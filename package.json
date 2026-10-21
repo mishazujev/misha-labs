@@ -1,0 +1,16 @@
+{
+  "name": "bench-chemistry-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local static server for the Bench Chemistry Lab",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "share": "ngrok http 127.0.0.1:4173",
+    "test": "node lab/reaction_engine.test.mjs && node lab/engine.test.mjs && node lab/distillation_interactions.test.mjs && node lab3d/course_labs.test.mjs && node analytics.test.mjs",
+    "deploy:prepare": "node scripts/prepare-deploy.mjs"
+  }
+}

@@ -1,0 +1,90 @@
+name: Deploy to Zone
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: labs-production-zone
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Test
+        run: npm test
+
+      - name: Prepare production files
+        run: npm run deploy:prepare
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ZONE_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.ZONE_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/zone_deploy
+          chmod 600 ~/.ssh/zone_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Validate deployment target
+        env:
+          ZONE_TARGET_PATH: ${{ vars.ZONE_TARGET_PATH }}
+        run: |
+          if [[ -z "$ZONE_TARGET_PATH" || "$ZONE_TARGET_PATH" == "/" || "$ZONE_TARGET_PATH" != /data*/virt*/domeenid/* ]]; then
+            echo "ZONE_TARGET_PATH must be the dedicated labs DocumentRoot below /data*/virt*/domeenid/."
+            exit 1
+          fi
+
+      - name: Upload application
+        env:
+          ZONE_HOST: ${{ vars.ZONE_HOST }}
+          ZONE_PORT: ${{ vars.ZONE_PORT }}
+          ZONE_TARGET_PATH: ${{ vars.ZONE_TARGET_PATH }}
+          ZONE_USERNAME: ${{ vars.ZONE_USERNAME }}
+        run: |
+          ssh -i ~/.ssh/zone_deploy -p "$ZONE_PORT" "$ZONE_USERNAME@$ZONE_HOST" "mkdir -p '$ZONE_TARGET_PATH'"
+          rsync -az --checksum -e "ssh -i ~/.ssh/zone_deploy -p $ZONE_PORT" .deploy/ "$ZONE_USERNAME@$ZONE_HOST:$ZONE_TARGET_PATH/"
+
+      - name: Restart application
+        env:
+          ZONE_HOST: ${{ vars.ZONE_HOST }}
+          ZONE_PM2_APP: ${{ vars.ZONE_PM2_APP }}
+          ZONE_PORT: ${{ vars.ZONE_PORT }}
+          ZONE_USERNAME: ${{ vars.ZONE_USERNAME }}
+        run: |
+          ssh -i ~/.ssh/zone_deploy -p "$ZONE_PORT" "$ZONE_USERNAME@$ZONE_HOST" "pm2 restart '$ZONE_PM2_APP' --update-env"
+
+      - name: Verify public routes
+        env:
+          PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+        run: |
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error "$PRODUCTION_URL/" >/dev/null && \
+               curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/" >/dev/null && \
+               curl --fail --silent --show-error "$PRODUCTION_URL/hub-assets/lab-chemistry.jpg" >/dev/null; then
+              echo "Production routes are healthy."
+              exit 0
+            fi
+            echo "Waiting for PM2 and mod_proxy (attempt $attempt of 12)..."
+            sleep 5
+          done
+          echo "Production verification failed."
+          exit 1

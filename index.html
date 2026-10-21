@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en" data-theme="navy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#13283a">
+  <meta name="description" content="Choose an interactive science, engineering, mathematics, or navigation simulation.">
+  <title>Simulation Hub | Misha Zujev Labs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #13283a;
+      --surface: #183247;
+      --surface-soft: #1b384f;
+      --text: #f4f4ed;
+      --muted: #b8c5cc;
+      --border: rgba(210, 225, 232, .17);
+      --accent: #e1b45b;
+      --accent-ink: #182836;
+      --shadow: rgba(2, 12, 20, .32);
+      --display: "Fraunces", Georgia, serif;
+      --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", monospace;
+    }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --background: #f6f2e8;
+      --surface: #fffdf7;
+      --surface-soft: #f1ecdf;
+      --text: #263c50;
+      --muted: #60717c;
+      --border: rgba(42, 63, 80, .17);
+      --accent: #a96f22;
+      --accent-ink: #fffdf7;
+      --shadow: rgba(37, 52, 64, .13);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(91, 153, 174, .12), transparent 28rem),
+        var(--background);
+      font-family: var(--sans);
+      transition: color .25s ease, background-color .25s ease;
+      overflow-x: hidden;
+    }
+    button, a { font: inherit; }
+    img { display: block; max-width: 100%; }
+    .shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 62px 0 42px; }
+    .hero { padding-bottom: 42px; border-bottom: 1px solid var(--border); }
+    .hero-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .eyebrow {
+      margin: 0;
+      color: var(--accent);
+      font: 500 .76rem/1.4 var(--mono);
+      letter-spacing: .26em;
+      text-transform: uppercase;
+    }
+    .controls { display: flex; gap: 9px; }
+    .control {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+    .control:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .control:focus-visible, .sim-card.live:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 3px; }
+    .control svg { width: 18px; height: 18px; }
+    .control-label { font-size: .78rem; font-weight: 600; }
+    h1 {
+      max-width: 760px;
+      margin: 22px 0 0;
+      font: 700 clamp(3rem, 8vw, 6.1rem)/.98 var(--display);
+      letter-spacing: -.035em;
+    }
+    .lede { max-width: 680px; margin: 24px 0 0; color: var(--muted); font-size: clamp(1rem, 2vw, 1.16rem); line-height: 1.7; }
+    .availability { margin-top: 23px; color: var(--accent); font: 500 .73rem/1.4 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .catalogue { display: grid; gap: 52px; padding: 48px 0 14px; }
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    h2 { margin: 0; font: 600 clamp(1.55rem, 3vw, 2rem)/1.15 var(--display); }
+    .section-head p { max-width: 520px; margin: 0; color: var(--muted); font-size: .9rem; text-align: right; }
+    .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .sim-card {
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      color: inherit;
+      background: var(--surface);
+      box-shadow: 0 18px 45px -32px var(--shadow);
+      text-decoration: none;
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .25s ease;
+    }
+    .sim-card.live:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 70%, transparent); box-shadow: 0 26px 55px -32px var(--shadow); }
+    .sim-card.soon { opacity: .82; }
+    .media { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--surface-soft); }
+    .media::after { content: ""; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(8, 20, 30, .3)); pointer-events: none; }
+    .media img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.035); animation: drift-a 9s ease-in-out infinite; will-change: transform; }
+    .sim-card:nth-child(even) .media img { animation-name: drift-b; animation-duration: 10.5s; }
+    .status {
+      position: absolute;
+      z-index: 1;
+      top: 14px;
+      left: 14px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: var(--accent-ink);
+      background: var(--accent);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .16);
+      font: 500 .63rem/1 var(--mono);
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+    .soon .status { color: #f4f4ed; background: rgba(16, 36, 52, .76); backdrop-filter: blur(7px); }
+    .card-body { padding: 20px 21px 22px; }
+    .card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    h3 { margin: 0; font: 600 1.38rem/1.2 var(--display); }
+    .arrow { color: var(--accent); font-size: 1.5rem; line-height: 1; transition: transform .2s ease; }
+    .live:hover .arrow { transform: translateX(4px); }
+    .subtitle { margin: 8px 0 0; color: var(--accent); font-size: .82rem; font-weight: 600; }
+    .description { margin: 9px 0 0; color: var(--muted); font-size: .91rem; line-height: 1.58; }
+    footer { margin-top: 38px; padding-top: 26px; border-top: 1px solid var(--border); color: var(--muted); font-size: .88rem; }
+    @keyframes drift-a {
+      0%, 100% { transform: scale(1.035) translate3d(-.35%, 0, 0); }
+      50% { transform: scale(1.105) translate3d(1.1%, -1.2%, 0); }
+    }
+    @keyframes drift-b {
+      0%, 100% { transform: scale(1.04) translate3d(.4%, 0, 0); }
+      50% { transform: scale(1.1) translate3d(-1%, -1%, 0); }
+    }
+    .motion-paused .media img { animation-play-state: paused; }
+    @media (max-width: 720px) {
+      .shell { width: calc(100% - 28px); max-width: 620px; padding-top: 30px; }
+      .hero { padding-bottom: 34px; }
+      .hero-top { align-items: flex-start; flex-wrap: wrap; }
+      .eyebrow { max-width: 210px; letter-spacing: .18em; }
+      .controls { margin-left: auto; }
+      .control-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+      .control { width: 42px; padding: 0; justify-content: center; }
+      .card-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 7px; text-align: left; }
+      .catalogue { gap: 42px; padding-top: 38px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+      .media img { transform: none; }
+      #motion-toggle { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="hero-top">
+        <p class="eyebrow">Misha Zujev · Simulation Hub</p>
+        <div class="controls" aria-label="Display controls">
+          <button class="control" id="motion-toggle" type="button" aria-pressed="false" title="Pause image motion">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pause-icon" d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="play-icon" d="m9 6 9 6-9 6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" hidden/></svg>
+            <span class="control-label">Pause motion</span>
+          </button>
+          <button class="control" id="theme-toggle" type="button" title="Switch to light theme">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <span class="control-label">Light theme</span>
+          </button>
+        </div>
+      </div>
+      <h1>Choose your simulation</h1>
+      <p class="lede">Explore science, engineering, mathematics, and navigation through hands-on virtual laboratories. Pick a subject and start experimenting.</p>
+      <p class="availability">1 available now · 6 in development</p>
+    </header>
+
+    <div class="catalogue">
+      <section aria-labelledby="natural-sciences">
+        <div class="section-head">
+          <h2 id="natural-sciences">Natural Sciences & Mathematics</h2>
+          <p>Investigate matter, living systems, our planet, and the patterns that connect them.</p>
+        </div>
+        <div class="card-grid">
+          <a class="sim-card live" href="./chemistry/">
+            <div class="media"><img src="./hub-assets/lab-chemistry.jpg" alt="Clay scientist pouring turquoise liquid into an orange bubbling beaker" width="992" height="672" fetchpriority="high"><span class="status">Live</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Chemistry</h3><span class="arrow" aria-hidden="true">→</span></div><p class="subtitle">Matter, mixtures & reactions</p><p class="description">Mix reagents, handle laboratory equipment, observe reactions, and repeat experiments safely.</p></div>
+          </a>
+          <article class="sim-card soon">
+            <div class="media"><img src="./hub-assets/lab-biology.jpg" alt="Clay biology student studying a miniature ecosystem with a magnifying glass" width="992" height="672" loading="lazy" decoding="async"><span class="status">In development</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Biology</h3></div><p class="subtitle">Cells, organisms & ecosystems</p><p class="description">Explore how living systems grow, interact, adapt, and maintain the balance of life.</p></div>
+          </article>
+          <article class="sim-card soon">
+            <div class="media"><img src="./hub-assets/lab-geography.jpg" alt="Clay geography student examining a globe beside maps and a landscape model" width="992" height="672" loading="lazy" decoding="async"><span class="status">In development</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Geography</h3></div><p class="subtitle">Earth systems, maps & landscapes</p><p class="description">Investigate places, physical processes, climate, and the ways people navigate our world.</p></div>
+          </article>
+          <article class="sim-card soon">
+            <div class="media"><img src="./hub-assets/lab-math.jpg" alt="Clay mathematics student comparing colorful geometric solids" width="992" height="672" loading="lazy" decoding="async"><span class="status">In development</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Mathematics</h3></div><p class="subtitle">Patterns, geometry & problem solving</p><p class="description">Make abstract ideas tangible through shapes, measurements, models, and visual experiments.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="mechanics">
+        <div class="section-head">
+          <h2 id="mechanics">Mechanics</h2>
+          <p>Discover how materials and structures respond when forces are applied.</p>
+        </div>
+        <div class="card-grid">
+          <article class="sim-card soon">
+            <div class="media"><img src="./hub-assets/lab-strength.jpg" alt="Clay engineering student testing a beam under a stack of weights" width="992" height="672" loading="lazy" decoding="async"><span class="status">In development</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Strength of Materials</h3></div><p class="subtitle">Loads, stress & deformation</p><p class="description">Test beams and structural materials to see how they bend, carry load, and reach their limits.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="seamanship">
+        <div class="section-head">
+          <h2 id="seamanship">Seamanship & Navigation</h2>
+          <p>Learn how vessels find their position and travel safely from one point to another.</p>
+        </div>
+        <div class="card-grid">
+          <article class="sim-card soon">
+            <div class="media"><img src="./hub-assets/lab-navigation.jpg" alt="Clay ship captain plotting a course on a nautical chart" width="992" height="672" loading="lazy" decoding="async"><span class="status">In development</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Navigation</h3></div><p class="subtitle">Position, course & safe passage</p><p class="description">Plot routes, work with charts and instruments, and make decisions in changing sea conditions.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="engineering">
+        <div class="section-head">
+          <h2 id="engineering">Marine Engineering</h2>
+          <p>Explore the heat, energy, and machinery that keep a ship moving.</p>
+        </div>
+        <div class="card-grid">
+          <article class="sim-card soon">
+            <div class="media"><img src="./hub-assets/lab-thermodynamics.jpg" alt="Clay engineer operating a steam engine with pressure and temperature instruments" width="992" height="672" loading="lazy" decoding="async"><span class="status">In development</span></div>
+            <div class="card-body"><div class="card-title-row"><h3>Technical Thermodynamics</h3></div><p class="subtitle">Heat, energy & engine cycles</p><p class="description">Follow energy through engines and systems while exploring pressure, temperature, and heat transfer.</p></div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <footer>New simulators will become available here as they are completed.</footer>
+  </main>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeButton = document.querySelector('#theme-toggle');
+      const motionButton = document.querySelector('#motion-toggle');
+      const themeLabel = themeButton.querySelector('.control-label');
+      const motionLabel = motionButton.querySelector('.control-label');
+      const pauseIcon = motionButton.querySelector('.pause-icon');
+      const playIcon = motionButton.querySelector('.play-icon');
+      const savedTheme = localStorage.getItem('labs-theme');
+      if (savedTheme === 'light' || savedTheme === 'navy') root.dataset.theme = savedTheme;
+
+      function syncTheme() {
+        const light = root.dataset.theme === 'light';
+        themeLabel.textContent = light ? 'Navy theme' : 'Light theme';
+        themeButton.title = light ? 'Switch to navy theme' : 'Switch to light theme';
+        document.querySelector('meta[name="theme-color"]').content = light ? '#f6f2e8' : '#13283a';
+      }
+      themeButton.addEventListener('click', () => {
+        root.dataset.theme = root.dataset.theme === 'light' ? 'navy' : 'light';
+        localStorage.setItem('labs-theme', root.dataset.theme);
+        syncTheme();
+      });
+
+      let paused = localStorage.getItem('labs-motion') === 'paused';
+      function syncMotion() {
+        root.classList.toggle('motion-paused', paused);
+        motionButton.setAttribute('aria-pressed', String(paused));
+        motionButton.title = paused ? 'Resume image motion' : 'Pause image motion';
+        motionLabel.textContent = paused ? 'Resume motion' : 'Pause motion';
+        pauseIcon.hidden = paused;
+        playIcon.hidden = !paused;
+      }
+      motionButton.addEventListener('click', () => {
+        paused = !paused;
+        localStorage.setItem('labs-motion', paused ? 'paused' : 'playing');
+        syncMotion();
+      });
+      syncTheme();
+      syncMotion();
+    })();
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import { conductivityBrightness, conductivityCategory, evaporativeCoolingAt, HEAT_CONDUCTION_ORDER, reagentBottleMass, solutionMass } from './course_lab_models.mjs';
 
 const pureWater = { V: 30, tot: {}, eq: { pH: 7, ppt: {} } };
@@ -26,6 +27,25 @@ assert.equal(Number((reagentBottleMass('water', 180, false) - reagentBottleMass(
 
 const source = fs.readFileSync(new URL('./main3d.js', import.meta.url), 'utf8');
 const decor = fs.readFileSync(new URL('./decor3d.js', import.meta.url), 'utf8');
+const dictionarySource = [
+  '../lab/i18n_en.js', '../lab/i18n_ru.js', '../lab/i18n_et.js', '../lab/i18n_uk.js', './i18n3d.js'
+].map(file => fs.readFileSync(new URL(file, import.meta.url), 'utf8')).join('\n');
+const dictionaryContext = {};
+vm.runInNewContext(`${dictionarySource}\n;globalThis.__i18n = I18N;`, dictionaryContext);
+const instructionKeys = ['x.steps', 'lab.ph.steps', 'lab.comb.steps',
+  'x.lab.ind1', 'x.lab.ind2', 'x.lab.ind3', 'x.lab.pre1', 'x.lab.pre2', 'x.lab.pre3',
+  'x.lab.k111', 'x.lab.k112', 'x.lab.k113', 'x.lab.k3v01', 'x.lab.k3v02'];
+for (const lang of ['ru', 'et', 'uk']) {
+  for (const key of instructionKeys) {
+    assert.ok(dictionaryContext.__i18n[lang][key], `${lang}.${key} must be translated`);
+    assert.notEqual(dictionaryContext.__i18n[lang][key], dictionaryContext.__i18n.en[key], `${lang}.${key} must not fall back to English`);
+  }
+  for (const key of ['x.k3v01.title', 'x.k3v01.goal', 'x.k3v01.desc', 'x.lab.k3v01', 'x.lab.k3v01.done', 'x.lab.k3v01.sensory',
+    'x.k3v02.title', 'x.k3v02.goal', 'x.k3v02.desc', 'x.lab.k3v02', 'x.lab.k3v02.done', 'x.lab.k3v02.sensory']) {
+    assert.ok(dictionaryContext.__i18n[lang][key], `${lang}.${key} must be translated`);
+    assert.notEqual(dictionaryContext.__i18n[lang][key], dictionaryContext.__i18n.en[key], `${lang}.${key} must not fall back to English`);
+  }
+}
 for (const id of ['k111', 'k112', 'k113', 'k3v01', 'k3v02']) {
   assert.match(source, new RegExp(`id: '${id}'`), `${id} task must be registered`);
   assert.match(source, new RegExp(`${id}: \\[`), `${id} demo must be registered`);

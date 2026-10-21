@@ -20,7 +20,11 @@ const port = await freePort(), base = `http://127.0.0.1:${port}`;
 const child = spawn(process.execPath, ["server.mjs"], { cwd: new URL(".", import.meta.url), env: { ...process.env, PORT: String(port), HOST: "127.0.0.1", LAB_DATA_DIR: dataDir }, stdio: ["ignore", "pipe", "pipe"] });
 try {
   await waitForServer(child, "Bench Chemistry Lab is running");
-  let r = await fetch(`${base}/teacher`, { redirect: "manual" });
+  let r = await fetch(`${base}/hub-assets/lab-chemistry.jpg`);
+  assert.equal(r.status, 200); assert.equal(r.headers.get("content-type"), "image/jpeg");
+  r = await fetch(`${base}/server.mjs`);
+  assert.equal(r.status, 404);
+  r = await fetch(`${base}/teacher`, { redirect: "manual" });
   assert.equal(r.status, 303); assert.equal(r.headers.get("location"), "/teacher/login");
   r = await fetch(`${base}/teacher/login`, { redirect: "manual" });
   assert.equal(r.status, 303); assert.equal(r.headers.get("location"), "/teacher/setup");

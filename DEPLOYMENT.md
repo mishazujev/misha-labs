@@ -19,7 +19,11 @@ Environment variables:
 - `ZONE_HOST=217.146.69.31` (or the SSH hostname shown by Zone)
 - `ZONE_PORT=22`
 - `ZONE_USERNAME=virt71341`
-- `ZONE_TARGET_PATH` — the complete DocumentRoot for `labs.mishazujev.com`
+- `ZONE_TARGET_PATH=/data02/virt71341/domeenid/www.mishazujev.com/labs`
+
+This is the application directory verified over SSH. Do not use
+`/data02/virt71341/domeenid/www.labs.mishazujev.com/htdocs`: despite appearing in
+the Zone PM2 form, that directory does not exist in the SSH filesystem.
 - `ZONE_PM2_APP=misha-labs`
 
 ## One-time Zone setup
@@ -49,4 +53,4 @@ Revert the faulty commit and push the revert to `main`. The standard deployment 
 
 - `503 Service Unavailable`: inspect PM2 logs, confirm `HOST=127.1.61.189`, and confirm mod_proxy port `4173`.
 - SSH failure: confirm the public deployment key is still authorized in Zone and refresh `ZONE_KNOWN_HOSTS` only after verifying a legitimate host-key change.
-- Upload failure: confirm `ZONE_TARGET_PATH` is the exact Labs DocumentRoot and `ZONE_USERNAME` is `virt71341`.
+- Upload failure: confirm `ZONE_TARGET_PATH` is `/data02/virt71341/domeenid/www.mishazujev.com/labs` and `ZONE_USERNAME` is `virt71341`.

@@ -20,7 +20,10 @@ const publicFiles = new Set([
     "lab-math.jpg",
     "lab-navigation.jpg",
     "lab-strength.jpg",
-    "lab-thermodynamics.jpg"
+    "lab-thermodynamics.jpg",
+    "chemistry-motion.webm",
+    "chemistry-motion.mp4",
+    "strength-motion.mp4"
   ].map((name) => join(root, "hub-assets", name))
 ]);
 
@@ -34,9 +37,11 @@ const mimeTypes = {
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8",
+  ".mp4": "video/mp4",
   ".png": "image/png",
   ".svg": "image/svg+xml; charset=utf-8",
   ".webp": "image/webp",
+  ".webm": "video/webm",
   ".woff": "font/woff",
   ".woff2": "font/woff2"
 };

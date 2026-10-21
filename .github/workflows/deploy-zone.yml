@@ -79,7 +79,8 @@ jobs:
           for attempt in {1..12}; do
             if curl --fail --silent --show-error "$PRODUCTION_URL/" >/dev/null && \
                curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/" >/dev/null && \
-               curl --fail --silent --show-error "$PRODUCTION_URL/hub-assets/lab-chemistry.jpg" >/dev/null; then
+               curl --fail --silent --show-error "$PRODUCTION_URL/hub-assets/lab-chemistry.jpg" >/dev/null && \
+               curl --fail --silent --show-error "$PRODUCTION_URL/hub-assets/chemistry-motion.webm" >/dev/null; then
               echo "Production routes are healthy."
               exit 0
             fi

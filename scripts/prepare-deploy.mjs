@@ -19,7 +19,10 @@ const files = [
   "hub-assets/lab-math.jpg",
   "hub-assets/lab-navigation.jpg",
   "hub-assets/lab-strength.jpg",
-  "hub-assets/lab-thermodynamics.jpg"
+  "hub-assets/lab-thermodynamics.jpg",
+  "hub-assets/chemistry-motion.webm",
+  "hub-assets/chemistry-motion.mp4",
+  "hub-assets/strength-motion.mp4"
 ];
 
 await rm(target, { recursive: true, force: true });

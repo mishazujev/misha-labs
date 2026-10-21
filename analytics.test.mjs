@@ -22,6 +22,10 @@ try {
   await waitForServer(child, "Bench Chemistry Lab is running");
   let r = await fetch(`${base}/hub-assets/lab-chemistry.jpg`);
   assert.equal(r.status, 200); assert.equal(r.headers.get("content-type"), "image/jpeg");
+  r = await fetch(`${base}/hub-assets/chemistry-motion.webm`);
+  assert.equal(r.status, 200); assert.equal(r.headers.get("content-type"), "video/webm");
+  r = await fetch(`${base}/hub-assets/strength-motion.mp4`);
+  assert.equal(r.status, 200); assert.equal(r.headers.get("content-type"), "video/mp4");
   r = await fetch(`${base}/server.mjs`);
   assert.equal(r.status, 404);
   r = await fetch(`${base}/teacher`, { redirect: "manual" });

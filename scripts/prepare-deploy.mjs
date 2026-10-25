@@ -13,6 +13,7 @@ const files = [
   "chemistry/index.html",
   "lab/lab.html",
   "lab3d/lab3d.html",
+  "lab3d/course_lab_models.mjs",
   "hub-assets/lab-biology.jpg",
   "hub-assets/lab-chemistry.jpg",
   "hub-assets/lab-geography.jpg",

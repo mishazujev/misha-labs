@@ -2440,10 +2440,10 @@ controls.enableZoom = false; controls.enableRotate = true; controls.enablePan = 
 controls.minPolarAngle = D2R(8); controls.maxPolarAngle = D2R(88);
 /* Free orbit is the default exploration mode. The named-view controls below
    remain a camera dashboard for exact, repeatable shelf and bench shots. */
-scene.add(new THREE.HemisphereLight(0xf6f9ff, 0xa9b1ad, 0.6));
-const sun = new THREE.DirectionalLight(0xfff4e6, 2.4); sun.position.set(0.55, 1.1, 0.6); sun.castShadow = true; sun.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
+scene.add(new THREE.HemisphereLight(0xf6f9ff, 0xb8c0bc, 0.95));
+const sun = new THREE.DirectionalLight(0xfff4e6, 1.65); sun.position.set(0.55, 1.1, 0.6); sun.castShadow = true; sun.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -.75, right: .75, top: .6, bottom: -.6, near: .1, far: 3 }); sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.002; scene.add(sun);
-const fillL = new THREE.DirectionalLight(0xdfe9ff, 0.5); fillL.position.set(-0.8, 0.5, 0.3); scene.add(fillL);
+const fillL = new THREE.DirectionalLight(0xdfe9ff, 0.68); fillL.position.set(-0.8, 0.5, 0.3); scene.add(fillL);
 
 /* ---------------- textures ---------------- */
 function canvasTex(w, h, draw, srgb = true) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
@@ -2452,7 +2452,7 @@ benchTex.wrapS = benchTex.wrapT = THREE.RepeatWrapping;
 const tileTex = canvasTex(1024, 1024, (g, w, h) => { g.fillStyle = '#bfc6c3'; g.fillRect(0, 0, w, h); const n = 8, s = w / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const v = 232 + Math.random() * 10; g.fillStyle = `rgb(${v},${v + 3},${v + 1})`; g.fillRect(i * s + 4, j * s + 4, s - 8, s - 8); } });
 tileTex.wrapS = tileTex.wrapT = THREE.RepeatWrapping; tileTex.repeat.set(3, 1.2);
 const softTex = canvasTex(128, 128, (g) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.4, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
-const shadowTex = canvasTex(128, 128, (g) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(0,0,0,.55)'); r.addColorStop(.55, 'rgba(0,0,0,.22)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
+const shadowTex = canvasTex(128, 128, (g) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(0,0,0,.28)'); r.addColorStop(.55, 'rgba(0,0,0,.10)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
 
 /* ---------------- materials ---------------- */
 const MAT = {
@@ -2477,7 +2477,10 @@ SINK.cx = (SINK.x0 + SINK.x1) / 2; SINK.cz = (SINK.z0 + SINK.z1) / 2;
   const slab = (x0, x1, z0, z1) => { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, .05, z1 - z0), mat); m.position.set((x0 + x1) / 2, -.025, (z0 + z1) / 2); m.receiveShadow = true; m.userData.help = 'bench'; scene.add(m); };
   slab(-.95, SINK.x0, -.5, .9); slab(SINK.x1, .95, -.5, .9); slab(SINK.x0, SINK.x1, -.5, SINK.z0); slab(SINK.x0, SINK.x1, SINK.z1, .9);
   const w = SINK.x1 - SINK.x0, d = SINK.z1 - SINK.z0, h = SINK.depth;
-  const plane = (pw, ph, pos, rot) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), MAT.steel); m.position.copy(pos); m.rotation.set(...rot); m.receiveShadow = true; m.userData.help = 'sink'; scene.add(m); };
+  // A moderately rough stainless surface avoids the high-frequency reflection
+  // pattern that made the basin look like wire mesh on smaller screens.
+  const sinkSteel = new THREE.MeshPhysicalMaterial({ color: 0xaeb8bb, metalness: .55, roughness: .62, clearcoat: .08, clearcoatRoughness: .5, side: THREE.DoubleSide });
+  const plane = (pw, ph, pos, rot) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), sinkSteel); m.position.copy(pos); m.rotation.set(...rot); m.receiveShadow = false; m.userData.help = 'sink'; scene.add(m); };
   plane(w, d, V3(SINK.cx, -h, SINK.cz), [-Math.PI / 2, 0, 0]);
   plane(w, h, V3(SINK.cx, -h / 2, SINK.z0), [0, 0, 0]); plane(w, h, V3(SINK.cx, -h / 2, SINK.z1), [0, Math.PI, 0]);
   plane(d, h, V3(SINK.x0, -h / 2, SINK.cz), [0, Math.PI / 2, 0]); plane(d, h, V3(SINK.x1, -h / 2, SINK.cz), [0, -Math.PI / 2, 0]);
@@ -2698,7 +2701,7 @@ function updateVessel(v, dt, t) {
   const fc = Math.min(300, Math.floor(v.foamAmt * 360)); let q = 0;
   for (let i = 0; i < fc; i++) { const f = v.foamSpots[i]; const y = surfaceY(v, f.x, f.z, t) + f.s * .3; const s = f.s * (.6 + .4 * Math.sin(t * 2 + f.ph)); M4.compose(P3.set(f.x, y, f.z), QI, SC.set(s, s * .55, s)); v.foam.setMatrixAt(q++, M4); }
   v.foam.count = q; v.foam.instanceMatrix.needsUpdate = true;
-  v.sh.position.set(v.g.position.x, .0006, v.g.position.z); v.sh.visible = !v.onBalance && !v.stowed && !v.inSink; v.sh.material.opacity = .9 * Math.max(0, 1 - v.g.position.y / .1);
+  v.sh.position.set(v.g.position.x, .0006, v.g.position.z); v.sh.visible = !v.onBalance && !v.stowed && !v.inSink; v.sh.material.opacity = .42 * Math.max(0, 1 - v.g.position.y / .1);
 }
 
 /* ===================== ASSET: REAGENT BOTTLE ===================== (pivot: base; spout (0,0.142,0)) */
@@ -3246,7 +3249,8 @@ const FLOOR = -.9, LV = { B: -.86, M1: .02, M2: .40, T: .78 };
 const ROOM = {
   glass: { frontX: -1.75, backX: -2.2, out: 1, ry: Math.PI / 2, z0: -.48, z1: 2.22, secs: [[-.48, .42], [.42, 1.32], [1.32, 2.22]] },
   chem: { frontX: 1.9, backX: 2.35, out: -1, ry: -Math.PI / 2, cabs: { acid: [-.48, .02], gen: [.02, .72], ox: [.72, 1.12], base: [1.12, 1.62] } },
-  gas: { x: 2.16, z0: 1.85, step: .21 },
+  flam: { x: 2.12, z: 1.72, ry: -Math.PI / 2 },
+  gas: { x: 2.16, z0: 2.08, step: .21 },
 };
 const floorTex = canvasTex(512, 512, (g, w, h) => { g.fillStyle = '#d9dcd6'; g.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { const v = 180 + Math.random() * 60; g.fillStyle = `rgba(${v},${v},${v - 6},${Math.random() * .35})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
 floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(4, 5);
@@ -3258,8 +3262,9 @@ floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(4, 5
   const lam = new THREE.MeshStandardMaterial({ color: 0xD3D8D5, roughness: .6 });
   const base = new THREE.Mesh(new THREE.BoxGeometry(1.9, FLOOR * -1 - .13, 1.32), lam); base.position.set(0, (FLOOR - .13) / 2, .18); base.receiveShadow = true; base.userData.help = 'bench'; scene.add(base);
   const apron = new THREE.Mesh(new THREE.BoxGeometry(1.9, .08, .02), lam); apron.position.set(0, -.09, .885); scene.add(apron);
-  // flammables cabinet under the bench (left)
-  const fc = new THREE.Group(); fc.position.set(-.62, FLOOR, .845); fc.userData.help = 'flamcab'; scene.add(fc);
+  // Dedicated flammables storage belongs to the Chemicals side of the room,
+  // outside the starting bench view but still separate from oxidisers.
+  const fc = new THREE.Group(); fc.position.set(ROOM.flam.x, FLOOR, ROOM.flam.z); fc.rotation.y = ROOM.flam.ry; fc.userData.help = 'flamcab'; scene.add(fc);
   const flamMat = new THREE.MeshPhysicalMaterial({ color: 0xE9B91A, roughness: .45, clearcoat: .3 });
   const fback = new THREE.Mesh(new THREE.BoxGeometry(.56, .7, .02), flamMat); fback.position.set(0, .4, -.2); fc.add(fback);
   for (const x of [-.275, .275]) { const side = new THREE.Mesh(new THREE.BoxGeometry(.03, .7, .22), flamMat); side.position.set(x, .4, -.1); fc.add(side); }
@@ -3506,11 +3511,20 @@ const DECOR_PICK = [], DECOR_MESH = {}, PROPS = [];
   }
   for (const it of D.glass) { const [w, d] = SH[it.shape](it); emit('glass:' + it.sh, w, d, { type: 'glass', it }); }
   const CAB = { acid: 'acid', base: 'base', gen: 'gen', ind: 'gen', met: 'gen', org: 'gen', ox: 'ox' };
-  for (const it of D.chem) { if (!CAB[it.grp]) continue; const [w, d] = chemShape(it); emit(CAB[it.grp] + ':' + (it.sh || 'M2'), w, d, { type: 'chem', it }); }
-  // Flammable liquids live in the open yellow fire-resistant cabinet below the bench.
+  // Usable stock containers already occupy these cabinet slots. Rendering a
+  // second display-only model underneath them made one bottle appear to remain
+  // after its working counterpart was taken.
+  const functionalChem = new Set([...bottles.map(b => b.id), ...droppers.map(d => d.id)]);
+  for (const it of D.chem) { if (!CAB[it.grp] || functionalChem.has(it.k)) continue; const [w, d] = chemShape(it); emit(CAB[it.grp] + ':' + (it.sh || 'M2'), w, d, { type: 'chem', it }); }
+  // Flammable liquids live in their own fire-resistant cabinet beside the
+  // chemical cabinets, outside the default bench view.
   // Render the individual bottles here so they are findable and can be taken by labs such as K1.13.
   const flammables = D.chem.filter(it => it.grp === 'flam');
-  flammables.forEach((it, i) => { const [w, d] = chemShape(it), col = i % 5, row = Math.floor(i / 5); place(null, w, d, { type: 'chem', it }, { x: -.82 + col * .10, y: -.82 + row * .30, z: .77, ry: 0 }); });
+  flammables.forEach((it, i) => {
+    const [w, d] = chemShape(it), col = i % 5, row = Math.floor(i / 5);
+    const p = V3(-.2 + col * .10, 0, -.075).applyAxisAngle(V3(0, 1, 0), ROOM.flam.ry);
+    place(null, w, d, { type: 'chem', it }, { x: ROOM.flam.x + p.x, y: FLOOR + .08 + row * .30, z: ROOM.flam.z + p.z, ry: ROOM.flam.ry });
+  });
   // locked box (toxic), sealed box (water-reactive) in the oxidiser/locked cabinet
   part(box(.28, .16, .22), 'opaque', .14, 0, 0, 0x7A8288); part(box(.06, .03, .004), 'opaque', .14, .1, .112, 0xE2B714); emit('ox:M1', .29, .23, { type: 'group', key: 'tox', items: D.chem.filter(i => i.grp === 'tox') });
   part(box(.16, .1, .14), 'opaque', .08, 0, 0, 0x4A5257); part(box(.05, .025, .004), 'opaque', .08, .06, .072, 0x3E7CC4); emit('ox:B', .17, .15, { type: 'group', key: 'wr', items: D.chem.filter(i => i.grp === 'wr') });
@@ -3527,7 +3541,7 @@ const DECOR_PICK = [], DECOR_MESH = {}, PROPS = [];
     const bx = new THREE.Box3(); for (const q of P) { if (q.b === 'opaque') col(q.g, q.c); q.g.computeBoundingBox(); bx.union(q.g.boundingBox); buckets[q.b].push(q.g); } P.length = 0;
     DECOR_PICK.push({ box: bx, info: { type: 'gas', it: gs } }); });
   // The sign opens the cabinet note; the open front remains free so individual bottles can be selected.
-  { const bx = new THREE.Box3(V3(-.74, -.29, .84), V3(-.50, -.15, .89)); DECOR_PICK.push({ box: bx, info: { type: 'group', key: 'flam', items: D.chem.filter(i => i.grp === 'flam') } }); }
+  { const bx = new THREE.Box3(V3(ROOM.flam.x - .25, -.29, ROOM.flam.z - .3), V3(ROOM.flam.x - .18, -.15, ROOM.flam.z + .3)); DECOR_PICK.push({ box: bx, info: { type: 'group', key: 'flam', items: D.chem.filter(i => i.grp === 'flam') } }); }
   const mats = {
     glass: new THREE.MeshPhysicalMaterial({ color: 0xcfe0df, roughness: .05, transparent: true, opacity: .32, clearcoat: 1, envMapIntensity: 1.6, depthWrite: false, side: THREE.DoubleSide }),
     amber: new THREE.MeshPhysicalMaterial({ color: 0x7a3d10, roughness: .1, transparent: true, opacity: .7, clearcoat: 1, side: THREE.DoubleSide, depthWrite: false }),
@@ -4095,7 +4109,7 @@ function stowItem(it) {
   if (it.key === 'jar') { JAR.present = false; JAR.g.visible = true; JAR.g.position.copy(P); JAR.g.rotation.y = ry; JAR.lid.position.set(0, JAR.H + .006, 0); }
   else if (o.kind === 'dropper') { unpark(o); o.open = false; o.dragWhole = false; o.proxy.userData.obj = o.lidControl; o.bottleG.visible = true; o.bottleG.position.copy(P); o.bottleG.rotation.y = ry; o.g.visible = true; o.g.position.copy(P).add(V3(0, .006, 0)); o.home.copy(o.g.position); o.squeeze = 0; o.teat.scale.set(1, 1, 1); }
   else {
-    if (o.kind === 'vessel' || o.kind === 'bottle') { detachFrom(o); o.docked = false; o.pour = null; o.onBalance = false; o.inSink = false; o.tilt = 0; o.g.quaternion.copy(qY(ry)); drawStream(o, null); }
+    if (o.kind === 'vessel' || o.kind === 'bottle') { detachFrom(o); o.docked = false; o.pour = null; o.onBalance = false; o.inSink = false; if (o.kind === 'vessel') o.sinkDrain = null; o.tilt = 0; o.g.quaternion.copy(qY(ry)); drawStream(o, null); }
     if (o.kind === 'pipette') { o.docked = false; o.pz = null; o.in = null; o.lying = true; o.g.quaternion.copy(qY(ry)).multiply(QLIE); }
     if (o.kind === 'rod' || o.kind === 'thermo') { o.in = null; o.lying = true; o.g.quaternion.copy(qY(ry)).multiply(QLIE); }
     if (o.kind === 'spatula') o.g.rotation.set(0, ry, 0);
@@ -4547,7 +4561,7 @@ function resetState() {
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
-  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
+  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
   for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.lidT = 0; b.lidHome = null; }
   for (const q of pipettes) { q.chem = { V: 0, tot: {}, ind: {} }; q.src = null; q.held = false; }
   for (const d of droppers) { unpark(d); d.held = false; }
@@ -4703,8 +4717,8 @@ function viewShelf(sh, cab, lvl) {
   flyTo(t, p); shelfView = { sh, cab: cab ?? null, lvl: lvl || 'M2' }; markShelfBtns(); renderPlaces();
 }
 function viewFlammables() {
-  const t = V3(-.62, -.52, .77), portrait = camera.aspect < .85;
-  flyTo(t, V3(-.62, -.43, portrait ? 1.72 : 1.42)); shelfView = { sh: 'flam', cab: 'flam' }; markShelfBtns(); renderPlaces();
+  const t = V3(ROOM.flam.x, -.52, ROOM.flam.z), portrait = camera.aspect < .85;
+  flyTo(t, V3(ROOM.flam.x - (portrait ? 1.55 : 1.1), -.43, ROOM.flam.z)); shelfView = { sh: 'flam', cab: 'flam' }; markShelfBtns(); renderPlaces();
 }
 /* element cabinet wall view: framed close-ups of row groups; one-finger drag slides along the wall */
 const PT_PARTS = { all: () => true, p13: Z => Z <= 18, p45: Z => Z >= 19 && Z <= 54, p67: Z => Z === 55 || Z === 56 || (Z >= 72 && Z <= 88) || Z >= 104, f: Z => (Z >= 57 && Z <= 71) || (Z >= 89 && Z <= 103) };
@@ -4826,7 +4840,7 @@ function startHold(o, e, part) {
   if (o.kind === 'dropper') o.dragWhole = part === 'dropperBody';
   setOnBalance(o, false);
   held = o; o.held = true; hover = null; $('tip').hidden = true;
-  if (o.kind === 'vessel') { o.onBalance = false; o.inSink = false; for (const s of [electrode, rod, ...probes]) if (s.in === o) s.in = null; for (const d of droppers) if (d.parked === o) unpark(d); for (const q of pipettes) if (q.in === o) q.in = null; }
+  if (o.kind === 'vessel') { o.onBalance = false; o.inSink = false; o.sinkDrain = null; for (const s of [electrode, rod, ...probes]) if (s.in === o) s.in = null; for (const d of droppers) if (d.parked === o) unpark(d); for (const q of pipettes) if (q.in === o) q.in = null; }
   if (o.kind === 'dropper' && o.parked && !o.dragWhole) unpark(o);
   if (o.kind === 'electrode' || o.kind === 'rod' || o.kind === 'thermo') o.in = null;
   moveHeld(e);
@@ -4979,7 +4993,11 @@ function placeVessel(v) {
   if (p.x > SINK.x0 - .01 && p.x < SINK.x1 + .01 && p.z > SINK.z0 - .01 && p.z < SINK.z1 + .01) { // stands in the sink basin, under the tap if close to it
     let x = clamp(p.x, SINK.x0 + v.R + .004, SINK.x1 - v.R - .004), z = clamp(p.z, SINK.z0 + v.R + .004, SINK.z1 - v.R - .004);
     if (Math.hypot(x - TAP.spout.x, z - TAP.spout.z) < .07) { x = TAP.spout.x; z = TAP.spout.z; }
-    v.base.set(x, -SINK.depth + .001, z); v.inSink = true; return; }
+    v.base.set(x, -SINK.depth + .001, z); v.inSink = true;
+    // With water running, an upright beaker fills under the spout. With the
+    // tap off, releasing a filled beaker into the basin tips it out visibly.
+    if (!TAP.on && v.chem.V > FILM + .3) v.sinkDrain = { tg: { kind: 'sink', c: V3(SINK.cx, 0, SINK.cz), R: .04 }, dir: V3(x <= SINK.cx ? 1 : -1, 0, 0) };
+    return; }
   v.base.copy(findSpot(v, p.x, p.z, v.R + .002));
 }
 function stickVessel(o) {
@@ -5091,6 +5109,18 @@ function updatePourer(o, dt, t) {
     if (!isV) { o.cap.visible = true; animLid(o, dt); o.liq.visible = o.V > .05; o.plane.constant = o.g.position.y + o.shape.levelAt(Math.abs((o.demoPose.tilt || 0) * 180 / Math.PI), Math.max(o.V, .05)); o.sh.position.set(o.g.position.x, .0006, o.g.position.z); }
     return;
   }
+  if (isV && o.sinkDrain) {
+    if (TAP.on) { o.sinkDrain = null; o.tilt = 0; o.g.quaternion.identity(); }
+    else {
+      const sd = o.sinkDrain;
+      o.tilt = Math.min(132, o.tilt + dt * 105);
+      const spoutLocal = V3(sd.dir.x * o.R, o.H, sd.dir.z * o.R);
+      const sp = sd.tg.c.clone().addScaledVector(sd.dir, -.02); sp.y = .03 + o.H * Math.max(0, Math.cos(D2R(o.tilt)));
+      o.spout.lerp(sp, 1 - Math.exp(-dt * 12)); poseTilted(o, spoutLocal, sd.dir, o.tilt); flowFrom(o, sd.tg, dt); o.g.updateMatrixWorld();
+      if (o.chem.V <= FILM + .02) { o.sinkDrain = null; o.base.set(clamp(sd.tg.c.x, SINK.x0 + o.R + .004, SINK.x1 - o.R - .004), -SINK.depth + .001, clamp(sd.tg.c.z, SINK.z0 + o.R + .004, SINK.z1 - o.R - .004)); o.inSink = true; }
+      return;
+    }
+  }
   let tiltT = 0;
   if (isV && o.held && !o.pour && ptrOK && underTap(o)) return;
   o.underTap = false;
@@ -5134,7 +5164,7 @@ function updatePourer(o, dt, t) {
     o.cap.visible = true; animLid(o, dt);
     o.liq.visible = o.V > .05;
     o.plane.constant = o.g.position.y + o.shape.levelAt(o.tilt, Math.max(o.V, .05));
-    o.sh.position.set(o.g.position.x, .0006, o.g.position.z); o.sh.material.opacity = .8 * Math.max(0, 1 - o.g.position.y / .12);
+    o.sh.position.set(o.g.position.x, .0006, o.g.position.z); o.sh.material.opacity = .38 * Math.max(0, 1 - o.g.position.y / .12);
   }
 }
 function flowFrom(o, tg, dt) {
@@ -5190,7 +5220,7 @@ function updateWash(o, dt) {
     else drawStream(o, null);
   } else { drawStream(o, null); o.squeeze = Math.max(0, o.squeeze - dt * 4); o.g.position.lerp(o.home, 1 - Math.exp(-dt * 9)); o.g.rotation.y *= Math.exp(-dt * 6); o.g.rotation.x = 0; o.g.rotation.z *= Math.exp(-dt * 9); }
   o.body.scale.set(1 - o.squeeze * .12, 1, 1 - o.squeeze * .06);
-  o.sh.position.set(o.g.position.x, .0006, o.g.position.z); o.sh.material.opacity = .8 * Math.max(0, 1 - o.g.position.y / .1);
+  o.sh.position.set(o.g.position.x, .0006, o.g.position.z); o.sh.material.opacity = .38 * Math.max(0, 1 - o.g.position.y / .1);
 }
 function saltLog(o) { if (o.sessionV) { logE('obs', [['x.saltIn', { g: fmt(o.sessionG, 2) }]], { v: o.sessionV.letter, amt: '', f: 'NaCl' }); analyticsActivity('solid:nacl', 1, o.sessionG, 'solid:transferred'); o.sessionV = null; } }
 function updateSpatula(o, dt) {

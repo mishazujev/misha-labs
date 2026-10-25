@@ -64,6 +64,9 @@ assert.ok(source.includes('function ensureInventorySlots()'), 'new inventory ite
 assert.ok(source.indexOf('ensureInventorySlots();') < source.indexOf('function buildTags()'), 'inventory slots must be completed before tag construction');
 assert.match(source, /const flammables = D\.chem\.filter\(it => it\.grp === 'flam'\)/, 'flammable bottles must be rendered individually');
 assert.match(source, /function viewFlammables\(\)/, 'flammables cabinet needs a dedicated close-up view');
+assert.ok(source.includes('const functionalChem = new Set'), 'working chemical bottles must replace duplicate display-only shelf models');
+assert.ok(source.includes('ROOM.flam.x'), 'the flammables cabinet must live in the Chemicals side of the room');
+assert.ok(source.includes("if (!TAP.on && v.chem.V > FILM + .3) v.sinkDrain"), 'a filled beaker released into the sink with the tap off must drain');
 assert.match(decor, /k: 'ethanol'.*mark: 'EtOH'.*accent:/, '96% ethanol needs a distant-recognition label and colour band');
 assert.match(decor, /k: 'etohabs'.*mark: 'EtOH ABS'.*accent:/, 'absolute ethanol must be distinguishable from 96% ethanol');
 assert.ok(source.includes("Math.abs(x - task.targetC) <= task.targetC * .03"), 'vinegar concentration must be checked to ±3%');
@@ -75,4 +78,6 @@ for (const id of ['k111', 'k112', 'k113', 'k3v01', 'k3v02']) {
 }
 assert.ok(built.includes('landingOnPan'), 'the generated page must contain the balance landing zone fix');
 assert.ok(built.includes('drawStream(container, mouth, landing'), 'the generated page must contain aligned demo pouring');
+assert.ok(built.includes('const functionalChem = new Set'), 'the generated page must omit duplicate working chemical models');
+assert.ok(built.includes('v.sinkDrain'), 'the generated page must contain sink draining behavior');
 console.log('course_labs: models, inventory, demos and generated page passed');

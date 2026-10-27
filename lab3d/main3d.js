@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
+import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, UNKNOWN_SOLIDS, carbonateReactionTime, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, peroxideOxygenRate, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -1945,6 +1945,25 @@ TASKS.push(
   { id: 'k113', lab: true, code: 'K1.13', title: 'x.k113.title', goal: 'x.k113.goal', steps: 'x.lab.k113', start: 'x.labStart', done: 'x.lab.k113.done', sensory: 'x.lab.k113.sensory',
     setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['bottle:water'], ['decor:ethanol'], ['decor:acetone'], ['thermo:1'], ['thermo:2'], ['thermo:3']],
     answer: { rows: ['water', 'ethanol', 'acetone'], rowKey: 'x.solv_', optKey: 'x.ans_', opts: ['most', 'middle', 'least'], fixed: { water: 'least', ethanol: 'middle', acetone: 'most' }, needSeen: true } },
+  { id: 'k114', lab: true, code: 'K1.14', title: 'x.k114.title', goal: 'x.k114.goal', steps: 'x.lab.k114', start: 'x.labStart', done: 'x.lab.k114.done', sensory: 'x.lab.k114.sensory', setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['beaker:D'], ['bottle:water'], ['spatula'], ['cond'], ['glass:lamp'], ['glass:matches']],
+    activity: { trials: Object.keys(UNKNOWN_SOLIDS).map(sample => ({ id: sample, label: 'x.sample.' + sample, result: () => ({ key: 'x.k114.obs.' + sample }) })) } },
+  { id: 'k115', lab: true, code: 'K1.15', title: 'x.k115.title', goal: 'x.k115.goal', steps: 'x.lab.k115', start: 'x.labStart', done: 'x.lab.k115.done', sensory: 'x.lab.k115.sensory', setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['bottle:hcl'], ['bottle:water'], ['thermo:1'], ['glass:splints']],
+    activity: { trials: [
+      { id: 'baseline', label: 'x.k115.run.baseline', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 1, temperature: 20, form: 'chips' }) } }) },
+      { id: 'concentration', label: 'x.k115.run.concentration', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 2, temperature: 20, form: 'chips' }) } }) },
+      { id: 'temperature', label: 'x.k115.run.temperature', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 1, temperature: 35, form: 'chips' }) } }) },
+      { id: 'surface', label: 'x.k115.run.surface', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 1, temperature: 20, form: 'powder' }) } }) },
+      { id: 'peroxide', label: 'x.k115.run.peroxide', result: () => ({ key: peroxideOxygenRate(true).seconds < peroxideOxygenRate(false).seconds ? 'x.k115.peroxide' : 'x.k115.peroxide.error' }) },
+    ] } },
+  { id: 'k304', lab: true, code: 'K3.04', title: 'x.k304.title', goal: 'x.k304.goal', steps: 'x.lab.k304', start: 'x.labStart', done: 'x.lab.k304.done', sensory: 'x.lab.k304.sensory', setup: [],
+    activity: { trials: Object.keys(MOLECULE_MODELS).map(id => ({ id, label: 'x.molecule.' + id, result: () => ({ key: 'x.k304.obs.' + id, p: { formula: MOLECULE_MODELS[id].formula, angle: MOLECULE_MODELS[id].angle } }) })) } },
+  { id: 'k305', lab: true, code: 'K3.05', title: 'x.k305.title', goal: 'x.k305.goal', steps: 'x.lab.k305', start: 'x.labStart', done: 'x.lab.k305.done', sensory: 'x.lab.k305.sensory', setup: [['beaker:A'], ['beaker:B'], ['bottle:water'], ['glass:splints']],
+    activity: { trials: [
+      { id: 'structure', label: 'x.k305.run.structure', result: () => ({ key: 'x.k305.structure' }) },
+      { id: 'water', label: 'x.k305.run.water', result: () => ({ key: 'x.k305.water' }) },
+      { id: 'volatility', label: 'x.k305.run.volatility', result: () => ({ key: 'x.k305.volatility', p: { a: C4H10O_ISOMERS.butanol.boilingPoint, b: C4H10O_ISOMERS.ether.boilingPoint } }) },
+      { id: 'sodium', label: 'x.k305.run.sodium', result: () => ({ key: 'x.k305.sodium' }) },
+    ] } },
 );
 /* K3 carboxylic-acid labs. K3-V02 uses a diluted vinegar sample so a
    10 mL aliquot can be titrated within the range of a 50 mL burette. */
@@ -1962,11 +1981,23 @@ TASKS.push(
 function dealUnknowns(task) {
   task.key = {}; task.picks = {}; task.num = '';
   task.evidence = task.answer && task.answer.needSeen ? {} : null;
+  task.activityDone = new Set(); task.activityResults = {};
   for (const L of UNK) { REAG['u' + L].tot = {}; }
   if (!task.deal) return;
   const d = task.deal.slice(); for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
   d.forEach((k, i) => { const L = UNK[i]; task.key[L] = k; REAG['u' + L].tot = { ...SOL[k] }; });
   for (const b of bottles) if (b.id[0] === 'u') tintBottle(b);
+}
+function runActivityTrial(trial) {
+  if (!PPE.goggles) { logE('mistake', [['x.noGoggles']]); renderCard(); return; }
+  const result = trial.result();
+  TASK.activityDone.add(trial.id); TASK.activityResults[trial.id] = result;
+  logE('obs', [[result.key, result.p]]);
+  analyticsActivity('activity:' + TASK.id + ':' + trial.id, 1, 0, 'activity:observed');
+  if (TASK.activityDone.size === TASK.activity.trials.length && !TASK.reached) {
+    TASK.reached = true; logE('success', [[TASK.done]]); analyticsCompleteAttempt(); buzz(30);
+  }
+  renderCard();
 }
 function checkAnswers() {
   const A = TASK.answer; let wrong = 0;
@@ -2337,6 +2368,10 @@ const LABS = [
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
   { id: 'k112', run: 'k112', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔩', title: 'x.k112.title', goal: 'x.k112.goal', desc: 'x.k112.desc', time: '15–20 min' },
   { id: 'k113', run: 'k113', level: 'high', course: 'inorganic', tp: 'bond', icon: '💧', title: 'x.k113.title', goal: 'x.k113.goal', desc: 'x.k113.desc', time: '12–15 min' },
+  { id: 'k114', run: 'k114', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔎', title: 'x.k114.title', goal: 'x.k114.goal', desc: 'x.k114.desc', time: '20–25 min' },
+  { id: 'k115', run: 'k115', level: 'high', course: 'inorganic', tp: 'kinetics', icon: '⏱️', title: 'x.k115.title', goal: 'x.k115.goal', desc: 'x.k115.desc', time: '20–25 min' },
+  { id: 'k304', run: 'k304', level: 'high', course: 'organic', tp: 'structure', icon: '🧬', title: 'x.k304.title', goal: 'x.k304.goal', desc: 'x.k304.desc', time: '15–20 min' },
+  { id: 'k305', run: 'k305', level: 'high', course: 'organic', tp: 'structure', icon: '🧩', title: 'x.k305.title', goal: 'x.k305.goal', desc: 'x.k305.desc', time: '18–22 min' },
   { id: 'k3v01', run: 'k3v01', level: 'high', course: 'organic', tp: 'carboxylic', icon: '⚡', title: 'x.k3v01.title', goal: 'x.k3v01.goal', desc: 'x.k3v01.desc', time: '15–18 min' },
   { id: 'k3v02', run: 'k3v02', level: 'high', course: 'organic', tp: 'carboxylic', icon: '🧪', title: 'x.k3v02.title', goal: 'x.k3v02.goal', desc: 'x.k3v02.desc', time: '18–22 min' },
 ];
@@ -2352,7 +2387,7 @@ function openLabs() {
   const filter = (label, values, selected, set) => { const row = el('div', 'filterrow'); row.append(el('span', null, label)); for (const [value, labelText, disabled] of values) { const b = el('button', null, labelText); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-pressed', String(selected === value)); if (!disabled) b.addEventListener('click', () => { set(value); openLabs(); }); row.append(b); } filters.append(row); };
   filter(T('x.level'), [['high', T('x.levelHigh')], ['university', T('x.levelUniversity'), true]], labSel.level, v => { labSel.level = v; });
   filter(T('x.branch'), [['all', T('x.all')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
-  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
+  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
   box.append(filters);
   const grid = el('div', 'labgrid'), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
   const launch = (l, demoMode) => { pk.hidden = true; const task = TASKS.find(t => t.id === l.run); instructorTab = 'procedure'; if (demoMode) startDemo(task); else { setupTask(task); setInspector(true); } };
@@ -3022,6 +3057,16 @@ function renderCard() {
     if (TASK.free) c.append(h('div', 'cap', T('x.safetyCap'))); else c.append(h('div', 'instruction-banner', '✅ ' + T('x.studentInstructions')));
     const ol = h(TASK.free ? 'ul' : 'ol', TASK.free ? 'steps' : 'steps student-steps'); T(TASK.steps).split('|').forEach((s, i) => { const li = h('li', DEMO.active && i === DEMO.step ? 'demo-current' : null, s); ol.append(li); }); c.append(ol);
     if (TASK.check) c.append(h('p', 'goal' + (TASK.reached ? ' ok' : ''), T(TASK.reached ? 'x.goalOk' : 'x.goalOpen')));
+    if (TASK.activity) {
+      const station = h('section', 'activity'); station.append(h('div', 'cap', T('x.activityStation')));
+      for (const trial of TASK.activity.trials) {
+        const done = TASK.activityDone.has(trial.id), row = h('div', 'activity-row');
+        const button = h('button', 'btn', (done ? '✓ ' : '') + T(trial.label)); button.type = 'button'; button.disabled = done; button.addEventListener('click', () => runActivityTrial(trial)); row.append(button);
+        if (done) { const result = TASK.activityResults[trial.id]; row.append(h('p', 'activity-result', T(result.key, result.p))); }
+        station.append(row);
+      }
+      station.append(h('p', 'goal' + (TASK.reached ? ' ok' : ''), T(TASK.reached ? 'x.goalOk' : 'x.activityOpen'))); c.append(station);
+    }
     if (TASK.answer) { const A = TASK.answer, box = h('div', 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
       const optLabel = o => A.optKey ? T(A.optKey + o) : A.cat ? T('x.ans_' + o) : SOLF[o];
       for (const L of A.rows || Object.keys(TASK.key)) { const row = h('label', 'arow'); row.append(h('span', null, A.rowKey ? T(A.rowKey + L) : T('x.bottleL', { l: L })));

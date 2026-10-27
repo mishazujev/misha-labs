@@ -92,6 +92,12 @@ The high-school **Bonding and physical properties** catalogue includes:
 
 These labs use the normal action log and anonymous major-action analytics. Their conductivity, heat-transfer and evaporation behaviours are reusable simulation systems rather than fixed demo recordings.
 
+The catalogue also includes K1.14 (identifying five solids), K1.15 (factors affecting reaction rate), K3.04 (three-dimensional molecular geometry), and K3.05 (functional-group isomers). Their controlled observations are written to the same copyable laboratory notebook and counted as major anonymous activities.
+
+## Curriculum catalogue maintenance
+
+Every runnable online lab must have one page in the Notion **Katsed** database and at least one relation to its curriculum row in **Tunniteemad**. The relation is reciprocal, so set it on either database and verify it appears on both pages. Before adding a lab, search **Katsed** by its curriculum code and title to avoid duplicates; keep the code (for example `K1.15` or `K3.04`) in both the Notion title and the application task. Add or verify this relation as part of every future catalogue update, together with the full procedure in Notion and the concise student steps in the online lab.
+
 ## Chemistry tests
 
 Run the renderer-independent reaction checks with:

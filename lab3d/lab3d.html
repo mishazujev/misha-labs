@@ -154,6 +154,11 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .ans .arow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; align-items: center; font-size: 14px; }
 .ans select, .ans input { font: 14px var(--f-body); padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; }
 .ans .btn { justify-self: start; }
+.activity { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.activity-row { display: grid; gap: 5px; }
+.activity-row .btn { justify-self: stretch; text-align: left; background: var(--surface); }
+.activity-row .btn:disabled { opacity: 1; border-color: var(--ok); color: var(--ok); cursor: default; }
+.activity-result { padding: 7px 9px; border-left: 3px solid var(--accent); background: var(--surface); color: var(--muted); font-size: 12.5px; line-height: 1.45; }
 .manual { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; font-size: 13.5px; line-height: 1.45; }
 .manual .mh { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .manual .mh b { font: 600 15px var(--f-display); }
 .manual .mh button { border: 0; background: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); }
@@ -1566,6 +1571,113 @@ I18N.uk = Object.assign({}, I18N.en, {
   for (const l in X) Object.assign(I18N[l], X[l]);
 })();
 
+/* K1.14, K1.15, K3.04 and K3.05 evidence-station laboratories. */
+(function () {
+  Object.assign(I18N.en, {
+    'topic.kinetics': 'Reaction rates', 'topic.structure': 'Molecular structure and isomerism',
+    'x.activityStation': 'Controlled observations', 'x.activityOpen': 'Complete every controlled observation to finish the lab.',
+    'x.yes': 'yes', 'x.no': 'no',
+    'x.sample.nacl': 'Sodium chloride', 'x.sample.sucrose': 'Sucrose', 'x.sample.paraffin': 'Paraffin wax', 'x.sample.sand': 'Sand', 'x.sample.iron': 'Iron',
+    'x.k114.title': 'K1.14 · Identify five unknown solids',
+    'x.k114.goal': 'Relate appearance, magnetism, solubility, conductivity and heating behaviour to metallic, ionic, molecular and network structures.',
+    'x.k114.desc': 'Use the same test sequence on sodium chloride, sucrose, paraffin, sand and iron, then identify each solid from combined evidence.',
+    'x.lab.k114': 'Put on goggles. Label five clean, dry sample areas; never return tested material to a stock container.|Record appearance and test magnetism before adding water.|Test a small fresh portion for water solubility. Test conductivity only with the approved low-voltage apparatus; distinguish a solid from its solution.|Gently heat a separate small portion on a heatproof surface. Do not taste or directly smell any sample.|Run and record each controlled observation below, then identify the bonding/structure that best explains the pattern.',
+    'x.lab.k114.done': 'Complete: no single observation identifies every solid; the conclusion uses a pattern of independent tests.',
+    'x.lab.k114.sensory': 'Record crystal/grain/waxy appearance, attraction to a magnet, dissolution, lamp response and melting or decomposition. No direct smelling or tasting.',
+    'x.k114.obs.nacl': 'White crystals; not magnetic; dissolve in water. The solid does not light the tester, but its solution conducts strongly. No visible change under gentle heating.',
+    'x.k114.obs.sucrose': 'White crystals; not magnetic; dissolve in water. Neither solid nor solution lights the tester. On heating it melts, browns and decomposes.',
+    'x.k114.obs.paraffin': 'Waxy white solid; not magnetic; insoluble in water and non-conducting. Gentle heating melts it to a colourless liquid.',
+    'x.k114.obs.sand': 'Pale grains; not magnetic; insoluble in water and non-conducting. No visible change under gentle heating.',
+    'x.k114.obs.iron': 'Grey metallic grains; attracted to a magnet; insoluble in water and electrically conducting. No visible change under gentle heating.',
+    'x.k115.title': 'K1.15 · What changes reaction rate?',
+    'x.k115.goal': 'Change one variable at a time and compare concentration, temperature, surface area and catalysis using measured time and gas observations.',
+    'x.k115.desc': 'Time calcium carbonate–acid runs, then compare hydrogen peroxide with and without manganese(IV) oxide.',
+    'x.lab.k115': 'Put on goggles. For every carbonate run use equal calcium carbonate mass and equal acid volume; change only the named variable.|Measure the time until the same gas-volume mark is reached. Keep the baseline at 1.0 M HCl, 20 °C and equal-sized chips.|Repeat with higher concentration, higher temperature, then powdered carbonate. Start timing at mixing and record each result.|Compare equal hydrogen peroxide portions with and without a small amount of MnO₂. Confirm oxygen with a glowing splint; keep flames away from peroxide.|Use collision theory to explain the comparisons. A catalyst changes the route, not the overall products, and is not consumed overall.',
+    'x.lab.k115.done': 'Complete: higher concentration, temperature and surface area increased collision frequency/effectiveness; MnO₂ accelerated oxygen formation without being consumed overall.',
+    'x.lab.k115.sensory': 'Record time and bubbling rate. Carbonate plus acid releases colourless CO₂; catalysed peroxide bubbles rapidly and releases O₂. No odour test is needed.',
+    'x.k115.run.baseline': 'Baseline: 1.0 M HCl, 20 °C, chips', 'x.k115.run.concentration': 'Only concentration higher: 2.0 M HCl',
+    'x.k115.run.temperature': 'Only temperature higher: 35 °C', 'x.k115.run.surface': 'Only surface area higher: powder', 'x.k115.run.peroxide': 'Peroxide: without and with MnO₂',
+    'x.k115.rate': 'The fixed gas-volume mark was reached in {seconds} s. Compare this with the baseline; a shorter time means a greater average rate.',
+    'x.k115.peroxide': 'Without MnO₂, bubbling is very slow. With MnO₂, rapid colourless gas forms and a glowing splint relights: the gas is oxygen.',
+    'x.k115.peroxide.error': 'The catalyst comparison could not be calculated.',
+    'x.k304.title': 'K3.04 · Build molecules in three dimensions',
+    'x.k304.goal': 'Use electron-domain repulsion to connect Lewis structures, molecular geometry, bond angle and polarity.',
+    'x.k304.desc': 'Inspect CO₂, CH₄, NH₃, H₂O and C₂H₄ as rotatable model cases and compare their geometries.',
+    'x.lab.k304': 'Draw a Lewis structure and count electron domains around each central atom before opening its model observation.|Inspect CO₂ and CH₄; explain why symmetric bond dipoles cancel.|Inspect NH₃ and H₂O; include lone pairs when explaining their smaller bond angles and molecular polarity.|Inspect C₂H₄; identify trigonal-planar carbon atoms and restricted rotation at the double bond.|Record formula, geometry, approximate angle and polarity for all five molecules.',
+    'x.lab.k304.done': 'Complete: all five structures were compared using electron domains, geometry, angle and symmetry rather than a flat structural formula alone.',
+    'x.lab.k304.sensory': 'This is a model investigation; record spatial arrangement, angle and symmetry. Colours identify atom types, not real molecular colour.',
+    'x.molecule.co2': 'Inspect CO₂', 'x.molecule.ch4': 'Inspect CH₄', 'x.molecule.nh3': 'Inspect NH₃', 'x.molecule.h2o': 'Inspect H₂O', 'x.molecule.c2h4': 'Inspect C₂H₄',
+    'x.k304.obs.co2': '{formula}: linear, {angle}°; symmetric and non-polar overall.',
+    'x.k304.obs.ch4': '{formula}: tetrahedral, about {angle}°; symmetric and non-polar.',
+    'x.k304.obs.nh3': '{formula}: trigonal pyramidal, about {angle}°; one lone pair and a net dipole make it polar.',
+    'x.k304.obs.h2o': '{formula}: bent, about {angle}°; two lone pairs and a net dipole make it polar.',
+    'x.k304.obs.c2h4': '{formula}: trigonal planar around each carbon, about {angle}°; the planar molecule is non-polar overall.',
+    'x.k305.title': 'K3.05 · Same formula, different behaviour',
+    'x.k305.goal': 'Compare functional-group isomers butan-1-ol and ethoxyethane and explain property differences through structure and intermolecular forces.',
+    'x.k305.desc': 'Compare two C₄H₁₀O isomers by structure, water behaviour, volatility and a controlled sodium test.',
+    'x.lab.k305': 'Put on goggles and work in the fume cupboard with all ignition sources off. Compare the displayed structures of butan-1-ol and ethoxyethane.|Add equal small volumes to separate water samples, stopper, shake and allow layers to settle.|Compare volatility from boiling-point data; do not heat ethoxyethane over a flame.|For the teacher-controlled sodium micro-test, use separate dry vessels and tiny sodium pieces. Never add sodium to wet apparatus or dispose of it in the sink.|Explain every difference using the O–H group and hydrogen bonding. The same molecular formula does not mean the same structure or properties.',
+    'x.lab.k305.done': 'Complete: the alcohol can donate hydrogen bonds and reacts with sodium; the ether cannot. Their different intermolecular forces explain the large boiling-point difference.',
+    'x.lab.k305.sensory': 'Record layer formation, relative volatility and gas bubbles in the controlled sodium test. Both liquids are colourless and flammable; do not smell directly and keep away from ignition.',
+    'x.k305.run.structure': 'Compare structural formulas', 'x.k305.run.water': 'Compare behaviour with water', 'x.k305.run.volatility': 'Compare boiling points', 'x.k305.run.sodium': 'Teacher-controlled sodium micro-test',
+    'x.k305.structure': 'Both are C₄H₁₀O. Butan-1-ol contains an O–H group; ethoxyethane has C–O–C and no O–H bond.',
+    'x.k305.water': 'Butan-1-ol is partly soluble. Ethoxyethane is only slightly soluble and a separate layer forms after settling.',
+    'x.k305.volatility': 'Butan-1-ol boils at {a} °C; ethoxyethane at {b} °C. Alcohol molecules hydrogen-bond to one another, so more energy is required to separate them.',
+    'x.k305.sodium': 'Dry butan-1-ol gives steady hydrogen bubbles with sodium; dry ethoxyethane gives no hydrogen under the same conditions. The O–H bond is decisive.'
+  });
+  Object.assign(I18N.et, {
+    'topic.kinetics': 'Reaktsioonikiirus', 'topic.structure': 'Molekulide ehitus ja isomeeria',
+    'x.activityStation': 'Kontrollitud vaatlused', 'x.activityOpen': 'Katse lõpetamiseks tee kõik kontrollitud vaatlused.',
+    'x.sample.nacl': 'Naatriumkloriid', 'x.sample.sucrose': 'Sahharoos', 'x.sample.paraffin': 'Parafiin', 'x.sample.sand': 'Liiv', 'x.sample.iron': 'Raud',
+    'x.k114.title': 'K1.14 · Viie tundmatu tahke aine tuvastamine',
+    'x.k114.goal': 'Seosta välimus, magnetilisus, lahustuvus, elektrijuhtivus ja kuumutamisel toimuv metallilise, ioonilise, molekulaarse või võrestruktuuriga.',
+    'x.k114.desc': 'Katseta sama skeemi järgi naatriumkloriidi, sahharoosi, parafiini, liiva ja rauda ning tuvasta aine koondtõendite põhjal.',
+    'x.lab.k114': 'Pane kaitseprillid ette. Märgista viis puhast kuiva prooviala; katsetatud ainet varupurki tagasi ei panda.|Kirjelda välimust ja kontrolli magnetilisust enne vee lisamist.|Kontrolli värske väikese proovi lahustuvust vees. Elektrijuhtivust kontrolli ainult madalpingeseadmega; erista tahket ainet ja selle lahust.|Kuumuta eraldi väikest proovi õrnalt kuumakindlal alusel. Ära maitse ega nuusuta proovi otse.|Käivita allpool kõik kontrollitud vaatlused ja põhjenda aine ehitust kogu tulemuste mustri põhjal.',
+    'x.lab.k114.done': 'Valmis: üksik vaatlus ei tuvasta kõiki aineid; järeldus põhineb mitmel sõltumatul katsel.',
+    'x.lab.k114.sensory': 'Märgi kristalliline, teraline või vahajas välimus, magneti toime, lahustumine, lambi reaktsioon ning sulamine või lagunemine. Ära maitse ega nuusuta otse.',
+    'x.k114.obs.nacl': 'Valged kristallid; ei ole magnetiline; lahustub vees. Tahke aine lampi ei süüta, kuid lahus juhib hästi. Õrnal kuumutamisel nähtavat muutust pole.',
+    'x.k114.obs.sucrose': 'Valged kristallid; ei ole magnetiline; lahustub vees. Tahke aine ega lahus lampi ei süüta. Kuumutamisel sulab, pruunistub ja laguneb.',
+    'x.k114.obs.paraffin': 'Valge vahajas aine; ei ole magnetiline; vees ei lahustu ega juhi elektrit. Õrnal kuumutamisel sulab värvituks vedelikuks.',
+    'x.k114.obs.sand': 'Heledad terad; ei ole magnetiline; vees ei lahustu ega juhi elektrit. Õrnal kuumutamisel nähtavat muutust pole.',
+    'x.k114.obs.iron': 'Hallid metallilised terad; magnet tõmbab; vees ei lahustu ja juhib elektrit. Õrnal kuumutamisel nähtavat muutust pole.',
+    'x.k115.title': 'K1.15 · Mis muudab reaktsiooni kiirust?',
+    'x.k115.goal': 'Muuda korraga üht tegurit ning võrdle kontsentratsiooni, temperatuuri, pindala ja katalüsaatori mõju aja ja gaasi tekke järgi.',
+    'x.k115.desc': 'Mõõda kaltsiumkarbonaadi ja happe reaktsioone ning võrdle vesinikperoksiidi lagunemist MnO₂-ga ja ilma.',
+    'x.lab.k115': 'Pane kaitseprillid ette. Kasuta igas karbonaadikatses sama CaCO₃ massi ja happe ruumala; muuda ainult nimetatud tegurit.|Mõõda aeg sama gaasiruumala märgini. Lähtekatse: 1,0 M HCl, 20 °C ja ühesuurused tükid.|Korda suurema kontsentratsiooni, kõrgema temperatuuri ja pulbriga. Käivita kell segamisel ning märgi tulemus.|Võrdle võrdseid H₂O₂ koguseid väikese MnO₂ lisandiga ja ilma. Tuvasta hapnik hõõguva pilpaga; hoia peroksiid leegist eemal.|Selgita tulemusi põrgeteooriaga. Katalüsaator muudab reaktsiooniteed, mitte saadusi, ja üldiselt ei kulu.',
+    'x.lab.k115.done': 'Valmis: suurem kontsentratsioon, temperatuur ja pindala suurendasid tõhusate põrgete sagedust; MnO₂ kiirendas hapniku teket ega kulunud üldkokkuvõttes.',
+    'x.lab.k115.sensory': 'Märgi aeg ja mullitamise kiirus. Karbonaat ja hape annavad värvitu CO₂; katalüüsitud peroksiid annab kiiresti O₂. Lõhna ei hinnata.',
+    'x.k115.run.baseline': 'Lähtekatse: 1,0 M HCl, 20 °C, tükid', 'x.k115.run.concentration': 'Ainult suurem kontsentratsioon: 2,0 M HCl',
+    'x.k115.run.temperature': 'Ainult kõrgem temperatuur: 35 °C', 'x.k115.run.surface': 'Ainult suurem pindala: pulber', 'x.k115.run.peroxide': 'Peroksiid: MnO₂-ga ja ilma',
+    'x.k115.rate': 'Kindel gaasiruumala saavutati {seconds} sekundiga. Võrdle lähtekatsega: lühem aeg tähendab suuremat keskmist kiirust.',
+    'x.k115.peroxide': 'Ilma MnO₂-ta tekib gaasi väga aeglaselt. MnO₂-ga tekib kiiresti värvitu gaas ja hõõguv pilbas süttib: gaas on hapnik.',
+    'x.k304.title': 'K3.04 · Molekulide ehitamine kolmemõõtmeliselt',
+    'x.k304.goal': 'Seosta elektronpaaride tõukumise abil Lewise struktuur, molekuli kuju, sidemenurk ja polaarsus.',
+    'x.k304.desc': 'Võrdle CO₂, CH₄, NH₃, H₂O ja C₂H₄ ruumilist ehitust.',
+    'x.lab.k304': 'Joonista Lewise struktuur ja loenda keskaatomi elektronpiirkonnad enne mudeli vaatlust.|Uuri CO₂ ja CH₄ ning selgita, miks sümmeetrilised sidemedipoolid kompenseeruvad.|Uuri NH₃ ja H₂O; arvesta üksikpaare väiksemate sidemenurkade ja polaarsuse põhjendamisel.|Uuri C₂H₄; tuvasta trigonaalplanaarsed süsinikud ja kaksiksideme piiratud pöörlemine.|Märgi kõigi viie valem, kuju, ligikaudne nurk ja polaarsus.',
+    'x.lab.k304.done': 'Valmis: viit struktuuri võrreldi elektronpiirkonna, ruumilise kuju, nurga ja sümmeetria järgi.',
+    'x.lab.k304.sensory': 'See on mudelkatse: kirjelda ruumilist paigutust, nurka ja sümmeetriat. Värvid tähistavad aatomiliike, mitte molekuli tegelikku värvi.',
+    'x.molecule.co2': 'Uuri CO₂', 'x.molecule.ch4': 'Uuri CH₄', 'x.molecule.nh3': 'Uuri NH₃', 'x.molecule.h2o': 'Uuri H₂O', 'x.molecule.c2h4': 'Uuri C₂H₄',
+    'x.k304.obs.co2': '{formula}: lineaarne, {angle}°; sümmeetriline ja tervikuna mittepolaarne.', 'x.k304.obs.ch4': '{formula}: tetraeedriline, umbes {angle}°; sümmeetriline ja mittepolaarne.',
+    'x.k304.obs.nh3': '{formula}: trigonaalpüramidaalne, umbes {angle}°; üksikpaar ja summaarne dipool teevad molekuli polaarseks.',
+    'x.k304.obs.h2o': '{formula}: nurgeline, umbes {angle}°; kaks üksikpaari ja summaarne dipool teevad molekuli polaarseks.',
+    'x.k304.obs.c2h4': '{formula}: iga süsiniku ümber trigonaalplanaarne, umbes {angle}°; molekul on tervikuna mittepolaarne.',
+    'x.k305.title': 'K3.05 · Sama valem, erinev käitumine',
+    'x.k305.goal': 'Võrdle butaan-1-ooli ja etoksüetaani ning põhjenda omaduste erinevusi struktuuri ja molekulidevaheliste jõududega.',
+    'x.k305.desc': 'Võrdle kahte C₄H₁₀O isomeeri struktuuri, vees käitumise, lenduvuse ja kontrollitud naatriumikatse järgi.',
+    'x.lab.k305': 'Pane kaitseprillid ette ja tööta tõmbekapis, süüteallikad väljas. Võrdle butaan-1-ooli ja etoksüetaani struktuure.|Lisa eraldi veeproovidesse võrdsed väikesed kogused, sulge, loksuta ja lase kihtidel eralduda.|Võrdle lenduvust keemistemperatuuride järgi; etoksüetaani ei kuumutata leegiga.|Õpetaja kontrollitud naatriumi mikrokatses kasuta eraldi kuivi anumaid ja imeväikesi Na tükke. Ära lisa naatriumi märga nõusse ega valamusse.|Põhjenda O–H rühma ja vesiniksidemete abil. Sama molekulivalem ei tähenda samu omadusi.',
+    'x.lab.k305.done': 'Valmis: alkohol saab moodustada vesiniksidemeid ja reageerib naatriumiga; eeter mitte. Molekulidevahelised jõud selgitavad keemispunktide erinevust.',
+    'x.lab.k305.sensory': 'Märgi kihtide teke, suhteline lenduvus ja gaasimullid kontrollitud naatriumikatses. Mõlemad vedelikud on värvitud ja tuleohtlikud; ära nuusuta otse.',
+    'x.k305.run.structure': 'Võrdle struktuurivalemeid', 'x.k305.run.water': 'Võrdle käitumist vees', 'x.k305.run.volatility': 'Võrdle keemistemperatuure', 'x.k305.run.sodium': 'Õpetaja kontrollitud naatriumi mikrokatsе',
+    'x.k305.structure': 'Mõlemad on C₄H₁₀O. Butaan-1-oolis on O–H rühm; etoksüetaanis on C–O–C ja O–H sidet pole.',
+    'x.k305.water': 'Butaan-1-ool lahustub osaliselt. Etoksüetaan lahustub vähe ja seismisel tekib eraldi kiht.',
+    'x.k305.volatility': 'Butaan-1-ooli keemispunkt on {a} °C, etoksüetaanil {b} °C. Alkoholi molekulide vesiniksidemete lõhkumiseks kulub rohkem energiat.',
+    'x.k305.sodium': 'Kuiv butaan-1-ool annab naatriumiga ühtlaselt vesinikumulle; kuiv etoksüetaan samadel tingimustel vesinikku ei anna. O–H side on määrav.'
+  });
+  for (const lang of ['ru', 'uk']) Object.assign(I18N[lang], {
+    'topic.kinetics': I18N.en['topic.kinetics'], 'topic.structure': I18N.en['topic.structure'],
+    ...Object.fromEntries(Object.keys(I18N.en).filter(k => /^x\.(activity|sample|k114|k115|k304|k305|lab\.k114|lab\.k115|lab\.k304|lab\.k305|molecule)/.test(k)).map(k => [k, I18N.en[k]]))
+  });
+})();
+
 /* K3 carboxylic-acid practicals. Keep every student-facing procedure in all
    supported languages so changing language never falls back to English. */
 (function () {
@@ -2298,7 +2410,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
+import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, UNKNOWN_SOLIDS, carbonateReactionTime, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, peroxideOxygenRate, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -4240,6 +4352,25 @@ TASKS.push(
   { id: 'k113', lab: true, code: 'K1.13', title: 'x.k113.title', goal: 'x.k113.goal', steps: 'x.lab.k113', start: 'x.labStart', done: 'x.lab.k113.done', sensory: 'x.lab.k113.sensory',
     setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['bottle:water'], ['decor:ethanol'], ['decor:acetone'], ['thermo:1'], ['thermo:2'], ['thermo:3']],
     answer: { rows: ['water', 'ethanol', 'acetone'], rowKey: 'x.solv_', optKey: 'x.ans_', opts: ['most', 'middle', 'least'], fixed: { water: 'least', ethanol: 'middle', acetone: 'most' }, needSeen: true } },
+  { id: 'k114', lab: true, code: 'K1.14', title: 'x.k114.title', goal: 'x.k114.goal', steps: 'x.lab.k114', start: 'x.labStart', done: 'x.lab.k114.done', sensory: 'x.lab.k114.sensory', setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['beaker:D'], ['bottle:water'], ['spatula'], ['cond'], ['glass:lamp'], ['glass:matches']],
+    activity: { trials: Object.keys(UNKNOWN_SOLIDS).map(sample => ({ id: sample, label: 'x.sample.' + sample, result: () => ({ key: 'x.k114.obs.' + sample }) })) } },
+  { id: 'k115', lab: true, code: 'K1.15', title: 'x.k115.title', goal: 'x.k115.goal', steps: 'x.lab.k115', start: 'x.labStart', done: 'x.lab.k115.done', sensory: 'x.lab.k115.sensory', setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['bottle:hcl'], ['bottle:water'], ['thermo:1'], ['glass:splints']],
+    activity: { trials: [
+      { id: 'baseline', label: 'x.k115.run.baseline', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 1, temperature: 20, form: 'chips' }) } }) },
+      { id: 'concentration', label: 'x.k115.run.concentration', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 2, temperature: 20, form: 'chips' }) } }) },
+      { id: 'temperature', label: 'x.k115.run.temperature', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 1, temperature: 35, form: 'chips' }) } }) },
+      { id: 'surface', label: 'x.k115.run.surface', result: () => ({ key: 'x.k115.rate', p: { seconds: carbonateReactionTime({ concentration: 1, temperature: 20, form: 'powder' }) } }) },
+      { id: 'peroxide', label: 'x.k115.run.peroxide', result: () => ({ key: peroxideOxygenRate(true).seconds < peroxideOxygenRate(false).seconds ? 'x.k115.peroxide' : 'x.k115.peroxide.error' }) },
+    ] } },
+  { id: 'k304', lab: true, code: 'K3.04', title: 'x.k304.title', goal: 'x.k304.goal', steps: 'x.lab.k304', start: 'x.labStart', done: 'x.lab.k304.done', sensory: 'x.lab.k304.sensory', setup: [],
+    activity: { trials: Object.keys(MOLECULE_MODELS).map(id => ({ id, label: 'x.molecule.' + id, result: () => ({ key: 'x.k304.obs.' + id, p: { formula: MOLECULE_MODELS[id].formula, angle: MOLECULE_MODELS[id].angle } }) })) } },
+  { id: 'k305', lab: true, code: 'K3.05', title: 'x.k305.title', goal: 'x.k305.goal', steps: 'x.lab.k305', start: 'x.labStart', done: 'x.lab.k305.done', sensory: 'x.lab.k305.sensory', setup: [['beaker:A'], ['beaker:B'], ['bottle:water'], ['glass:splints']],
+    activity: { trials: [
+      { id: 'structure', label: 'x.k305.run.structure', result: () => ({ key: 'x.k305.structure' }) },
+      { id: 'water', label: 'x.k305.run.water', result: () => ({ key: 'x.k305.water' }) },
+      { id: 'volatility', label: 'x.k305.run.volatility', result: () => ({ key: 'x.k305.volatility', p: { a: C4H10O_ISOMERS.butanol.boilingPoint, b: C4H10O_ISOMERS.ether.boilingPoint } }) },
+      { id: 'sodium', label: 'x.k305.run.sodium', result: () => ({ key: 'x.k305.sodium' }) },
+    ] } },
 );
 /* K3 carboxylic-acid labs. K3-V02 uses a diluted vinegar sample so a
    10 mL aliquot can be titrated within the range of a 50 mL burette. */
@@ -4257,11 +4388,23 @@ TASKS.push(
 function dealUnknowns(task) {
   task.key = {}; task.picks = {}; task.num = '';
   task.evidence = task.answer && task.answer.needSeen ? {} : null;
+  task.activityDone = new Set(); task.activityResults = {};
   for (const L of UNK) { REAG['u' + L].tot = {}; }
   if (!task.deal) return;
   const d = task.deal.slice(); for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
   d.forEach((k, i) => { const L = UNK[i]; task.key[L] = k; REAG['u' + L].tot = { ...SOL[k] }; });
   for (const b of bottles) if (b.id[0] === 'u') tintBottle(b);
+}
+function runActivityTrial(trial) {
+  if (!PPE.goggles) { logE('mistake', [['x.noGoggles']]); renderCard(); return; }
+  const result = trial.result();
+  TASK.activityDone.add(trial.id); TASK.activityResults[trial.id] = result;
+  logE('obs', [[result.key, result.p]]);
+  analyticsActivity('activity:' + TASK.id + ':' + trial.id, 1, 0, 'activity:observed');
+  if (TASK.activityDone.size === TASK.activity.trials.length && !TASK.reached) {
+    TASK.reached = true; logE('success', [[TASK.done]]); analyticsCompleteAttempt(); buzz(30);
+  }
+  renderCard();
 }
 function checkAnswers() {
   const A = TASK.answer; let wrong = 0;
@@ -4632,6 +4775,10 @@ const LABS = [
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
   { id: 'k112', run: 'k112', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔩', title: 'x.k112.title', goal: 'x.k112.goal', desc: 'x.k112.desc', time: '15–20 min' },
   { id: 'k113', run: 'k113', level: 'high', course: 'inorganic', tp: 'bond', icon: '💧', title: 'x.k113.title', goal: 'x.k113.goal', desc: 'x.k113.desc', time: '12–15 min' },
+  { id: 'k114', run: 'k114', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔎', title: 'x.k114.title', goal: 'x.k114.goal', desc: 'x.k114.desc', time: '20–25 min' },
+  { id: 'k115', run: 'k115', level: 'high', course: 'inorganic', tp: 'kinetics', icon: '⏱️', title: 'x.k115.title', goal: 'x.k115.goal', desc: 'x.k115.desc', time: '20–25 min' },
+  { id: 'k304', run: 'k304', level: 'high', course: 'organic', tp: 'structure', icon: '🧬', title: 'x.k304.title', goal: 'x.k304.goal', desc: 'x.k304.desc', time: '15–20 min' },
+  { id: 'k305', run: 'k305', level: 'high', course: 'organic', tp: 'structure', icon: '🧩', title: 'x.k305.title', goal: 'x.k305.goal', desc: 'x.k305.desc', time: '18–22 min' },
   { id: 'k3v01', run: 'k3v01', level: 'high', course: 'organic', tp: 'carboxylic', icon: '⚡', title: 'x.k3v01.title', goal: 'x.k3v01.goal', desc: 'x.k3v01.desc', time: '15–18 min' },
   { id: 'k3v02', run: 'k3v02', level: 'high', course: 'organic', tp: 'carboxylic', icon: '🧪', title: 'x.k3v02.title', goal: 'x.k3v02.goal', desc: 'x.k3v02.desc', time: '18–22 min' },
 ];
@@ -4647,7 +4794,7 @@ function openLabs() {
   const filter = (label, values, selected, set) => { const row = el('div', 'filterrow'); row.append(el('span', null, label)); for (const [value, labelText, disabled] of values) { const b = el('button', null, labelText); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-pressed', String(selected === value)); if (!disabled) b.addEventListener('click', () => { set(value); openLabs(); }); row.append(b); } filters.append(row); };
   filter(T('x.level'), [['high', T('x.levelHigh')], ['university', T('x.levelUniversity'), true]], labSel.level, v => { labSel.level = v; });
   filter(T('x.branch'), [['all', T('x.all')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
-  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
+  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
   box.append(filters);
   const grid = el('div', 'labgrid'), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
   const launch = (l, demoMode) => { pk.hidden = true; const task = TASKS.find(t => t.id === l.run); instructorTab = 'procedure'; if (demoMode) startDemo(task); else { setupTask(task); setInspector(true); } };
@@ -5317,6 +5464,16 @@ function renderCard() {
     if (TASK.free) c.append(h('div', 'cap', T('x.safetyCap'))); else c.append(h('div', 'instruction-banner', '✅ ' + T('x.studentInstructions')));
     const ol = h(TASK.free ? 'ul' : 'ol', TASK.free ? 'steps' : 'steps student-steps'); T(TASK.steps).split('|').forEach((s, i) => { const li = h('li', DEMO.active && i === DEMO.step ? 'demo-current' : null, s); ol.append(li); }); c.append(ol);
     if (TASK.check) c.append(h('p', 'goal' + (TASK.reached ? ' ok' : ''), T(TASK.reached ? 'x.goalOk' : 'x.goalOpen')));
+    if (TASK.activity) {
+      const station = h('section', 'activity'); station.append(h('div', 'cap', T('x.activityStation')));
+      for (const trial of TASK.activity.trials) {
+        const done = TASK.activityDone.has(trial.id), row = h('div', 'activity-row');
+        const button = h('button', 'btn', (done ? '✓ ' : '') + T(trial.label)); button.type = 'button'; button.disabled = done; button.addEventListener('click', () => runActivityTrial(trial)); row.append(button);
+        if (done) { const result = TASK.activityResults[trial.id]; row.append(h('p', 'activity-result', T(result.key, result.p))); }
+        station.append(row);
+      }
+      station.append(h('p', 'goal' + (TASK.reached ? ' ok' : ''), T(TASK.reached ? 'x.goalOk' : 'x.activityOpen'))); c.append(station);
+    }
     if (TASK.answer) { const A = TASK.answer, box = h('div', 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
       const optLabel = o => A.optKey ? T(A.optKey + o) : A.cat ? T('x.ans_' + o) : SOLF[o];
       for (const L of A.rows || Object.keys(TASK.key)) { const row = h('label', 'arow'); row.append(h('span', null, A.rowKey ? T(A.rowKey + L) : T('x.bottleL', { l: L })));

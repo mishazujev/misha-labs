@@ -154,6 +154,11 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .ans .arow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; align-items: center; font-size: 14px; }
 .ans select, .ans input { font: 14px var(--f-body); padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; }
 .ans .btn { justify-self: start; }
+.activity { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.activity-row { display: grid; gap: 5px; }
+.activity-row .btn { justify-self: stretch; text-align: left; background: var(--surface); }
+.activity-row .btn:disabled { opacity: 1; border-color: var(--ok); color: var(--ok); cursor: default; }
+.activity-result { padding: 7px 9px; border-left: 3px solid var(--accent); background: var(--surface); color: var(--muted); font-size: 12.5px; line-height: 1.45; }
 .manual { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; font-size: 13.5px; line-height: 1.45; }
 .manual .mh { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .manual .mh b { font: 600 15px var(--f-display); }
 .manual .mh button { border: 0; background: none; font-size: 20px; line-height: 1; cursor: pointer; color: var(--muted); }

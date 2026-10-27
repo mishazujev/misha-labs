@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { conductivityBrightness, conductivityCategory, evaporativeCoolingAt, HEAT_CONDUCTION_ORDER, reagentBottleMass, solutionMass } from './course_lab_models.mjs';
+import { C4H10O_ISOMERS, conductivityBrightness, conductivityCategory, carbonateReactionTime, evaporativeCoolingAt, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, peroxideOxygenRate, reagentBottleMass, solutionMass, UNKNOWN_SOLIDS, unknownSolidObservation } from './course_lab_models.mjs';
 
 const pureWater = { V: 30, tot: {}, eq: { pH: 7, ppt: {} } };
 const saltSolution = { V: 30, tot: { Na: 3, Cl: 3 }, eq: { pH: 7, ppt: {} } };
@@ -14,6 +14,20 @@ assert.equal(conductivityCategory(conductivityBrightness(sugarSolution)), 'off')
 assert.equal(conductivityCategory(conductivityBrightness(hydrochloricAcid)), 'bright');
 assert.equal(conductivityCategory(conductivityBrightness(aceticAcid)), 'dim');
 assert.deepEqual(HEAT_CONDUCTION_ORDER, ['cu', 'al', 'fe', 'glass']);
+assert.equal(Object.keys(UNKNOWN_SOLIDS).length, 5);
+assert.equal(unknownSolidObservation('iron', 'magnet'), true);
+assert.equal(unknownSolidObservation('nacl', 'conductivity'), 'bright');
+assert.equal(unknownSolidObservation('sucrose', 'conductivity'), 'off');
+assert.equal(unknownSolidObservation('missing', 'water'), null);
+const baselineRate = carbonateReactionTime({ concentration: 1, temperature: 20, form: 'chips' });
+assert.ok(carbonateReactionTime({ concentration: 2, temperature: 20, form: 'chips' }) < baselineRate);
+assert.ok(carbonateReactionTime({ concentration: 1, temperature: 35, form: 'chips' }) < baselineRate);
+assert.ok(carbonateReactionTime({ concentration: 1, temperature: 20, form: 'powder' }) < baselineRate);
+assert.ok(peroxideOxygenRate(true).seconds < peroxideOxygenRate(false).seconds);
+assert.equal(MOLECULE_MODELS.co2.angle, 180);
+assert.equal(MOLECULE_MODELS.h2o.geometry, 'bent');
+assert.equal(C4H10O_ISOMERS.butanol.hydrogenBondDonor, true);
+assert.ok(C4H10O_ISOMERS.butanol.boilingPoint > C4H10O_ISOMERS.ether.boilingPoint);
 assert.ok(evaporativeCoolingAt('acetone', 1).drop > evaporativeCoolingAt('ethanol', 1).drop);
 assert.ok(evaporativeCoolingAt('ethanol', 1).drop > evaporativeCoolingAt('water', 1).drop);
 assert.equal(evaporativeCoolingAt('acetone', 12).active, false);
@@ -50,6 +64,11 @@ for (const id of ['k111', 'k112', 'k113', 'k3v01', 'k3v02']) {
   assert.match(source, new RegExp(`id: '${id}'`), `${id} task must be registered`);
   assert.match(source, new RegExp(`${id}: \\[`), `${id} demo must be registered`);
 }
+for (const id of ['k114', 'k115', 'k304', 'k305']) {
+  assert.match(source, new RegExp(`id: '${id}'`), `${id} task must be registered`);
+  assert.match(source, new RegExp(`id: '${id}', run: '${id}'`), `${id} must be visible in the lab catalogue`);
+}
+assert.ok(source.includes('function runActivityTrial'), 'controlled evidence labs must use the reusable activity station');
 for (const item of ['beaker:A', 'bottle:water', 'bottle:hcl01', 'bottle:acetic01', 'bottle:vinegar', 'bottle:naoh01', 'cond', 'glass:lamp', 'glass:matches', 'decor:ethanol', 'decor:acetone', 'thermo:1', 'thermo:2', 'thermo:3']) {
   assert.ok(source.includes(`'${item}'`), `${item} must be included in the K1 lab inventory`);
 }
@@ -75,6 +94,9 @@ const built = fs.readFileSync(new URL('./lab3d.html', import.meta.url), 'utf8');
 for (const id of ['k111', 'k112', 'k113', 'k3v01', 'k3v02']) {
   assert.ok(built.includes(`id: '${id}'`), `${id} must be present in the generated page`);
   assert.match(built, new RegExp(`${id}: \\[`), `${id} demo must be present in the generated page`);
+}
+for (const id of ['k114', 'k115', 'k304', 'k305']) {
+  assert.ok(built.includes(`id: '${id}'`), `${id} must be present in the generated page`);
 }
 assert.ok(built.includes('landingOnPan'), 'the generated page must contain the balance landing zone fix');
 assert.ok(built.includes('drawStream(container, mouth, landing'), 'the generated page must contain aligned demo pouring');

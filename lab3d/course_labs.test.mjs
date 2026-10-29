@@ -82,6 +82,11 @@ assert.match(source, /id: 'nonmetals-halogens'.*hoodLab: true/, 'the halogen lab
 assert.ok(source.includes('const GRAVITY_SOLIDS'), 'all vessel-borne solids must share one name-independent gravity behaviour');
 assert.ok(source.includes('GRAVITY_SOLIDS.update(o, tg, dt)'), 'solid gravity must run through the generic vessel pouring path');
 assert.ok(!source.includes('o.metal && o.metal.length'), 'pouring must not depend on a metal-specific contents field');
+assert.ok(source.includes("if (k === 'tripod') S.heatStand"), 'tripod and wire gauze must be a functional heat support');
+assert.ok(source.includes('function snapVesselToHeatStand'), 'beakers must snap onto the generic heat support');
+assert.ok(source.includes('function snapHeatSource'), 'spirit lamps and Bunsen burners must snap beneath the heat support');
+assert.ok(source.includes('function updateVesselHeating'), 'all vessel contents must use the global heating model');
+assert.match(source, /function updateVessel\(v, dt, t\)[\s\S]*?updateVesselHeating\(v, dt\)/, 'heating must run for every active beaker, independent of lab id');
 assert.ok(source.includes('function runActivityTrial'), 'controlled evidence labs must use the reusable activity station');
 for (const item of ['beaker:A', 'bottle:water', 'bottle:hcl01', 'bottle:acetic01', 'bottle:vinegar', 'bottle:naoh01', 'cond', 'glass:lamp', 'glass:matches', 'decor:ethanol', 'decor:acetone', 'thermo:1', 'thermo:2', 'thermo:3']) {
   assert.ok(source.includes(`'${item}'`), `${item} must be included in the K1 lab inventory`);

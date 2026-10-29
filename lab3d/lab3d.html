@@ -2507,6 +2507,13 @@ const NONMETAL_TEXT = {
   'x.halogenReaction': 'Beaker {v}: {equation}. The new molecular halogen gives the observed colour.',
   'x.halogenNoReaction': 'Beaker {v}: iodine does not displace bromide; no colour change beyond dilution.',
   'x.solidPoured': 'Solid particles fell from beaker {v} into beaker {to}.',
+  'x.tripodMounted': 'Beaker {v} was placed on the tripod and wire gauze.',
+  'x.heatSourcePlaced': 'The burner was positioned beneath the tripod.',
+  'x.heatingStart': 'Beaker {v} is warming over the lit {source}.',
+  'x.heatingStop': 'Heating of beaker {v} stopped.',
+  'x.boiling': 'Beaker {v} reached its boiling point; steady bubbles are visible.',
+  'x.tripodBusy': 'Remove the beaker from the tripod before moving or returning it.',
+  'x.man.heatstand.app': 'Take a tripod with wire gauze from the closet. Place a beaker near its centre to snap it onto the gauze, then place a spirit lamp or Bunsen burner beneath it and light the burner. Any liquid will warm; immerse a digital thermometer to follow the temperature.',
   'x.nonmetalsSpc.goal': 'Burn carbon, phosphorus and sulfur, absorb their oxides in water, test the pH change, then neutralise the acidic products with sodium hydroxide.',
   'x.nonmetalsSpc.desc': 'A combustion and acid–base investigation of three nonmetals and their oxides.',
   'x.nonmetalsSpc.start': 'The S/P/C combustion apparatus and three labelled indicator-water receivers are ready inside the fume cupboard.',
@@ -2907,7 +2914,8 @@ function updateVessel(v, dt, t) {
   const kk = clamp((v.a - .26) * 1.7, 0, .92);
   for (const m of [v.mat, v.tmat]) { m.color.setRGB(1, 1, 1).lerp(c, kk); m.attenuationColor.copy(c); m.attenuationDistance = .9 - kk * .55; m.emissive.copy(c).multiplyScalar(.22 * kk); }
   v.stir *= Math.exp(-dt / 1.6); v.visualKick *= Math.exp(-dt / .35); v.swirl += (v.stir - v.swirl) * (1 - Math.exp(-dt * 3));
-  v.temp += (22 - v.temp) * (1 - Math.exp(-dt / 240));
+  updateVesselHeating(v, dt);
+  if (!v.heatSource) v.temp += (22 - v.temp) * (1 - Math.exp(-dt / 240));
   const has = v.chem.V > .02, tilted = v.tilt > 1;
   v.surf.visible = v.side.visible = v.bottom.visible = has && !tilted; v.tilted.visible = has && tilted;
   v.meniscus.visible = has && !tilted; v.meniscus.position.y = v.level + .00045;
@@ -4146,7 +4154,7 @@ function propInfo(S, quiet) {
   cornerNote(nm, lines, S.g.position, acts); if (!quiet) showManual(manualOfProp(S));
 }
 function returnProp(S, now) {
-  if (!now) { if (S.lamp && S.lamp.lit) { showMsg(T('x.lampLitBack')); return; } if (S.held || S.fly) return; S.open = false; flyArc(S, S.shelf, () => returnProp(S, true)); S.home = S.shelf.clone(); return; }
+  if (!now) { if (S.heatStand && mountedVessel(S)) { showMsg(T('x.tripodBusy')); return; } if (S.lamp && S.lamp.lit) { showMsg(T('x.lampLitBack')); return; } if (S.held || S.fly) return; S.open = false; flyArc(S, S.shelf, () => returnProp(S, true)); S.home = S.shelf.clone(); return; }
   const I = S.d.info; if (S.lid) { scene.remove(S.lid); removeButton(S.lidProxy); } if (S.extra) S.extra(); scene.remove(S.g); S.g.traverse(m => { if (m.geometry) m.geometry.dispose(); });
   for (const r of I.ranges) { const pa = DECOR_MESH[r.b].geometry.attributes.position; pa.array.set(r.saved, r.start * 3); pa.needsUpdate = true; r.saved = null; }
   I.taken = null; PROPS.splice(PROPS.indexOf(S), 1); refreshPickables();
@@ -4163,6 +4171,7 @@ function flyStep(S, dt) {
 }
 const nameOf = S => S.kind === 'sample' ? elName(S.e) : S.label();
 function moveArea(S, area) {
+  if (S.heatStand && mountedVessel(S)) { showMsg(T('x.tripodBusy')); return; }
   if (S.lamp && S.lamp.lit) { showMsg(T('x.lampLitMove')); return; }
   S.area = area; const A = AREAS[area]; const q = findSpot(S, (A[0] + A[1]) / 2 + (Math.random() - .5) * .4, area === 'hood' ? 2.85 : .12, S.R || .03);
   S.home.set(q.x, 0, q.z); if (S.open && S.lid) { S.open = false; S.lidT = 0; } flyArc(S, S.home);
@@ -4200,6 +4209,7 @@ const FLAMELOG = new Set(['Li', 'Na', 'K', 'Rb', 'Cs', 'Ca', 'Sr', 'Ba', 'Cu', '
 const NEEDHOOD = new Set(['S', 'P', 'As', 'Se', 'Te', 'Cd', 'Tl', 'Pb']);
 function propSetup(S) {
   const k = S.d.info.it.k;
+  if (k === 'tripod') S.heatStand = { height: Math.max(.145, S.H), radius: Math.max(.065, S.R * .82) };
   if (k === 'lamp') {
     const wick = new THREE.Mesh(new THREE.CylinderGeometry(.0022, .0022, .012, 10), new THREE.MeshStandardMaterial({ color: 0xF0EBDD, roughness: .9 })); wick.position.y = .072; S.g.add(wick);
     const fl = new THREE.Group(); fl.position.y = .079; S.g.add(fl);
@@ -4240,6 +4250,54 @@ function stopBurner(S) {
   analyticsActivity('flame:off'); logE('info', [['x.burnerOff']]); if (!DEMO.active) propInfo(S, true);
 }
 function lampFlamePos(S) { return S.g.position.clone().add(V3(0, S.burner ? .15 : .09, 0)); }
+const mountedVessel = stand => vessels.find(v => v.heatSupport === stand);
+function nearestHeatStand(p, area) {
+  let best = null, bd = Infinity;
+  for (const S of PROPS) if (S.heatStand && !S.fly && (S.area || 'bench') === (area || 'bench')) {
+    const d = Math.hypot(p.x - S.g.position.x, p.z - S.g.position.z); if (d < bd) { best = S; bd = d; }
+  }
+  return bd < .105 ? best : null;
+}
+function snapVesselToHeatStand(v) {
+  const S = nearestHeatStand(v.g.position, v.area); if (!S || mountedVessel(S)) return false;
+  v.heatSupport = S; v.inSink = false; v.tilt = 0; v.g.quaternion.identity();
+  v.base.set(S.g.position.x, S.g.position.y + S.heatStand.height + .003, S.g.position.z); v.g.position.copy(v.base);
+  logE('info', [['x.tripodMounted', { v: v.letter }]]); analyticsActivity('heat:beaker_mounted'); buzz(12); return true;
+}
+function snapHeatSource(S) {
+  if (!S.lamp) return false;
+  const stand = nearestHeatStand(S.g.position, S.area); if (!stand) return false;
+  S.home.set(stand.g.position.x, 0, stand.g.position.z); S.g.position.copy(S.home); S.heatStandUnder = stand;
+  logE('info', [['x.heatSourcePlaced']]); analyticsActivity('heat:source_placed'); buzz(12); return true;
+}
+function boilingPoint(v) {
+  const s = v.chem.solv || {}, V = Math.max(1, v.chem.V);
+  if ((s.acetone || 0) / V > .25) return 56;
+  if ((s.ethanol || 0) / V > .25) return 78;
+  return 100;
+}
+function updateVesselHeating(v, dt) {
+  const stand = v.heatSupport;
+  if (stand && (!PROPS.includes(stand) || !stand.heatStand)) v.heatSupport = null;
+  if (v.heatSupport && !v.held) {
+    const S = v.heatSupport; v.base.set(S.g.position.x, S.g.position.y + S.heatStand.height + .003, S.g.position.z);
+  }
+  const source = v.heatSupport && !v.held && v.chem.V > .5 ? PROPS.find(S => S.lamp && S.lamp.lit && !S.held && (S.area || 'bench') === (v.heatSupport.area || 'bench') && Math.hypot(S.g.position.x - v.heatSupport.g.position.x, S.g.position.z - v.heatSupport.g.position.z) < .055) : null;
+  if (source !== v.heatSource) {
+    if (source) logE('info', [['x.heatingStart', { v: v.letter, source: source.d.info.it.n[0] }]]);
+    else if (v.heatSource) logE('info', [['x.heatingStop', { v: v.letter }]]);
+    v.heatSource = source; if (!source) v.heatBoilLogged = false;
+  }
+  if (!source) return;
+  const effectiveWatts = source.burner ? (source.burner.airOpen ? 280 : 190) : 115;
+  const heatCapacity = Math.max(18, v.chem.V * 4.18 + v.glassMass * .84);
+  const bp = boilingPoint(v), gain = effectiveWatts / heatCapacity * dt;
+  v.temp = Math.min(bp, v.temp + gain); v.visualKick = Math.max(v.visualKick, .12);
+  if (v.temp >= bp - .15) {
+    v.gas = Math.max(v.gas, source.burner ? .18 : .1);
+    if (!v.heatBoilLogged) { v.heatBoilLogged = true; logE('success', [['x.boiling', { v: v.letter }]]); analyticsActivity('heat:boiling'); }
+  }
+}
 function lightLamp(S) {
   const mt = PROPS.find(p => p.d.info.it.k === 'matches' && (p.area || 'bench') === (S.area || 'bench'));
   if (!mt) { showMsg(T('x.needMatches')); return; }
@@ -4877,7 +4935,7 @@ function resetState() {
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
-  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
+  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.heatSupport = null; v.heatSource = null; v.heatBoilLogged = false; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
   for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.lidT = 0; b.lidHome = null; b.area = 'bench'; }
   for (const q of pipettes) { q.chem = { V: 0, tot: {}, ind: {} }; q.src = null; q.held = false; }
   for (const d of droppers) { unpark(d); d.held = false; }
@@ -5127,6 +5185,7 @@ let lastEv = null;
 const HELD_R = o => o.kind === 'holder' ? .022 : o.kind === 'pipette' ? .012 : o.kind === 'dropper' ? .02 : o.kind === 'vessel' ? o.R + .002 : o.kind === 'bottle' ? BOT_R : o.kind === 'wash' ? .032 : o.kind === 'sample' ? .026 : o.kind === 'prop' ? o.R : 0;
 function keepApart(o) {
   if (!o) return; const r = HELD_R(o); if (!r || !ptrOK) return;
+  if ((o.kind === 'vessel' || (o.kind === 'prop' && o.lamp)) && nearestHeatStand(ptr, o.area)) return;
   const canEnter = o.kind === 'pipette' ? pipTarget(o) : (o.kind === 'vessel' || o.kind === 'bottle' || o.kind === 'wash' || (o.kind === 'sample' && o.open && o.left > 0) || (o.kind === 'prop' && o.open && o.chem && o.left > 0)) && findTarget(o);
   if (canEnter) return;
   const circ = obstacles(o);
@@ -5160,6 +5219,7 @@ function toggleDropper(d) {
 }
 function undockAll() { for (const o of [...bottles, ...vessels]) if (o.docked) { o.docked = false; o.pour = null; } }
 function startHold(o, e, part) {
+  if (o.heatStand && mountedVessel(o)) { showMsg(T('x.tripodBusy')); return; }
   // Dragging a closed working bottle is an intent to use it: remove its cap
   // first so the familiar drag-to-pour gesture cannot silently do nothing.
   if (o.kind === 'bottle' && !o.open) toggleBottle(o);
@@ -5172,7 +5232,7 @@ function startHold(o, e, part) {
   if (o.kind === 'dropper') o.dragWhole = part === 'dropperBody';
   setOnBalance(o, false);
   held = o; o.held = true; hover = null; $('tip').hidden = true;
-  if (o.kind === 'vessel') { o.onBalance = false; o.inSink = false; o.sinkDrain = null; for (const s of [electrode, rod, ...probes]) if (s.in === o) s.in = null; for (const d of droppers) if (d.parked === o) unpark(d); for (const q of pipettes) if (q.in === o) q.in = null; }
+  if (o.kind === 'vessel') { o.onBalance = false; o.inSink = false; o.sinkDrain = null; o.heatSupport = null; for (const s of [electrode, rod, ...probes]) if (s.in === o) s.in = null; for (const d of droppers) if (d.parked === o) unpark(d); for (const q of pipettes) if (q.in === o) q.in = null; }
   if (o.kind === 'dropper' && o.parked && !o.dragWhole) unpark(o);
   if (o.kind === 'electrode' || o.kind === 'rod' || o.kind === 'thermo') o.in = null;
   moveHeld(e);
@@ -5302,7 +5362,7 @@ function release() {
   if (o.kind === 'bottle') { o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, BOT_R)); o.emptyLog = o.V <= .005; }
   if (o.kind === 'wash') o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, .032));
   if (o.kind === 'holder') { const q = findSpot(o, o.g.position.x, o.g.position.z, .022); o.home.set(q.x, 0, q.z); }
-  if (o.kind === 'sample' || o.kind === 'prop') { setOnBalance(o, false); const q = findSpot(o, o.g.position.x, o.g.position.z, o.R || .03); o.home.set(q.x, 0, q.z); }
+  if (o.kind === 'sample' || o.kind === 'prop') { setOnBalance(o, false); if (!(o.kind === 'prop' && snapHeatSource(o))) { const q = findSpot(o, o.g.position.x, o.g.position.z, o.R || .03); o.home.set(q.x, 0, q.z); } }
   if (o.kind === 'spatula') { const p = findSpot(o, o.g.position.x + .06, o.g.position.z - .035, .03); o.home.set(p.x - .06, .004, p.z + .035); }
   if ((o.kind === 'electrode' || o.kind === 'rod' || o.kind === 'thermo') && !o.zoneV) {
     const st = o.stand0, p = o.g.position;
@@ -5320,7 +5380,7 @@ function release() {
 renderer.domElement.addEventListener('pointerup', release); renderer.domElement.addEventListener('pointercancel', release);
 renderer.domElement.addEventListener('pointerleave', () => { $('tip').hidden = true; });
 function placeVessel(v) {
-  v.tilt = 0; v.g.quaternion.identity();
+  v.tilt = 0; v.g.quaternion.identity(); v.heatSupport = null; v.heatSource = null;
   const p = v.g.position;
   if (p.x > SINK.x0 - .01 && p.x < SINK.x1 + .01 && p.z > SINK.z0 - .01 && p.z < SINK.z1 + .01) { // stands in the sink basin, under the tap if close to it
     let x = clamp(p.x, SINK.x0 + v.R + .004, SINK.x1 - v.R - .004), z = clamp(p.z, SINK.z0 + v.R + .004, SINK.z1 - v.R - .004);
@@ -5330,6 +5390,7 @@ function placeVessel(v) {
     // tap off, releasing a filled beaker into the basin tips it out visibly.
     if (!TAP.on && v.chem.V > FILM + .3) v.sinkDrain = { tg: { kind: 'sink', c: V3(SINK.cx, 0, SINK.cz), R: .04 }, dir: V3(x <= SINK.cx ? 1 : -1, 0, 0) };
     return; }
+  if (snapVesselToHeatStand(v)) return;
   v.base.copy(findSpot(v, p.x, p.z, v.R + .002));
 }
 function stickVessel(o) {

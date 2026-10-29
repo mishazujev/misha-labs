@@ -17,6 +17,29 @@ const clamp = THREE.MathUtils.clamp, D2R = THREE.MathUtils.degToRad;
 /* ---------------- i18n ---------------- */
 let LANG = (() => { try { const s = localStorage.getItem('lab.lang'); if (s && I18N[s]) return s; } catch (e) { } const n = (navigator.language || 'en').slice(0, 2); return n === 'et' ? 'et' : n === 'uk' ? 'uk' : n === 'ru' ? 'ru' : 'en'; })();
 function T(k, p) { let s = (I18N[LANG] && I18N[LANG][k]) ?? I18N.en[k] ?? k; if (p) s = s.replace(/\{(\w+)\}/g, (m, q) => { const v = p[q]; return v && typeof v === 'object' && v.k ? T(v.k, v.p) : (v ?? ''); }); return s; }
+const NONMETAL_TEXT = {
+  'x.chlorineWater': 'Chlorine water', 'x.bromineWater': 'Bromine water', 'x.iodineSolution': 'Iodine solution', 'x.kbr': 'Potassium bromide', 'x.ki': 'Potassium iodide',
+  'x.hoodAutoStage': 'The complete experiment has been placed inside the fume cupboard. Switch on the extraction fan before opening or heating reagents.',
+  'x.oxideAbsorbed': '{oxide} was absorbed in the indicator water in beaker {v}; the solution became acidic.',
+  'x.halogenReaction': 'Beaker {v}: {equation}. The new molecular halogen gives the observed colour.',
+  'x.halogenNoReaction': 'Beaker {v}: iodine does not displace bromide; no colour change beyond dilution.',
+  'x.nonmetalsSpc.goal': 'Burn carbon, phosphorus and sulfur, absorb their oxides in water, test the pH change, then neutralise the acidic products with sodium hydroxide.',
+  'x.nonmetalsSpc.desc': 'A combustion and acid–base investigation of three nonmetals and their oxides.',
+  'x.nonmetalsSpc.start': 'The S/P/C combustion apparatus and three labelled indicator-water receivers are ready inside the fume cupboard.',
+  'x.lab.nonmetalsSpc': 'Put on goggles, raise the sash, and switch on the fume-cupboard fan. The equipment is already inside; it does not need to cross the bench boundary.|Open and light the spirit lamp. Burn a small sample of carbon, phosphorus, and sulfur one at a time. Their oxides are collected in the matching labelled beakers A, B, and C.|Compare the flame, glow, smoke, and the universal-indicator colour change when CO₂, P₄O₁₀, and SO₂ dissolve in water.|Add 0.10 M sodium hydroxide gradually to A, B, and C until each indicator returns to green. This tests that the oxide solutions are acidic.|Cap the lamp. The lab completes when all three samples have burned and all three acidic solutions have been neutralised.',
+  'x.lab.nonmetalsSpc.done': 'Experiment complete: C, P, and S formed acidic oxides; their aqueous products were then neutralised by sodium hydroxide.',
+  'x.lab.nonmetalsSpc.sensory': 'Record glow or flame colour, smoke, and indicator colour. Never smell combustion products directly.',
+  'x.halogens.goal': 'Establish the reactivity order Cl₂ > Br₂ > I₂ using displacement reactions, then test reaction with sodium hydroxide.',
+  'x.halogens.desc': 'Wet-chemistry tests with halogen water, halide ions, and alkali; no label-reading quiz.',
+  'x.halogens.start': 'Four labelled displacement beakers and the halogen/halide solutions are ready inside the fume cupboard.',
+  'x.lab.halogens': 'Put on goggles and gloves, raise the sash, and switch on the fume-cupboard fan. All solutions are already staged inside.|In A mix chlorine water with KBr; in B mix chlorine water with KI; in C mix bromine water with KI. Observe the new halogen colour in each displacement reaction.|In D mix iodine solution with KBr. The absence of displacement is evidence that iodine is the weaker oxidising agent.|Add 0.10 M sodium hydroxide gradually to one coloured halogen mixture. Its colour fades as the halogen disproportionates to halide and oxohalate.|Use the three positive displacements and the negative test to conclude Cl₂ > Br₂ > I₂. The lab completes from the reactions themselves—there is no answer quiz.',
+  'x.lab.halogens.done': 'Experiment complete: chlorine displaced bromide and iodide, bromine displaced iodide, iodine did not displace bromide, and alkali decolourised a halogen solution.',
+  'x.lab.halogens.sensory': 'Observe colour changes through the lowered sash. Do not smell halogen solutions or mix them with acids.'
+};
+Object.assign(I18N.en, NONMETAL_TEXT);
+// Until the revised procedures receive a full human translation, show the
+// chemically correct English workflow instead of the obsolete quiz text.
+for (const l of ['ru', 'et', 'uk']) Object.assign(I18N[l], NONMETAL_TEXT);
 const fmt = (x, d) => Number(x).toFixed(d).replace('.', LANG === 'en' ? '.' : ',');
 const $ = id => document.getElementById(id);
 
@@ -40,6 +63,11 @@ const REAG = {
   cuso4: { tot: { Cu: .1, SO4: .1 }, name: 'x.cuso4', f: 'CuSO₄', cap: 0x2F62A8, hazard: 'harm' },
   agno3: { tot: { Ag: .1, NO3: .1 }, name: 'x.agno3', f: 'AgNO₃', rgb: [236, 236, 232] },
   bacl2: { tot: { Ba: .1, Cl: .2 }, name: 'x.bacl2', f: 'BaCl₂', rgb: [236, 236, 232] },
+  chlorineWater: { tot: { Cl2: .02 }, name: 'x.chlorineWater', f: 'Cl₂(aq)', cap: 0xC9D75A, hazard: 'harm' },
+  bromineWater: { tot: { Br2: .02 }, name: 'x.bromineWater', f: 'Br₂(aq)', cap: 0xA94C24, hazard: 'harm' },
+  iodineSolution: { tot: { I2: .02 }, name: 'x.iodineSolution', f: 'I₂(aq)', cap: 0x65402E, hazard: 'harm' },
+  kbr: { tot: { K: .1, Br: .1 }, name: 'x.kbr', f: 'KBr 0.10 M', cap: 0x6C7773, hazard: null },
+  ki: { tot: { K: .1, I: .1 }, name: 'x.ki', f: 'KI 0.10 M', cap: 0x6C7773, hazard: null },
 };
 /* unlabelled bottles A–F for the identification labs: their contents are dealt out when a lab starts */
 const UNK = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -53,7 +81,7 @@ const SOL = {
 const SOLF = { HCl: 'HCl', NaOH: 'NaOH', H2O: 'H₂O', NaCl: 'NaCl', Na2CO3: 'Na₂CO₃', NH4Cl: 'NH₄Cl', CH3COOH: 'CH₃COOH', NH3: 'NH₃', CH3COONa: 'CH₃COONa', Na2SO4: 'Na₂SO₄', NaNO3: 'NaNO₃', CuSO4: 'CuSO₄', FeCl3: 'FeCl₃', FeSO4: 'FeSO₄', PbNO32: 'Pb(NO₃)₂', KI: 'KI', AgNO3: 'AgNO₃' };
 /* acid/base equivalents of a composition (per mL): >0 excess acid, <0 excess base; used for the heat of neutralisation */
 const Z2 = ['Ba', 'Ca', 'Cu', 'Fe2', 'Pb', 'Mg', 'Zn', 'Mn', 'Ni', 'Co', 'Cd', 'Sn'];
-const excessOf = t => { const g = k => t[k] || 0; let e = g('Cl') + g('NO3') + 2 * g('SO4') + g('I') + g('Ac') - g('Na') - g('K') - g('NH3') - g('Ag') - 3 * (g('Fe3') + g('Al')); for (const k of Z2) e -= 2 * g(k); return e; };
+const excessOf = t => { const g = k => t[k] || 0; let e = g('Cl') + g('Br') + g('NO3') + 2 * g('SO4') + g('I') + g('Ac') - g('Na') - g('K') - g('NH3') - g('Ag') - 3 * (g('Fe3') + g('Al')); for (const k of Z2) e -= 2 * g(k); return e; };
 const compOf = id => { const r = REAG[id]; return { id, tot: r.tot, ind: r.ind ? { [r.ind]: 20 } : {}, isInd: !!r.ind, f: r.f }; };
 const compOfVessel = v => { const tot = {}, ind = {}, solv = {}; for (const k in v.chem.tot) tot[k] = v.chem.tot[k] / v.chem.V; for (const k in v.chem.ind) ind[k] = v.chem.ind[k] / v.chem.V; for (const k in (v.chem.solv || {})) solv[k] = v.chem.solv[k] / v.chem.V; return { id: 'v' + v.letter, tot, ind, solv, isInd: false, f: T('x.beaker') + ' ' + v.letter }; };
 const MW = { Na: 23, Cl: 35.45, Ct: 60, Ac: 59, NH3: 17 };
@@ -307,6 +335,36 @@ const worldToLocal = (v, p) => V3(p.x - v.g.position.x, p.y - v.g.position.y, p.
 const rimY = v => v.g.position.y + v.H;
 
 /* ---------- vessel chemistry ---------- */
+function reactHalogens(v, added) {
+  const t = v.chem.tot, made = [];
+  const pair = (oxidant, halide, product, productHalide, evidence, equation) => {
+    const x = Math.min(t[oxidant] || 0, (t[halide] || 0) / 2);
+    if (x < .002) return;
+    t[oxidant] -= x; t[halide] -= 2 * x; t[product] = (t[product] || 0) + x; t[productHalide] = (t[productHalide] || 0) + 2 * x;
+    made.push([evidence, equation]);
+  };
+  pair('Cl2', 'Br', 'Br2', 'Cl', 'cl-br', 'Cl₂ + 2Br⁻ → 2Cl⁻ + Br₂');
+  pair('Cl2', 'I', 'I2', 'Cl', 'cl-i', 'Cl₂ + 2I⁻ → 2Cl⁻ + I₂');
+  pair('Br2', 'I', 'I2', 'Br', 'br-i', 'Br₂ + 2I⁻ → 2Br⁻ + I₂');
+  if ((added.id === 'naoh' || added.id === 'naoh01') && added._dV > 0) {
+    let capacity = (added.tot.Na || 0) * added._dV / 2;
+    for (const key of ['Cl2', 'Br2', 'I2']) {
+      const x = Math.min(t[key] || 0, capacity); if (x < .001) continue;
+      t[key] -= x; capacity -= x; made.push(['alkali', key.replace('2', '₂') + ' + OH⁻ → halide + oxohalate']);
+    }
+  }
+  v.nonmetalLog ||= new Set(); TASK.evidence ||= {};
+  const weakerTest = ((added.id === 'kbr' && (t.I2 || 0) > .02) || (added.id === 'iodineSolution' && (t.Br || 0) > .04));
+  if (weakerTest && !v.nonmetalLog.has('no-displacement')) {
+    v.nonmetalLog.add('no-displacement'); TASK.evidence['no-displacement'] = true;
+    logE('info', [['x.halogenNoReaction', { v: v.letter }]], { v: v.letter, amt: '', f: '' });
+  }
+  if (!made.length) return;
+  for (const [evidence, equation] of made) if (!v.nonmetalLog.has(evidence)) {
+    v.nonmetalLog.add(evidence); if (TASK.id === 'nonmetals-halogens') TASK.evidence[evidence] = true;
+    logE('success', [['x.halogenReaction', { v: v.letter, equation }]], { v: v.letter, amt: '', f: '' });
+  }
+}
 function addLiquid(v, comp, dV, wx, wz) {
   if (dV <= 0) return 0; ppeCheck(comp);
   if (v.chem.V + dV > v.chem.cap - 6) { if (!v.fullLogged) { v.fullLogged = true; logE('info', [['x.full', { v: v.letter }]]); } return 0; }
@@ -315,6 +373,7 @@ function addLiquid(v, comp, dV, wx, wz) {
   const c = v.chem; const bulk = {}, bulkInd = {}; if (c.V > 0) { for (const k in c.tot) bulk[k] = c.tot[k] / c.V; for (const k in c.ind) bulkInd[k] = c.ind[k] / c.V; }
   { const e = excessOf(comp.tot) * dV; if (e > 0) c.acidEq = (c.acidEq || 0) + e; else c.baseEq = (c.baseEq || 0) - e; }
   c.V += dV; for (const k in comp.tot) c.tot[k] = (c.tot[k] || 0) + comp.tot[k] * dV; for (const k in comp.ind) c.ind[k] = (c.ind[k] || 0) + comp.ind[k] * dV; c.solv ||= {}; for (const k in (comp.solv || {})) c.solv[k] = (c.solv[k] || 0) + comp.solv[k] * dV;
+  if (TASK && TASK.id === 'nonmetals-halogens') reactHalogens(v, { ...comp, _dV: dV });
   v.eqDirty = true; v.visualKick = 1;
   if (wx != null && (Object.keys(bulkInd).length || Object.keys(comp.ind).length)) {
     const loc = { V: 1, tot: {}, ind: {} }; for (const k in bulk) loc.tot[k] = bulk[k] / 2; for (const k in comp.tot) loc.tot[k] = (loc.tot[k] || 0) + comp.tot[k] / 2;
@@ -912,7 +971,9 @@ function updateBurette(dt) {
 makeBeaker('A', 0, .02, 105.37); makeBeaker('B', .14, -.07, 98.62); makeBeaker('C', -.13, .14, 101.14); makeBeaker('D', .06, .16, 99.83);
 const bottles = [makeBottle('hcl', -.3, -.24), makeBottle('naoh', -.18, -.25), makeBottle('na2co3', .16, -.25), makeBottle('water', .28, -.24),
   makeBottle('hcl01', -.28, -.16), makeBottle('hcl001', -.2, -.16), makeBottle('acetic01', -.12, -.16), makeBottle('naoh01', -.04, -.16), makeBottle('vinegar', .04, -.16),
-  makeBottle('nacl', -.06, -.25), makeBottle('na2so4', .05, -.25), makeBottle('cuso4', .4, -.25), ...UNK.map((L, i) => makeBottle('u' + L, -.1 + i * .1, -.16))];
+  makeBottle('nacl', -.06, -.25), makeBottle('na2so4', .05, -.25), makeBottle('cuso4', .4, -.25),
+  makeBottle('chlorineWater', -.3, -.08), makeBottle('bromineWater', -.22, -.08), makeBottle('iodineSolution', -.14, -.08), makeBottle('kbr', -.06, -.08), makeBottle('ki', .02, -.08),
+  ...UNK.map((L, i) => makeBottle('u' + L, -.1 + i * .1, -.16))];
 function tintBottle(b) { const t = {}; for (const k in REAG[b.id].tot) t[k] = REAG[b.id].tot[k] * 100; const ch = { V: 100, tot: t, ind: {} }; equilibrate(ch); const lk = vesselLook(ch);
   const m = b.liq.material, col = lk.baseKey !== 'colourless'; if (col) m.attenuationColor.setRGB(lk.rgb[0] / 255, lk.rgb[1] / 255, lk.rgb[2] / 255, THREE.SRGBColorSpace); else m.attenuationColor.setRGB(.78, .88, .92); m.attenuationDistance = col ? .025 : .12; }
 for (const b of bottles) tintBottle(b);
@@ -1076,6 +1137,8 @@ slotFor('bottle:hcl01', 'acid:M1', .066, .066); slotFor('bottle:hcl001', 'acid:M
 slotFor('bottle:naoh01', 'base:M1', .066, .066);
 slotFor('dropper:univ', 'gen:M2', .04, .04); slotFor('dropper:phph', 'gen:M2', .04, .04); slotFor('dropper:mo', 'gen:M2', .04, .04); slotFor('jar', 'gen:T', .075, .075);
 slotFor('bottle:nacl', 'gen:B', .066, .066); slotFor('bottle:na2so4', 'gen:B', .066, .066); slotFor('bottle:cuso4', 'gen:B', .066, .066); slotFor('dropper:agno3', 'ox:M2', .04, .04); slotFor('dropper:bacl2', 'ox:M2', .04, .04);
+slotFor('bottle:chlorineWater', 'ox:M1', .066, .066); slotFor('bottle:bromineWater', 'ox:M1', .066, .066); slotFor('bottle:iodineSolution', 'ox:M1', .066, .066);
+slotFor('bottle:kbr', 'gen:M1', .066, .066); slotFor('bottle:ki', 'gen:M1', .066, .066);
 for (const L of UNK) slotFor('bottle:u' + L, 'base:M1', .066, .066);
 // lying items are placed with their tip at the start of their slot, pointing along the shelf
 for (const k of ['p10', 'p3', 'rod', 'spatula', 'thermo:1', 'thermo:2', 'thermo:3', 'cond']) { const S = SLOTS[k]; S.p.z = S.along; }
@@ -1705,7 +1768,21 @@ function lightLamp(S) {
 }
 function burnInFlame(S, lamp) {   // an open element jar held at a lit flame: a little of it goes onto the deflagrating spoon
   const sym = S.e[0], L = lamp.lamp, p = lampFlamePos(lamp);
-  if (TASK.id === 'nonmetals-spc' && TASK.evidence) TASK.evidence[sym.toLowerCase()] = true;
+  if (TASK.id === 'nonmetals-spc' && ['C', 'P', 'S'].includes(sym)) {
+    TASK.evidence ||= {};
+    if (!TASK.evidence[sym.toLowerCase()]) {
+      TASK.evidence[sym.toLowerCase()] = true;
+      const letter = { C: 'A', P: 'B', S: 'C' }[sym], v = vessels.find(q => q.letter === letter);
+      if (v) {
+        // The labelled water beaker represents the gas-washing receiver used
+        // to absorb each oxide. The indicator then reveals its acidic nature.
+        if (sym === 'C') { v.chem.tot.Ct = (v.chem.tot.Ct || 0) + .25; v.chem.acidEq = (v.chem.acidEq || 0) + .5; }
+        else { const dose = sym === 'P' ? .25 : .18; v.chem.tot.Cl = (v.chem.tot.Cl || 0) + dose; v.chem.acidEq = (v.chem.acidEq || 0) + dose; }
+        v.oxide = sym; v.eqDirty = true; v.visualKick = 1; spawnPlume(v, v.g.position.x, v.g.position.z, [235, 235, 225], 10);
+        logE('success', [['x.oxideAbsorbed', { oxide: { C: 'CO₂', P: 'P₄O₁₀', S: 'SO₂' }[sym], v: letter }]], { v: letter, amt: '', f: '' });
+      }
+    }
+  }
   S.left = Math.max(0, S.left - .15); L.col = FLAMEC[sym] ?? null; L.colT = 2.6;
   if (sym === 'Fe') for (let i = 0; i < 14; i++) spark(p, 0xFFC060);
   if (sym === 'Mg' || sym === 'P' || sym === 'Zn') for (let i = 0; i < 5; i++) puff(p, 0xF2F2EE);
@@ -1938,14 +2015,12 @@ TASKS.push(
    reusable so later labs can use the same conductivity, heat and evaporation
    behaviour instead of scripted outcomes. */
 TASKS.push(
-  { id: 'nonmetals-spc', lab: true, title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', steps: 'x.lab.nonmetalsSpc', start: 'x.labStart', done: 'x.lab.nonmetalsSpc.done', sensory: 'x.lab.nonmetalsSpc.sensory',
-    setup: [['el:6'], ['el:15'], ['el:16'], ['glass:lamp'], ['glass:matches']],
-    answer: { rows: ['c', 'p', 's'], rowKey: 'x.nonmetalsSpc.row.', optKey: 'x.ans_', opts: ['co2', 'p4o10', 'so2'], fixed: { c: 'co2', p: 'p4o10', s: 'so2' }, needSeen: true } },
-  { id: 'nonmetals-halogens', lab: true, title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', steps: 'x.lab.halogens', start: 'x.labStart', done: 'x.lab.halogens.done', sensory: 'x.lab.halogens.sensory',
-    setup: [['el:17'], ['el:35'], ['el:53']],
-    answer: { rows: ['cl', 'br', 'i', 'trend'], rowKey: 'x.halogens.row.', optKey: 'x.ans_', opts: ['cl2gas', 'br2liquid', 'i2solid', 'reactivityDown', 'reactivityUp'],
-      optsByRow: { cl: ['cl2gas', 'br2liquid', 'i2solid'], br: ['cl2gas', 'br2liquid', 'i2solid'], i: ['cl2gas', 'br2liquid', 'i2solid'], trend: ['reactivityDown', 'reactivityUp'] },
-      fixed: { cl: 'cl2gas', br: 'br2liquid', i: 'i2solid', trend: 'reactivityDown' }, needSeen: true } },
+  { id: 'nonmetals-spc', lab: true, hoodLab: true, title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', steps: 'x.lab.nonmetalsSpc', start: 'x.nonmetalsSpc.start', done: 'x.lab.nonmetalsSpc.done', sensory: 'x.lab.nonmetalsSpc.sensory',
+    setup: [['beaker:A', { V: 40, tot: {}, ind: { univ: 3 } }], ['beaker:B', { V: 40, tot: {}, ind: { univ: 3 } }], ['beaker:C', { V: 40, tot: {}, ind: { univ: 3 } }], ['el:6'], ['el:15'], ['el:16'], ['glass:lamp'], ['glass:matches'], ['bottle:naoh01']],
+    check: () => TASK.evidence && ['c', 'p', 's'].every(k => TASK.evidence[k]) && ['A', 'B', 'C'].every(L => { const v = vessels.find(q => q.letter === L); if (v.eqDirty) doEq(v); return v.oxide && v.chem.eq.pH >= 6 && v.chem.eq.pH <= 9; }) ? vessels.find(v => v.letter === 'A') : null },
+  { id: 'nonmetals-halogens', lab: true, hoodLab: true, title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', steps: 'x.lab.halogens', start: 'x.halogens.start', done: 'x.lab.halogens.done', sensory: 'x.lab.halogens.sensory',
+    setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['beaker:D'], ['bottle:chlorineWater'], ['bottle:bromineWater'], ['bottle:iodineSolution'], ['bottle:kbr'], ['bottle:ki'], ['bottle:naoh01']],
+    check: () => TASK.evidence && ['cl-br', 'cl-i', 'br-i', 'no-displacement', 'alkali'].every(k => TASK.evidence[k]) ? vessels.find(v => v.letter === 'A') : null },
   { id: 'k111', lab: true, code: 'K1.11', title: 'x.k111.title', goal: 'x.k111.goal', steps: 'x.lab.k111', start: 'x.labStart', done: 'x.lab.k111.done', sensory: 'x.lab.k111.sensory',
     setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['beaker:D'], ['bottle:water'], ['bottle:nacl'], ['jar'], ['spatula'], ['rod'], ['cond'], ['decor:sucrose']],
     answer: { rows: ['dry', 'water', 'nacl', 'sugar'], rowKey: 'x.k111.row.', optKey: 'x.ans_', opts: ['bright', 'faint', 'off'], fixed: { dry: 'off', water: 'off', nacl: 'bright', sugar: 'off' }, needSeen: true } },
@@ -2303,12 +2378,23 @@ function startDemo(task = TASK) {
 }
 function restartDemo() { startDemo(TASK); }
 function startMyself() { const task = TASK; cancelDemo(); setupTask(task); instructorTab = 'procedure'; setInspector(true); }
+function stageTaskInHood() {
+  HOOD.sashT = 1;
+  const activeVessels = vessels.filter(v => !v.stowed);
+  activeVessels.forEach((v, i) => { const x = (i - (activeVessels.length - 1) / 2) * .27; v.area = 'hood'; v.inSink = false; v.base.set(x, 0, 2.7); v.g.position.copy(v.base); });
+  const activeBottles = bottles.filter(b => !b.stowed);
+  activeBottles.forEach((b, i) => { const x = (i - (activeBottles.length - 1) / 2) * .19; b.area = 'hood'; b.home.set(x, 0, 3.14); b.g.position.copy(b.home); });
+  const samples = PT.samples.slice();
+  samples.forEach((S, i) => { const x = (i - (samples.length - 1) / 2) * .24; S.fly = null; S.area = 'hood'; S.home.set(x, 0, 3.01); S.g.position.copy(S.home); });
+  const props = PROPS.slice();
+  props.forEach((S, i) => { const x = (i - (props.length - 1) / 2) * .22; S.fly = null; S.area = 'hood'; S.home.set(x, 0, 2.88); S.g.position.copy(S.home); });
+}
 function resetState() {
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
-  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
-  for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.lidT = 0; b.lidHome = null; }
+  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
+  for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.lidT = 0; b.lidHome = null; b.area = 'bench'; }
   for (const q of pipettes) { q.chem = { V: 0, tot: {}, ind: {} }; q.src = null; q.held = false; }
   for (const d of droppers) { unpark(d); d.held = false; }
   spatula.grams = 0; spatula.held = false; rod.held = false; for (const q of probes) { q.held = false; q.in = null; q.reading = ROOM_T; q.b = 0; q.logged = null; q.pend = null; q.pendT = 0; q.wet = q.wetS = null; } electrode.in = null; electrode.home.copy(electrode.home0); electrode.lying = false;
@@ -2340,7 +2426,7 @@ function setupTask(task, mode = task.free ? 'free' : 'independent') {
     const it = ITEMS.find(i => i.key === key); if (!it) continue; const o = it.obj;
     const home = o.kind === 'vessel' ? o.base0 : o.home0 || (o.kind === 'dropper' ? V3(o.bx0, 0, o.bz0) : null);
     if (it.key === 'jar') placeItem(it, JAR.x0, JAR.z0); else if (o.kind === 'dropper') placeItem(it, o.bx0, o.bz0); else if (o.kind === 'pipette' || o.kind === 'spatula' || o.kind === 'rod') placeItem(it, o.home0.x, o.home0.z); else placeItem(it, home.x, home.z);
-    if (fill) { o.chem.V = fill.V || 0; o.chem.tot = { ...(fill.tot || {}) }; o.chem.solv = { ...(fill.solv || {}) }; o.solid = fill.solid || 0; equilibrate(o.chem); const lk = vesselLook(o.chem); o.rgb = lk.rgb.slice(); o.a = lk.a; o.level = levelOf(o); o.eqDirty = true; }
+    if (fill) { o.chem.V = fill.V || 0; o.chem.tot = { ...(fill.tot || {}) }; o.chem.ind = { ...(fill.ind || {}) }; o.chem.solv = { ...(fill.solv || {}) }; o.solid = fill.solid || 0; equilibrate(o.chem); const lk = vesselLook(o.chem); o.rgb = lk.rgb.slice(); o.a = lk.a; o.level = levelOf(o); o.eqDirty = true; }
   }
   if (task.id === 'phmeasure') {
     const tags = { A: ['A · HCl', '0.10 M · 75 mL'], B: ['B · HCl', '0.010 M · 75 mL'], C: ['C · CH₃COOH', '0.10 M · 75 mL'] };
@@ -2362,8 +2448,17 @@ function setupTask(task, mode = task.free ? 'free' : 'independent') {
     if (!d || !takeProp(d)) continue;
     const o = d.info.taken; o.fly = null; o.area = 'hood'; o.home.set(spec.x, 0, spec.z); o.g.position.copy(o.home);
   }
-  NB.log = []; NB.t0 = performance.now(); NB.started = Date.now(); logE('info', [[task.start]]);
-  renderCard(); renderInv(); if (task.id === 'combustion') { const shot = combustionShot(); flyTo(shot.t, shot.p); } else { const v = view0(); flyTo(v.t, v.p); }
+  if (task.id === 'nonmetals-spc') {
+    setSampleTag(vessels.find(v => v.letter === 'A'), 'A · CO₂ receiver', 'water + universal indicator');
+    setSampleTag(vessels.find(v => v.letter === 'B'), 'B · P₄O₁₀ receiver', 'water + universal indicator');
+    setSampleTag(vessels.find(v => v.letter === 'C'), 'C · SO₂ receiver', 'water + universal indicator');
+  }
+  if (task.id === 'nonmetals-halogens') {
+    for (const [L, detail] of [['A', 'Cl₂ + KBr'], ['B', 'Cl₂ + KI'], ['C', 'Br₂ + KI'], ['D', 'I₂ + KBr']]) setSampleTag(vessels.find(v => v.letter === L), L + ' · displacement', detail);
+  }
+  if (task.hoodLab) stageTaskInHood();
+  NB.log = []; NB.t0 = performance.now(); NB.started = Date.now(); logE('info', [[task.start]]); if (task.hoodLab) logE('info', [['x.hoodAutoStage']]);
+  renderCard(); renderInv(); if (task.id === 'combustion') { const shot = combustionShot(); flyTo(shot.t, shot.p); } else if (task.hoodLab) flyTo(V3(0, .08, 2.9), V3(0, .48, 2.18)); else { const v = view0(); flyTo(v.t, v.p); }
 }
 function checkTask() {
   if (!TASK || !TASK.check || TASK.reached) return;

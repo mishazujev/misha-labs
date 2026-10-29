@@ -73,7 +73,12 @@ for (const id of ['nonmetals-spc', 'nonmetals-halogens']) {
   assert.ok(source.includes(`id: '${id}'`), `${id} task must be registered`);
 }
 assert.ok(source.includes("['nonmetals', T('topic.nonmetals')]"), 'the catalogue must expose the Nonmetals topic filter');
-for (const Z of [6, 15, 16, 17, 35, 53]) assert.ok(source.includes(`['el:${Z}']`), `element ${Z} must be preloaded by a nonmetals lab`);
+for (const Z of [6, 15, 16]) assert.ok(source.includes(`['el:${Z}']`), `element ${Z} must be preloaded by the S/P/C lab`);
+for (const reagent of ['chlorineWater', 'bromineWater', 'iodineSolution', 'kbr', 'ki']) assert.ok(source.includes(`['bottle:${reagent}']`), `${reagent} must be a working halogen-lab reagent`);
+assert.ok(source.includes('function reactHalogens'), 'the halogen lab must calculate displacement reactions from mixed reagents');
+assert.ok(source.includes('function stageTaskInHood'), 'hazardous nonmetal labs must stage their apparatus in the fume cupboard');
+assert.match(source, /id: 'nonmetals-spc'.*hoodLab: true/, 'the S/P/C lab must launch in the fume cupboard');
+assert.match(source, /id: 'nonmetals-halogens'.*hoodLab: true/, 'the halogen lab must launch in the fume cupboard');
 assert.ok(source.includes('function runActivityTrial'), 'controlled evidence labs must use the reusable activity station');
 for (const item of ['beaker:A', 'bottle:water', 'bottle:hcl01', 'bottle:acetic01', 'bottle:vinegar', 'bottle:naoh01', 'cond', 'glass:lamp', 'glass:matches', 'decor:ethanol', 'decor:acetone', 'thermo:1', 'thermo:2', 'thermo:3']) {
   assert.ok(source.includes(`'${item}'`), `${item} must be included in the K1 lab inventory`);

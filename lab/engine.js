@@ -64,7 +64,7 @@ function speciate(tot, V) {
       else { d = Math.min(cM, cap); if (cM - d > 0) p[me.oh] = cM - d; }
       dis[m] = d; cat += me.z * d;
     }
-    const an = c('Cl') + c('NO3') + 2 * c('SO4') + c('I') + c('Ac') * KA_AC / (H + KA_AC) + Cf * (a1 + 2 * a2) + OH;
+    const an = c('Cl') + c('Br') + c('NO3') + 2 * c('SO4') + c('I') + c('Ac') * KA_AC / (H + KA_AC) + Cf * (a1 + 2 * a2) + OH;
     if (!detail) return cat - an;
     return { f: cat - an, H, OH, p, dis, h2co3: Cf * H * H / D, nh3free: c('NH3') * KA_NH4 / (H + KA_NH4) };
   };
@@ -138,6 +138,12 @@ function vesselLook(v) {
   if (conc('Cu') > .004) { mix([60, 140, 225], Math.min(.85, conc('Cu') * 9)); baseKey = 'lightblue'; }
   if (conc('Fe3') > .004) { mix([205, 140, 40], Math.min(.85, conc('Fe3') * 9)); baseKey = 'yellowbrown'; }
   if (conc('Fe2') > .004) { mix([160, 205, 130], Math.min(.6, conc('Fe2') * 6)); baseKey = 'palegreen'; }
+  // Molecular halogens are distinct from their colourless halide ions. This
+  // makes the visible colour follow the displacement reaction in the beaker.
+  for (const [key, colour, name] of [['Cl2', [190, 215, 70], 'yellowgreen'], ['Br2', [178, 74, 25], 'redbrown'], ['I2', [112, 55, 92], 'violetbrown']]) {
+    const amount = Math.max(0, v.tot[key] || 0) / Math.max(1, v.V);
+    if (amount > .00002) { mix(colour, Math.min(.9, .22 + amount * 34)); baseKey = name; }
+  }
   let indKey = null;
   const inds = Object.keys(v.ind || {}).filter(k => v.ind[k] > 0);
   for (const k of inds) {

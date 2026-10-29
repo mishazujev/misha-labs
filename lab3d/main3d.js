@@ -1519,6 +1519,7 @@ function takeSample(D) {
   logE('info', [['x.took', { n: elName(D.e) + ' (' + D.e[0] + ')' }]]);
 }
 function sampleInfo(S) {
+  if (TASK.id === 'nonmetals-halogens' && TASK.evidence) { TASK.evidence[S.e[0].toLowerCase()] = true; if (['cl', 'br', 'i'].every(k => TASK.evidence[k])) TASK.evidence.trend = true; }
   const D = S.D, st = toggleJar(S);
   cornerNote(elName(D.e) + ' (' + D.e[0] + ')', [T('x.ptZ', { z: D.Z, m: D.e[1] }), T('x.ptCfg', { c: D.e[2] }), T('x.cat_' + D.e[3]) + ' · ' + T('x.st_' + D.e[4]), T('x.form_' + formOf(D.e)), T(st)], S.g.position, [[T(S.area === 'hood' ? 'x.toBench' : 'x.toHood'), () => moveArea(S, S.area === 'hood' ? 'bench' : 'hood')]]);
 }
@@ -1704,6 +1705,7 @@ function lightLamp(S) {
 }
 function burnInFlame(S, lamp) {   // an open element jar held at a lit flame: a little of it goes onto the deflagrating spoon
   const sym = S.e[0], L = lamp.lamp, p = lampFlamePos(lamp);
+  if (TASK.id === 'nonmetals-spc' && TASK.evidence) TASK.evidence[sym.toLowerCase()] = true;
   S.left = Math.max(0, S.left - .15); L.col = FLAMEC[sym] ?? null; L.colT = 2.6;
   if (sym === 'Fe') for (let i = 0; i < 14; i++) spark(p, 0xFFC060);
   if (sym === 'Mg' || sym === 'P' || sym === 'Zn') for (let i = 0; i < 5; i++) puff(p, 0xF2F2EE);
@@ -1936,6 +1938,14 @@ TASKS.push(
    reusable so later labs can use the same conductivity, heat and evaporation
    behaviour instead of scripted outcomes. */
 TASKS.push(
+  { id: 'nonmetals-spc', lab: true, title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', steps: 'x.lab.nonmetalsSpc', start: 'x.labStart', done: 'x.lab.nonmetalsSpc.done', sensory: 'x.lab.nonmetalsSpc.sensory',
+    setup: [['el:6'], ['el:15'], ['el:16'], ['glass:lamp'], ['glass:matches']],
+    answer: { rows: ['c', 'p', 's'], rowKey: 'x.nonmetalsSpc.row.', optKey: 'x.ans_', opts: ['co2', 'p4o10', 'so2'], fixed: { c: 'co2', p: 'p4o10', s: 'so2' }, needSeen: true } },
+  { id: 'nonmetals-halogens', lab: true, title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', steps: 'x.lab.halogens', start: 'x.labStart', done: 'x.lab.halogens.done', sensory: 'x.lab.halogens.sensory',
+    setup: [['el:17'], ['el:35'], ['el:53']],
+    answer: { rows: ['cl', 'br', 'i', 'trend'], rowKey: 'x.halogens.row.', optKey: 'x.ans_', opts: ['cl2gas', 'br2liquid', 'i2solid', 'reactivityDown', 'reactivityUp'],
+      optsByRow: { cl: ['cl2gas', 'br2liquid', 'i2solid'], br: ['cl2gas', 'br2liquid', 'i2solid'], i: ['cl2gas', 'br2liquid', 'i2solid'], trend: ['reactivityDown', 'reactivityUp'] },
+      fixed: { cl: 'cl2gas', br: 'br2liquid', i: 'i2solid', trend: 'reactivityDown' }, needSeen: true } },
   { id: 'k111', lab: true, code: 'K1.11', title: 'x.k111.title', goal: 'x.k111.goal', steps: 'x.lab.k111', start: 'x.labStart', done: 'x.lab.k111.done', sensory: 'x.lab.k111.sensory',
     setup: [['beaker:A'], ['beaker:B'], ['beaker:C'], ['beaker:D'], ['bottle:water'], ['bottle:nacl'], ['jar'], ['spatula'], ['rod'], ['cond'], ['decor:sucrose']],
     answer: { rows: ['dry', 'water', 'nacl', 'sugar'], rowKey: 'x.k111.row.', optKey: 'x.ans_', opts: ['bright', 'faint', 'off'], fixed: { dry: 'off', water: 'off', nacl: 'bright', sugar: 'off' }, needSeen: true } },
@@ -2320,6 +2330,7 @@ function setupTask(task, mode = task.free ? 'free' : 'independent') {
     const vinegarBottle = bottles.find(b => b.id === 'vinegar'); if (vinegarBottle) tintBottle(vinegarBottle);
   }
   for (const [key, fill] of task.setup) {
+    if (key.startsWith('el:')) { const D = PT.doors.find(q => q.Z === +key.slice(3)); if (D) { if (!D.sample) toggleDoor(D); takeSample(D); } continue; }
     if (key.startsWith('decor:') || key.startsWith('glass:')) {
       const propKey = key.slice(key.indexOf(':') + 1), d = DECOR_PICK.find(q => q.info && q.info.it && q.info.it.k === propKey && q.info.ranges);
       if (!d || !takeProp(d)) continue;
@@ -2364,6 +2375,8 @@ function checkTask() {
 const LABS = [
   { id: 'acidalkali', run: 'acidalkali', level: 'high', course: 'inorganic', tp: 'acidbase', icon: '🌈', title: 'x.title', goal: 'x.goal', desc: 'lab.acid.desc', time: '12–15 min' },
   { id: 'phmeasure', run: 'phmeasure', level: 'high', course: 'inorganic', tp: 'acidbase', icon: '📟', title: 'lab.ph.title', goal: 'lab.ph.goal', desc: 'lab.ph.desc', time: '10–12 min' },
+  { id: 'nonmetals-spc', run: 'nonmetals-spc', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🔥', title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', time: '12–15 min' },
+  { id: 'nonmetals-halogens', run: 'nonmetals-halogens', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🧪', title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', time: '8–10 min' },
   { id: 'combustion', run: 'combustion', level: 'high', course: 'organic', tp: 'hydrocarbons', icon: '🔥', title: 'lab.comb.title', goal: 'lab.comb.goal', desc: 'lab.comb.desc', time: '8–10 min' },
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
   { id: 'k112', run: 'k112', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔩', title: 'x.k112.title', goal: 'x.k112.goal', desc: 'x.k112.desc', time: '15–20 min' },
@@ -2387,7 +2400,7 @@ function openLabs() {
   const filter = (label, values, selected, set) => { const row = el('div', 'filterrow'); row.append(el('span', null, label)); for (const [value, labelText, disabled] of values) { const b = el('button', null, labelText); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-pressed', String(selected === value)); if (!disabled) b.addEventListener('click', () => { set(value); openLabs(); }); row.append(b); } filters.append(row); };
   filter(T('x.level'), [['high', T('x.levelHigh')], ['university', T('x.levelUniversity'), true]], labSel.level, v => { labSel.level = v; });
   filter(T('x.branch'), [['all', T('x.all')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
-  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
+  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['nonmetals', T('topic.nonmetals')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
   box.append(filters);
   const grid = el('div', 'labgrid'), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
   const launch = (l, demoMode) => { pk.hidden = true; const task = TASKS.find(t => t.id === l.run); instructorTab = 'procedure'; if (demoMode) startDemo(task); else { setupTask(task); setInspector(true); } };

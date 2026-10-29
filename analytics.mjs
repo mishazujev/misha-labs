@@ -5,7 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 
 const MAX_BODY = 64 * 1024;
 const SESSION_TTL = 12 * 60 * 60 * 1000;
-const LABS = new Set(["free", "acidalkali", "phmeasure", "combustion", "ind1", "ind2", "ind3", "pre1", "pre2", "pre3", "k111", "k112", "k113", "k3v01", "k3v02"]);
+const LABS = new Set(["free", "acidalkali", "phmeasure", "combustion", "nonmetals-spc", "nonmetals-halogens", "ind1", "ind2", "ind3", "pre1", "pre2", "pre3", "k111", "k112", "k113", "k3v01", "k3v02"]);
 const ID_RE = /^[a-f0-9-]{20,64}$/i;
 const KEY_RE = /^[a-z0-9_.:+-]{1,100}$/i;
 

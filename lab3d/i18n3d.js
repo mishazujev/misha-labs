@@ -269,6 +269,76 @@
     'x.blueFlameObs': 'Õhuava avatud: lühem sinine leek on kütuse ja hapniku eelsegunemise tõttu kuumem ning puhtam.', 'x.burnerOff': 'Gaas suleti ja põleti kustus.'
   });
   for (const l in X) Object.assign(I18N[l], X[l]);
+  Object.assign(I18N.en, {
+    'topic.nonmetals': 'Nonmetals',
+    'x.nonmetalsSpc.title': 'Properties of S, P, C',
+    'x.nonmetalsSpc.goal': 'Compare carbon, phosphorus and sulfur, burn a small sample of each safely, and identify the main oxide formed.',
+    'x.nonmetalsSpc.desc': 'Observe three solid nonmetals and compare their combustion, products and safety requirements.',
+    'x.lab.nonmetalsSpc': 'Put on goggles. Move the element jars and spirit lamp into the fume cupboard and switch on the extraction fan.|Tap each jar and inspect the sample form and appearance.|Open and light the spirit lamp. Open one element jar at a time and hold it at the flame until the notebook records the observation. Keep sulfur and phosphorus inside the working fume cupboard.|Extinguish the lamp with its cap. Match each element to its main combustion product and press Check.',
+    'x.lab.nonmetalsSpc.done': 'Correct. Carbon glows and forms CO₂; sulfur burns with a blue flame to SO₂; phosphorus burns brightly with white P₄O₁₀ smoke. These are acidic oxides.',
+    'x.lab.nonmetalsSpc.sensory': 'Record the sample colour and form, flame colour, glow or smoke. Never smell the products directly.',
+    'x.nonmetalsSpc.row.c': 'Carbon (C)', 'x.nonmetalsSpc.row.p': 'Phosphorus (P)', 'x.nonmetalsSpc.row.s': 'Sulfur (S)',
+    'x.ans_co2': 'glows red → CO₂', 'x.ans_p4o10': 'bright flame, white smoke → P₄O₁₀', 'x.ans_so2': 'blue flame → SO₂',
+    'x.halogens.title': 'Properties of halogens',
+    'x.halogens.goal': 'Compare chlorine, bromine and iodine at room conditions and connect their physical properties with the reactivity trend down Group 17.',
+    'x.halogens.desc': 'Inspect Cl₂, Br₂ and I₂ to discover how colour, state and reactivity change down Group 17.',
+    'x.lab.halogens': 'Put on goggles and gloves. Chlorine and bromine are toxic: keep their sealed sample jars in the fume cupboard.|Tap the chlorine, bromine and iodine jars. Record each substance’s colour and physical state at room conditions.|Compare the samples down Group 17: colour deepens and melting and boiling points rise.|Complete the observations and the reactivity trend, then press Check.',
+    'x.lab.halogens.done': 'Correct. Chlorine is a pale green gas, bromine a red-brown liquid and iodine a grey-black solid with violet vapour. Halogen reactivity decreases down Group 17.',
+    'x.lab.halogens.sensory': 'Observe through the closed jars. Do not open or smell chlorine or bromine; note colour, state and any visible vapour.',
+    'x.halogens.row.cl': 'Chlorine, Cl₂', 'x.halogens.row.br': 'Bromine, Br₂', 'x.halogens.row.i': 'Iodine, I₂', 'x.halogens.row.trend': 'Reactivity down Group 17',
+    'x.ans_cl2gas': 'pale green gas', 'x.ans_br2liquid': 'red-brown liquid', 'x.ans_i2solid': 'grey-black solid; violet vapour', 'x.ans_reactivityDown': 'decreases: Cl₂ > Br₂ > I₂', 'x.ans_reactivityUp': 'increases: I₂ > Br₂ > Cl₂'
+  });
+  Object.assign(I18N.ru, {
+    'topic.nonmetals': 'Неметаллы',
+    'x.nonmetalsSpc.title': 'Свойства S, P и C', 'x.nonmetalsSpc.goal': 'Сравните углерод, фосфор и серу, безопасно сожгите небольшую пробу каждого вещества и определите основной оксид.',
+    'x.nonmetalsSpc.desc': 'Исследуйте три твёрдых неметалла и сравните их горение, продукты и требования безопасности.',
+    'x.lab.nonmetalsSpc': 'Наденьте защитные очки. Перенесите банки с элементами и спиртовку в вытяжной шкаф и включите вентилятор.|Нажмите на каждую банку и рассмотрите форму и внешний вид образца.|Откройте и зажгите спиртовку. Открывайте по одной банке и держите её у пламени, пока наблюдение не появится в журнале. Серу и фосфор нагревайте только в работающем вытяжном шкафу.|Погасите спиртовку колпачком. Сопоставьте каждый элемент с основным продуктом горения и нажмите «Проверить».',
+    'x.lab.nonmetalsSpc.done': 'Верно. Углерод раскаляется и образует CO₂; сера горит синим пламенем до SO₂; фосфор горит ярко с белым дымом P₄O₁₀. Это кислотные оксиды.',
+    'x.lab.nonmetalsSpc.sensory': 'Запишите цвет и форму образца, цвет пламени, свечение или дым. Не нюхайте продукты напрямую.',
+    'x.nonmetalsSpc.row.c': 'Углерод (C)', 'x.nonmetalsSpc.row.p': 'Фосфор (P)', 'x.nonmetalsSpc.row.s': 'Сера (S)',
+    'x.ans_co2': 'красное свечение → CO₂', 'x.ans_p4o10': 'яркое пламя, белый дым → P₄O₁₀', 'x.ans_so2': 'синее пламя → SO₂',
+    'x.halogens.title': 'Свойства галогенов', 'x.halogens.goal': 'Сравните хлор, бром и иод при комнатных условиях и свяжите их физические свойства с реакционной способностью в группе 17.',
+    'x.halogens.desc': 'Исследуйте Cl₂, Br₂ и I₂ и определите изменение цвета, состояния и реакционной способности вниз по группе.',
+    'x.lab.halogens': 'Наденьте очки и перчатки. Хлор и бром токсичны: держите их запаянные банки в вытяжном шкафу.|Нажмите на банки с хлором, бромом и иодом. Запишите цвет и агрегатное состояние каждого вещества.|Сравните образцы сверху вниз в группе 17: цвет темнеет, температуры плавления и кипения растут.|Заполните наблюдения и укажите изменение реакционной способности, затем нажмите «Проверить».',
+    'x.lab.halogens.done': 'Верно. Хлор — бледно-зелёный газ, бром — красно-бурая жидкость, иод — серо-чёрное твёрдое вещество с фиолетовыми парами. Реакционная способность уменьшается вниз по группе.',
+    'x.lab.halogens.sensory': 'Наблюдайте через закрытые банки. Не открывайте и не нюхайте хлор и бром; отметьте цвет, состояние и видимые пары.',
+    'x.halogens.row.cl': 'Хлор, Cl₂', 'x.halogens.row.br': 'Бром, Br₂', 'x.halogens.row.i': 'Иод, I₂', 'x.halogens.row.trend': 'Реакционная способность вниз по группе 17',
+    'x.ans_cl2gas': 'бледно-зелёный газ', 'x.ans_br2liquid': 'красно-бурая жидкость', 'x.ans_i2solid': 'серо-чёрное твёрдое вещество; фиолетовые пары', 'x.ans_reactivityDown': 'уменьшается: Cl₂ > Br₂ > I₂', 'x.ans_reactivityUp': 'увеличивается: I₂ > Br₂ > Cl₂'
+  });
+  Object.assign(I18N.et, {
+    'topic.nonmetals': 'Mittemetallid',
+    'x.nonmetalsSpc.title': 'S, P ja C omadused', 'x.nonmetalsSpc.goal': 'Võrdle süsinikku, fosforit ja väävlit, põleta igaüht ohutult väike proov ning tuvasta peamine oksiid.',
+    'x.nonmetalsSpc.desc': 'Vaatle kolme tahket mittemetalli ning võrdle nende põlemist, saadusi ja ohutusnõudeid.',
+    'x.lab.nonmetalsSpc': 'Pane kaitseprillid ette. Vii elemendipurgid ja piirituslamp tõmbekappi ning lülita ventilaator sisse.|Puuduta iga purki ning vaatle proovi kuju ja välimust.|Ava ja süüta piirituslamp. Ava üks elemendipurk korraga ning hoia seda leegi juures, kuni vaatlus ilmub märkmikku. Kuumuta väävlit ja fosforit ainult töötavas tõmbekapis.|Kustuta lamp korgiga. Sobita iga element peamise põlemissaadusega ja vajuta „Kontrolli“.',
+    'x.lab.nonmetalsSpc.done': 'Õige. Süsinik hõõgub ja moodustab CO₂; väävel põleb sinise leegiga SO₂-ks; fosfor põleb eredalt ning annab valge P₄O₁₀ suitsu. Need on happelised oksiidid.',
+    'x.lab.nonmetalsSpc.sensory': 'Märgi proovi värvus ja kuju, leegi värvus, hõõgumine või suits. Ära nuusuta saadusi otse.',
+    'x.nonmetalsSpc.row.c': 'Süsinik (C)', 'x.nonmetalsSpc.row.p': 'Fosfor (P)', 'x.nonmetalsSpc.row.s': 'Väävel (S)',
+    'x.ans_co2': 'punane hõõgumine → CO₂', 'x.ans_p4o10': 'ere leek, valge suits → P₄O₁₀', 'x.ans_so2': 'sinine leek → SO₂',
+    'x.halogens.title': 'Halogeenide omadused', 'x.halogens.goal': 'Võrdle kloori, broomi ja joodi toatingimustel ning seosta nende füüsikalised omadused 17. rühma reaktsioonivõime trendiga.',
+    'x.halogens.desc': 'Vaatle Cl₂, Br₂ ja I₂ ning avasta värvuse, oleku ja reaktsioonivõime muutus rühmas.',
+    'x.lab.halogens': 'Pane kaitseprillid ja kindad. Kloor ja broom on mürgised: hoia nende suletud proovipurke tõmbekapis.|Puuduta kloori-, broomi- ja joodipurki. Märgi iga aine värvus ja olek toatingimustel.|Võrdle proove 17. rühmas ülalt alla: värvus tumeneb ning sulamis- ja keemistemperatuur tõusevad.|Täida vaatlustabel ja reaktsioonivõime trend ning vajuta „Kontrolli“.',
+    'x.lab.halogens.done': 'Õige. Kloor on kahvaturoheline gaas, broom punakaspruun vedelik ning jood hallikasmust tahkis violetse auruga. Reaktsioonivõime väheneb rühmas allapoole.',
+    'x.lab.halogens.sensory': 'Vaatle läbi suletud purkide. Ära ava ega nuusuta kloori või broomi; märgi värvus, olek ja nähtav aur.',
+    'x.halogens.row.cl': 'Kloor, Cl₂', 'x.halogens.row.br': 'Broom, Br₂', 'x.halogens.row.i': 'Jood, I₂', 'x.halogens.row.trend': 'Reaktsioonivõime 17. rühmas allapoole',
+    'x.ans_cl2gas': 'kahvaturoheline gaas', 'x.ans_br2liquid': 'punakaspruun vedelik', 'x.ans_i2solid': 'hallikasmust tahkis; violetne aur', 'x.ans_reactivityDown': 'väheneb: Cl₂ > Br₂ > I₂', 'x.ans_reactivityUp': 'suureneb: I₂ > Br₂ > Cl₂'
+  });
+  Object.assign(I18N.uk, {
+    'topic.nonmetals': 'Неметали',
+    'x.nonmetalsSpc.title': 'Властивості S, P і C', 'x.nonmetalsSpc.goal': 'Порівняйте вуглець, фосфор і сірку, безпечно спаліть малу пробу кожної речовини та визначте основний оксид.',
+    'x.nonmetalsSpc.desc': 'Дослідіть три тверді неметали та порівняйте їх горіння, продукти й вимоги безпеки.',
+    'x.lab.nonmetalsSpc': 'Надягніть окуляри. Перенесіть банки з елементами та спиртівку у витяжну шафу й увімкніть вентилятор.|Натисніть на кожну банку та розгляньте форму і вигляд зразка.|Відкрийте й запаліть спиртівку. Відкривайте по одній банці та тримайте біля полум’я, доки спостереження не з’явиться в журналі. Сірку й фосфор нагрівайте лише у працюючій витяжній шафі.|Загасіть спиртівку ковпачком. Зіставте кожен елемент з основним продуктом горіння й натисніть «Перевірити».',
+    'x.lab.nonmetalsSpc.done': 'Правильно. Вуглець розжарюється й утворює CO₂; сірка горить синім полум’ям до SO₂; фосфор горить яскраво з білим димом P₄O₁₀. Це кислотні оксиди.',
+    'x.lab.nonmetalsSpc.sensory': 'Запишіть колір і форму зразка, колір полум’я, світіння або дим. Не нюхайте продукти безпосередньо.',
+    'x.nonmetalsSpc.row.c': 'Вуглець (C)', 'x.nonmetalsSpc.row.p': 'Фосфор (P)', 'x.nonmetalsSpc.row.s': 'Сірка (S)',
+    'x.ans_co2': 'червоне світіння → CO₂', 'x.ans_p4o10': 'яскраве полум’я, білий дим → P₄O₁₀', 'x.ans_so2': 'синє полум’я → SO₂',
+    'x.halogens.title': 'Властивості галогенів', 'x.halogens.goal': 'Порівняйте хлор, бром та йод за кімнатних умов і пов’яжіть їхні фізичні властивості з реакційною здатністю у групі 17.',
+    'x.halogens.desc': 'Дослідіть Cl₂, Br₂ та I₂ і визначте зміну кольору, стану та реакційної здатності вниз по групі.',
+    'x.lab.halogens': 'Надягніть окуляри й рукавички. Хлор і бром токсичні: тримайте їхні герметичні банки у витяжній шафі.|Натисніть на банки з хлором, бромом та йодом. Запишіть колір і агрегатний стан кожної речовини.|Порівняйте зразки вниз по групі 17: колір темнішає, температури плавлення й кипіння зростають.|Заповніть спостереження і тренд реакційної здатності, потім натисніть «Перевірити».',
+    'x.lab.halogens.done': 'Правильно. Хлор — блідо-зелений газ, бром — червоно-бура рідина, йод — сіро-чорна тверда речовина з фіолетовою парою. Реакційна здатність зменшується вниз по групі.',
+    'x.lab.halogens.sensory': 'Спостерігайте крізь закриті банки. Не відкривайте й не нюхайте хлор або бром; відзначте колір, стан і видиму пару.',
+    'x.halogens.row.cl': 'Хлор, Cl₂', 'x.halogens.row.br': 'Бром, Br₂', 'x.halogens.row.i': 'Йод, I₂', 'x.halogens.row.trend': 'Реакційна здатність вниз по групі 17',
+    'x.ans_cl2gas': 'блідо-зелений газ', 'x.ans_br2liquid': 'червоно-бура рідина', 'x.ans_i2solid': 'сіро-чорна тверда речовина; фіолетова пара', 'x.ans_reactivityDown': 'зменшується: Cl₂ > Br₂ > I₂', 'x.ans_reactivityUp': 'збільшується: I₂ > Br₂ > Cl₂'
+  });
 })();
 
 /* K1.14, K1.15, K3.04 and K3.05 evidence-station laboratories. */

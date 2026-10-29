@@ -48,7 +48,7 @@ const dictionaryContext = {};
 vm.runInNewContext(`${dictionarySource}\n;globalThis.__i18n = I18N;`, dictionaryContext);
 const instructionKeys = ['x.steps', 'lab.ph.steps', 'lab.comb.steps',
   'x.lab.ind1', 'x.lab.ind2', 'x.lab.ind3', 'x.lab.pre1', 'x.lab.pre2', 'x.lab.pre3',
-  'x.lab.k111', 'x.lab.k112', 'x.lab.k113', 'x.lab.k3v01', 'x.lab.k3v02'];
+  'x.lab.nonmetalsSpc', 'x.lab.halogens', 'x.lab.k111', 'x.lab.k112', 'x.lab.k113', 'x.lab.k3v01', 'x.lab.k3v02'];
 for (const lang of ['ru', 'et', 'uk']) {
   for (const key of instructionKeys) {
     assert.ok(dictionaryContext.__i18n[lang][key], `${lang}.${key} must be translated`);
@@ -68,6 +68,12 @@ for (const id of ['k114', 'k115', 'k304', 'k305']) {
   assert.match(source, new RegExp(`id: '${id}'`), `${id} task must be registered`);
   assert.match(source, new RegExp(`id: '${id}', run: '${id}'`), `${id} must be visible in the lab catalogue`);
 }
+for (const id of ['nonmetals-spc', 'nonmetals-halogens']) {
+  assert.match(source, new RegExp(`id: '${id}', run: '${id}'`), `${id} must be visible and runnable in the lab catalogue`);
+  assert.ok(source.includes(`id: '${id}'`), `${id} task must be registered`);
+}
+assert.ok(source.includes("['nonmetals', T('topic.nonmetals')]"), 'the catalogue must expose the Nonmetals topic filter');
+for (const Z of [6, 15, 16, 17, 35, 53]) assert.ok(source.includes(`['el:${Z}']`), `element ${Z} must be preloaded by a nonmetals lab`);
 assert.ok(source.includes('function runActivityTrial'), 'controlled evidence labs must use the reusable activity station');
 for (const item of ['beaker:A', 'bottle:water', 'bottle:hcl01', 'bottle:acetic01', 'bottle:vinegar', 'bottle:naoh01', 'cond', 'glass:lamp', 'glass:matches', 'decor:ethanol', 'decor:acetone', 'thermo:1', 'thermo:2', 'thermo:3']) {
   assert.ok(source.includes(`'${item}'`), `${item} must be included in the K1 lab inventory`);
@@ -97,6 +103,9 @@ for (const id of ['k111', 'k112', 'k113', 'k3v01', 'k3v02']) {
 }
 for (const id of ['k114', 'k115', 'k304', 'k305']) {
   assert.ok(built.includes(`id: '${id}'`), `${id} must be present in the generated page`);
+}
+for (const id of ['nonmetals-spc', 'nonmetals-halogens']) {
+  assert.ok(built.includes(`id: '${id}', run: '${id}'`), `${id} must be present in the generated catalogue`);
 }
 assert.ok(built.includes('landingOnPan'), 'the generated page must contain the balance landing zone fix');
 assert.ok(built.includes('drawStream(container, mouth, landing'), 'the generated page must contain aligned demo pouring');

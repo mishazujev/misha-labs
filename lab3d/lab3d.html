@@ -2487,6 +2487,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, UNKNOWN_SOLIDS, carbonateReactionTime, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, peroxideOxygenRate, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
+import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase } from './mechanics.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -2802,6 +2803,7 @@ function makeBeaker(letter, x, z, glassMass, init) {
     label: () => T('x.beaker') + ' ' + letter + ' · ' + fmt(v.chem.V, 1) + ' mL' + (v.solid > .005 ? ' + ' + fmt(v.solid, 2) + ' g NaCl' : '') + ' — ' + T('x.beakerHint') };
   if (init) { v.chem.V = init.V; v.chem.tot = { ...init.tot }; }
   equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v);
+  applyMechanicalProfile(v, 'openVessel', { collisionRadius: R + .002 });
   proxy.userData.obj = v; vessels.push(v); return v;
 }
 function setSampleTag(v, title = '', detail = '') {
@@ -2989,6 +2991,7 @@ function makeBottle(id, x, z) {
   // Keep the cap in world space. An opened cap stays on the worktop while
   // the bottle is carried, matching the removable lids used elsewhere.
   g.updateMatrixWorld(true); const capWorld = cap.getWorldPosition(V3()); g.remove(cap); scene.add(cap); cap.position.copy(capWorld); cap.userData.off = V3(0, .143, 0);
+  applyMechanicalProfile(o, 'reagentBottle', { collisionRadius: BOT_R });
   o.tap = () => toggleBottle(o);
   proxy.userData.obj = o; return o;
 }
@@ -3016,6 +3019,7 @@ function makeDropper(id, x, z) {
     label: () => o.parked ? T('x.tapBulb') : T(REAG[id].name) + ' · ' + T(o.open ? 'x.indOpen' : 'x.indClosed') };
   const lidControl = { kind: 'button', name: 'dropperLid', noTip: false, owner: o, proxy, label: () => T('x.indLid'), tap: () => toggleDropper(o) }; Object.defineProperty(lidControl, 'stowed', { get: () => o.stowed }); o.lidControl = lidControl;
   o.tap = () => { if (!o.parked) { toggleDropper(o); return; } o.pulse = 1; o.count++; spawnDrop(o.g.position.clone().add(V3(0, -.002, 0)), compOf(id), o.parked); };
+  applyMechanicalProfile(o, 'dropper');
   proxy.userData.obj = lidControl; proxy.userData.part = 'dropperLid'; bodyProxy.userData.obj = o; bodyProxy.userData.part = 'dropperBody'; return o;
 }
 /* ===================== ASSET: WASH BOTTLE ===================== (PE squeeze bottle 250 mL; pivot base; nozzle tip local) */
@@ -3029,7 +3033,7 @@ function makeWashBottle(x, z) {
   const lab = new THREE.Mesh(new THREE.CylinderGeometry(.0315, .0315, .03, 32, 1, true, -.9, 1.8), new THREE.MeshStandardMaterial({ map: canvasTex(256, 128, (c, w, h) => { c.fillStyle = '#fff'; c.fillRect(0, 0, w, h); c.fillStyle = '#2F62A8'; c.font = '700 34px "IBM Plex Sans", sans-serif'; c.fillText('H₂O dest.', 20, 76); }), roughness: .8 })); lab.position.y = .07; g.add(lab);
   const proxy = new THREE.Mesh(new THREE.CylinderGeometry(.036, .036, .2, 10), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = .1; g.add(proxy);
   const o = { kind: 'wash', g, body, proxy, sh: contactShadow(.034, x, z, .8), home: V3(x, 0, z), home0: V3(x, 0, z), squeeze: 0, nozzleLocal: V3(.05, .19, 0), label: () => T('x.washHint') };
-  proxy.userData.obj = o; return o;
+  applyMechanicalProfile(o, 'washBottle'); proxy.userData.obj = o; return o;
 }
 /* ===================== ASSET: NaCl JAR + SPATULA ===================== */
 const JAR = { x: .4, z: -.24, R: .032, H: .07 };
@@ -3049,6 +3053,7 @@ const spatula = (() => {
   const load = new THREE.Mesh(new THREE.SphereGeometry(.007, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), MAT.salt); load.visible = false; d.add(load);
   const proxy = new THREE.Mesh(new THREE.BoxGeometry(.2, .03, .03), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.x = .08; d.add(proxy);
   const o = { kind: 'spatula', g: d, load, proxy, home: V3(.33, .004, -.14), home0: V3(.33, .004, -.14), grams: 0, label: () => o.grams > .005 ? T('x.spatulaLoaded', { g: fmt(o.grams, 2) }) : T('x.spatulaHint') };
+  applyMechanicalProfile(o, 'handTool', { collisionRadius: .03 });
   d.position.copy(o.home); d.rotation.y = .5; proxy.userData.obj = o; return o;
 })();
 /* ===================== ASSET: TOP-LOADING BALANCE ===================== (0.01 g, 620 g; pivot base) */
@@ -3133,7 +3138,7 @@ const electrode = (() => {
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(.0045, .0065, .014, 24), MAT.black); cap.position.y = .17; d.add(cap);
   const proxy = new THREE.Mesh(new THREE.CylinderGeometry(.016, .016, .18, 8), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = .09; d.add(proxy);
   const o = { kind: 'electrode', g: d, proxy, home: V3(-.3, .012, -.1), home0: V3(-.3, .012, -.1), stand0: V3(-.3, 0, -.1), lying: false, in: null, label: () => T('x.electrode') };
-  d.position.copy(o.home); proxy.userData.obj = o; return o;
+  applyMechanicalProfile(o, 'probe'); d.position.copy(o.home); proxy.userData.obj = o; return o;
 })();
 { const R = .02, H = .055; const m = new THREE.Mesh(shellLathe([V2(0, 0), V2(R - .003, 0), V2(R, .003), V2(R, H), V2(R + .0008, H + .0008)], .0012, 48), MAT.glass); m.position.set(-.3, 0, -.1); m.renderOrder = 3; m.userData.help = 'storage'; scene.add(m);
   const l = new THREE.Mesh(new THREE.CylinderGeometry(R - .0016, R - .0016, .03, 32), liquidMat()); l.position.set(-.3, .017, -.1); l.userData.help = 'storage'; scene.add(l); contactShadow(.024, -.3, -.1, .8); }
@@ -3153,14 +3158,14 @@ const rod = (() => {
   const m = new THREE.Mesh(new THREE.CapsuleGeometry(.0025, .195, 6, 16), new THREE.MeshPhysicalMaterial({ color: 0xf2fafa, roughness: .02, transparent: true, opacity: .35, clearcoat: 1, envMapIntensity: 2, depthWrite: false })); m.position.y = .1; m.renderOrder = 3; d.add(m);
   const proxy = new THREE.Mesh(new THREE.CylinderGeometry(.006, .006, .2, 8), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = .1; d.add(proxy);
   const o = { kind: 'rod', g: d, proxy, home: V3(.07, .004, .21), home0: V3(.07, .004, .21), stand0: V3(.07, 0, .21), lying: false, in: null, last: V3(), label: () => T('x.rod') };
-  d.position.copy(o.home); d.rotation.z = -.18; proxy.userData.obj = o; return o;
+  applyMechanicalProfile(o, 'probe'); d.position.copy(o.home); d.rotation.z = -.18; proxy.userData.obj = o; return o;
 })();
 /* rod holder: a small glass cup; it can be moved, and the rod standing in it moves along */
 const rodHolder = (() => { const R = .018, H = .05, g = new THREE.Group(); g.position.set(.07, 0, .21); g.userData.help = 'rodholder'; scene.add(g);
   const m = new THREE.Mesh(shellLathe([V2(0, 0), V2(R - .003, 0), V2(R, .003), V2(R, H), V2(R + .0008, H + .0008)], .0012, 48), MAT.glass); m.renderOrder = 3; m.userData.help = 'rodholder'; g.add(m);
   const sh = contactShadow(.022, 0, 0, .8); scene.remove(sh); sh.position.set(0, .0006, 0); g.add(sh);
   const proxy = new THREE.Mesh(new THREE.CylinderGeometry(.022, .022, .055, 10), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = .027; g.add(proxy);
-  const o = { kind: 'holder', g, proxy, home: V3(.07, 0, .21), held: false, label: () => T('x.h.rodholder.t') }; proxy.userData.obj = o; return o; })();
+  const o = { kind: 'holder', g, proxy, home: V3(.07, 0, .21), held: false, label: () => T('x.h.rodholder.t') }; applyMechanicalProfile(o, 'handTool', { collisionRadius: .022 }); proxy.userData.obj = o; return o; })();
 function updateHolder(dt) {
   const o = rodHolder; if (o.held && ptrOK) o.g.position.lerp(V3(ptr.x, .03, ptr.z), 1 - Math.exp(-dt * 14)); else o.g.position.lerp(o.home, 1 - Math.exp(-dt * 9));
   const p = o.g.position; rod.stand0.set(p.x, 0, p.z); rod.home0.set(p.x, p.y + .004, p.z);
@@ -3183,7 +3188,7 @@ const thermos = [1, 2, 3].map(n => {
   const proxy = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, .19, 8), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = .09; d.add(proxy);
   const o = { kind: 'thermo', n, g: d, proxy, cv, tex, reading: ROOM_T, shown: null, home: V3(.2 + n * .05, .0068, .25), home0: V3(.2 + n * .05, .0068, .25), stand0: null, lying: true, in: null, last: V3(),
     label: () => T('x.thermo', { n }) + ' — ' + fmt(o.reading, 1) + ' °C' };
-  d.position.copy(o.home); proxy.userData.obj = o; return o;
+  applyMechanicalProfile(o, 'probe'); d.position.copy(o.home); proxy.userData.obj = o; return o;
 });
 function thermoTarget(o) {
   const v = o.in || (o.held && o.zoneV);
@@ -3204,7 +3209,7 @@ const tester = (() => {
   const glow = new THREE.Mesh(new THREE.SphereGeometry(.024, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFFD27A, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); glow.position.y = .153; d.add(glow);
   const proxy = new THREE.Mesh(new THREE.CylinderGeometry(.022, .022, .18, 8), new THREE.MeshBasicMaterial({ visible: false })); proxy.position.y = .085; d.add(proxy);
   const o = { kind: 'thermo', cond: true, n: 0, g: d, proxy, bulb, fil, glow, b: 0, home: V3(.32, .017, .24), home0: V3(.32, .017, .24), stand0: null, lying: true, in: null, last: V3(), label: () => T('x.cond') };
-  d.position.copy(o.home); proxy.userData.obj = o; return o;
+  applyMechanicalProfile(o, 'probe'); d.position.copy(o.home); proxy.userData.obj = o; return o;
 })();
 const probes = [...thermos, tester];
 
@@ -3343,6 +3348,7 @@ function makePipette(kind, x, z) {
     label: () => T(big ? 'x.p10' : 'x.p3') + (o.chem.V > .004 ? ' · ' + fmtPip(o) : '') + ' — ' + T('x.pipHint') };
   const control = { kind: 'pipControl', pip: o, proxy: controlProxy, label: () => T('x.pipControl') };
   control.tap = () => showMsg(T('x.pipControlDock')); o.control = control; o.controlProxy = controlProxy; controlProxy.userData.obj = control;
+  applyMechanicalProfile(o, 'pipette');
   d.position.copy(o.home); d.rotation.set(0, 0, -Math.PI / 2); d.userData.help = big ? 'p10' : 'p3'; proxy.userData.obj = o; return o;
 }
 const QLIE = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, -Math.PI / 2));
@@ -4065,6 +4071,7 @@ function takeSample(D) {
   const home = findSpot(null, .12 + (Math.random() - .5) * .2, .06, .03);
   const big = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .07, 10), new THREE.MeshBasicMaterial({ visible: false })); big.position.y = .03; m.add(big);
   m.updateMatrixWorld(); const S = { kind: 'sample', D, e: D.e, g: m, proxy: big, home: V3(home.x, 0, home.z), held: false, open: false, onBal: false, noTip: true, label: () => elName(D.e) + ' (' + D.e[0] + ')' };
+  applyMechanicalProfile(S, 'sampleJar');
   { const form = formOf(D.e), metal = ['am', 'ae', 'tm', 'pt', 'la', 'ac'].includes(D.e[3]); S.full = S.left = form === 'atoms' ? 1e-6 : form === 'oil' ? 1.2 : form === 'lump' ? 6 : 10;
     S.mat = sMat(SAMPLE_LOOK[D.e[0]] ?? (metal ? 0xA8ADB2 : 0x8A8F8C), metal || D.e[0] === 'Ge' || D.e[0] === 'Sb'); }
   { const L = m.userData.lid; if (L) { m.updateMatrixWorld(); const wp = L.getWorldPosition(V3()); m.remove(L); L.position.copy(wp); scene.add(L); S.lid = L;
@@ -4130,6 +4137,7 @@ function takeProp(d) {
   grp.position.set(c.x, bb.min.y, c.z); grp.quaternion.setFromAxisAngle(V3(0, 1, 0), I.ry || 0); grp.rotation.y = I.ry || 0; grp.userData.spin = I.ry || 0; scene.add(grp);
   const L = { en: 0, ru: 1, et: 2 }[LANG] ?? 0, nm = () => I.it.n[{ en: 0, ru: 1, et: 2 }[LANG] ?? 0] || I.it.n[0];
   const S = { kind: 'prop', d, g: grp, proxy: px, R, home: V3(home.x, 0, home.z), held: false, noTip: true, label: () => nm(), H: sz.y, shelf: grp.position.clone() };
+  applyMechanicalProfile(S, 'movableProp', { collisionRadius: R });
   if (capParts.length) { const lid = new THREE.Group(); const cb = new THREE.Box3(); for (const [g] of capParts) { g.computeBoundingBox(); cb.union(g.boundingBox); }
     const cc = cb.getCenter(V3()); for (const [g, b] of capParts) { g.translate(-cc.x, -cc.y, -cc.z); g.computeBoundingSphere(); const m = new THREE.Mesh(g, DECOR_MESH[b].material); m.castShadow = true; lid.add(m); }
     lid.userData.off = cc.clone(); scene.add(lid); S.lid = lid;
@@ -5142,7 +5150,7 @@ const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let held = null, pending = null, hover = null; const ptr = V3(); let ptrOK = false; const scr = { x: 0, y: 0 };
 const carryPlane = new THREE.Plane(V3(0, 1, 0), 0);
 function setNdc(e) { const r = renderer.domElement.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); }
-const carryH = o => o.kind === 'bottle' ? .19 : o.kind === 'vessel' ? .16 : o.kind === 'dropper' ? .17 : o.kind === 'wash' ? .18 : .16;
+const carryH = mechanicalCarryHeight;
 /* SHAKE — a quick side-to-side wiggle of the finger or mouse (≥3 direction changes of 12 px+ within 0.7 s) while holding an object,
    or a real phone shake where the motion sensor is available. TILT — where the orientation sensor answers, tipping the phone sideways
    while pouring adds to the bottle's tilt; dragging still works everywhere (desktop, whiteboard). */
@@ -5156,7 +5164,7 @@ function trackWiggle(x, now) {
 const MOTION = { shakeOK: false, tiltOK: false, gamma: null, peaks: [], asked: false };
 function onShake(src) {
   const o = held; if (!o || o.pour || o.pz) return;
-  if (o.kind === 'vessel') {
+  if (hasMechanicalCapability(o, 'shake')) {
     o.stir = 1; o.swirl = Math.max(o.swirl, .8);
     for (let i = 0; i < 4; i++) addWave(o, (Math.random() - .5) * .04, (Math.random() - .5) * .04, .0009);
     if (o.chem.V > 150) for (let k = 0; k < 4; k++) SPL.push({ x: o.g.position.x + (Math.random() - .5) * .05, y: o.g.position.y + o.H, z: o.g.position.z + (Math.random() - .5) * .05, vx: (Math.random() - .5) * .3, vy: .3, vz: (Math.random() - .5) * .3, r: .0007 });
@@ -5182,11 +5190,12 @@ function pipDrag(o, y) {
   z.vT = clamp(z.vT - dy * k, 0, o.cap);
 }
 let lastEv = null;
-const HELD_R = o => o.kind === 'holder' ? .022 : o.kind === 'pipette' ? .012 : o.kind === 'dropper' ? .02 : o.kind === 'vessel' ? o.R + .002 : o.kind === 'bottle' ? BOT_R : o.kind === 'wash' ? .032 : o.kind === 'sample' ? .026 : o.kind === 'prop' ? o.R : 0;
+const HELD_R = mechanicalRadius;
 function keepApart(o) {
   if (!o) return; const r = HELD_R(o); if (!r || !ptrOK) return;
-  if ((o.kind === 'vessel' || (o.kind === 'prop' && o.lamp)) && nearestHeatStand(ptr, o.area)) return;
-  const canEnter = o.kind === 'pipette' ? pipTarget(o) : (o.kind === 'vessel' || o.kind === 'bottle' || o.kind === 'wash' || (o.kind === 'sample' && o.open && o.left > 0) || (o.kind === 'prop' && o.open && o.chem && o.left > 0)) && findTarget(o);
+  if ((hasMechanicalCapability(o, 'heat') || o.lamp) && nearestHeatStand(ptr, o.area)) return;
+  const canEnter = hasMechanicalCapability(o, 'drawLiquid') ? pipTarget(o) :
+    ((hasMechanicalCapability(o, 'pourLiquid') || hasMechanicalCapability(o, 'dispenseLiquid') || hasMechanicalCapability(o, 'dispenseSolid')) && findTarget(o));
   if (canEnter) return;
   const circ = obstacles(o);
   for (let it = 0; it < 6; it++) { let moved = false;
@@ -5222,17 +5231,17 @@ function startHold(o, e, part) {
   if (o.heatStand && mountedVessel(o)) { showMsg(T('x.tripodBusy')); return; }
   // Dragging a closed working bottle is an intent to use it: remove its cap
   // first so the familiar drag-to-pour gesture cannot silently do nothing.
-  if (o.kind === 'bottle' && !o.open) toggleBottle(o);
+  if (o.mechanics && o.mechanics.requiresOpen && !o.open) toggleBottle(o);
   if (o.docked) {
     o.docked = false;
     if (o.kind === 'pipette') { o.pz = null; o.tg = null; o.cand = null; o.block = null; }
     else if (o.pour) { o.pour.y0 = e.clientY; o.pour.x0 = e.clientX; o.pour.base = o.tilt; }
   }
-  if (o.kind === 'vessel' || o.kind === 'bottle') for (const q of pipettes) if (q.docked && q.pz && (q.pz.tg.v === o || q.pz.tg.b === o)) { q.docked = false; q.pz = null; q.home.copy(findSpot(q, q.g.position.x + q.L / 2, q.g.position.z, .03)).add(V3(-q.L / 2, .0072, 0)); q.lying = true; if (q.chem.V > .004) { logE('mistake', [['x.pipSpill', { a: fmtPip(q) }]]); q.chem = { V: 0, tot: {}, ind: {} }; } }
+  if (hasMechanicalCapability(o, 'contain')) for (const q of pipettes) if (q.docked && q.pz && (q.pz.tg.v === o || q.pz.tg.b === o)) { q.docked = false; q.pz = null; q.home.copy(findSpot(q, q.g.position.x + q.L / 2, q.g.position.z, .03)).add(V3(-q.L / 2, .0072, 0)); q.lying = true; if (q.chem.V > .004) { logE('mistake', [['x.pipSpill', { a: fmtPip(q) }]]); q.chem = { V: 0, tot: {}, ind: {} }; } }
   if (o.kind === 'dropper') o.dragWhole = part === 'dropperBody';
   setOnBalance(o, false);
   held = o; o.held = true; hover = null; $('tip').hidden = true;
-  if (o.kind === 'vessel') { o.onBalance = false; o.inSink = false; o.sinkDrain = null; o.heatSupport = null; for (const s of [electrode, rod, ...probes]) if (s.in === o) s.in = null; for (const d of droppers) if (d.parked === o) unpark(d); for (const q of pipettes) if (q.in === o) q.in = null; }
+  if (hasMechanicalCapability(o, 'receiveLiquid')) { o.onBalance = false; o.inSink = false; o.sinkDrain = null; o.heatSupport = null; for (const s of [electrode, rod, ...probes]) if (s.in === o) s.in = null; for (const d of droppers) if (d.parked === o) unpark(d); for (const q of pipettes) if (q.in === o) q.in = null; }
   if (o.kind === 'dropper' && o.parked && !o.dragWhole) unpark(o);
   if (o.kind === 'electrode' || o.kind === 'rod' || o.kind === 'thermo') o.in = null;
   moveHeld(e);
@@ -5349,7 +5358,7 @@ function release() {
   if (pending && !held) { const p = pending, o = p.o; pending = null; controls.enabled = true; if (o.stowed) { const it = itemOf(o) || ITEMS.find(i => i.key === 'jar'); if (it) takeItem(it); return; } if (p.part === 'dropperBody') { showManual('dropper'); return; } if (o.tap) o.tap(); return; }
   pending = null; controls.enabled = true; if (!held) return;
   const o = held; held = null; o.held = false; endSession();
-  if ((o.kind === 'vessel' || o.kind === 'bottle') && o.pour) { o.docked = true; o.pour.y0 = scr.y; o.pour.base = o.tilt; buzz(10); return; }
+  if (hasMechanicalCapability(o, 'tilt') && o.pour) { o.docked = true; o.pour.y0 = scr.y; o.pour.base = o.tilt; buzz(10); return; }
   if (placeOnBalance(o)) return;
   if (o.kind === 'pipette') {
     // Release is the docking decision. A valid mouth does not require the
@@ -5357,9 +5366,9 @@ function release() {
     const tg = (o.pz && o.pz.tg) || o.tg || pipTarget(o);
     if (dockPipette(o, tg)) return;
   }
-  if (o.kind === 'vessel') placeVessel(o);
+  if (hasMechanicalCapability(o, 'sink')) placeVessel(o);
   if (o.kind === 'sample') setOnBalance(o, false);
-  if (o.kind === 'bottle') { o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, BOT_R)); o.emptyLog = o.V <= .005; }
+  if (o.mechanics && o.mechanics.requiresOpen) { o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, mechanicalRadius(o))); o.emptyLog = o.V <= .005; }
   if (o.kind === 'wash') o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, .032));
   if (o.kind === 'holder') { const q = findSpot(o, o.g.position.x, o.g.position.z, .022); o.home.set(q.x, 0, q.z); }
   if (o.kind === 'sample' || o.kind === 'prop') { setOnBalance(o, false); if (!(o.kind === 'prop' && snapHeatSource(o))) { const q = findSpot(o, o.g.position.x, o.g.position.z, o.R || .03); o.home.set(q.x, 0, q.z); } }
@@ -5422,16 +5431,19 @@ const inHood = p => p.x > -.76 && p.x < .76 && p.z > 2.5 && p.z < 3.28;
 /* footprints of everything standing on the bench (centre x, z, radius), except `self` */
 function obstacles(self) {
   const circ = [];
-  for (const v of vessels) if (v !== self && !v.onBalance && !v.stowed && !v.held && !v.inSink) circ.push([v.base.x, v.base.z, v.R + .002]);
-  for (const b of bottles) if (!b.stowed) { if (b !== self && !b.held && !onBalance(b)) circ.push([b.home.x, b.home.z, BOT_R]); if (b.open && b.lidHome) circ.push([b.lidHome.x, b.lidHome.z, .018]); }
-  if (wash !== self && !wash.held && !onBalance(wash)) circ.push([wash.home.x, wash.home.z, .032]);
-  if (typeof PT !== 'undefined') for (const S of PT.samples) if (S !== self && !S.held && !S.onBal) { circ.push([S.home.x, S.home.z, .03]); if (S.open && S.lidHome) circ.push([S.lidHome.x, S.lidHome.z, .022]); }
-  for (const S of PROPS) { if (S !== self && !S.held && !onBalance(S)) circ.push([S.home.x, S.home.z, S.R]); if (S.open && S.lidHome) circ.push([S.lidHome.x, S.lidHome.z, .022]); }
-  for (const d of droppers) if (!d.stowed && d !== self && !d.held && !d.parked && !onBalance(d)) circ.push([d.bx, d.bz, .02]);
-  for (const q of probes) if (q !== self && !q.stowed && !q.held && !q.in && q.lying && !onBalance(q)) for (const k of [.03, .09, .15]) circ.push([q.home.x + k, q.home.z, .016]);
+  for (const o of balanceItems()) {
+    if (o === self || !hasMechanicalCapability(o, 'collide') || o.stowed || o.held || onBalance(o) || o.fly) continue;
+    const geometry = mechanicalGeometry(o), r = mechanicalRadius(o);
+    if (hasMechanicalCapability(o, 'sink')) { if (!o.inSink) circ.push([o.base.x, o.base.z, r]); }
+    else if (geometry === 'necked-bottle') { circ.push([o.home.x, o.home.z, r]); if (o.open && o.lidHome) circ.push([o.lidHome.x, o.lidHome.z, .018]); }
+    else if (geometry === 'dropper') { if (!o.parked) circ.push([o.bx, o.bz, r]); }
+    else if ((geometry === 'probe' || geometry === 'pipette') && o.lying && !o.in) {
+      const L = o.L || .18; for (const f of [.2, .5, .8]) circ.push([o.home.x + L * f, o.home.z, r]);
+    } else if (o.home) { circ.push([o.home.x, o.home.z, r]); if (o.open && o.lidHome) circ.push([o.lidHome.x, o.lidHome.z, .022]); }
+  }
   if (RIG.g.visible) circ.push([RIG.base.x, RIG.base.z, .09]);
   if (JAR.present) circ.push([JAR.x, JAR.z, JAR.R + .002], [JAR.x + .07, JAR.z + .03, .036]);
-  circ.push([-.45, -.1, .075], [-.3, -.1, .022]); if (rodHolder !== self && !rodHolder.held && !onBalance(rodHolder)) circ.push([rodHolder.home.x, rodHolder.home.z, .022]);
+  circ.push([-.45, -.1, .075], [-.3, -.1, .022]);
   return circ;
 }
 function findSpot(self, x, z, r) {
@@ -5481,8 +5493,9 @@ const GRAVITY_SOLIDS = {
   }
 };
 function findTarget(o) {
-  for (const v of vessels) if (v !== o && !v.held && !v.stowed) { const d = Math.hypot(ptr.x - v.g.position.x, ptr.z - v.g.position.z); if (d < v.R + .045) return { kind: 'vessel', v, c: V3(v.g.position.x, rimY(v), v.g.position.z), R: v.Ri }; }
-  if ((o.kind === 'bottle' || o.kind === 'pipette' || (o.kind === 'vessel' && (o.chem.V > FILM + .3 || GRAVITY_SOLIDS.has(o)))) && ptr.x > SINK.x0 - .03 && ptr.x < SINK.x1 + .03 && ptr.z > SINK.z0 - .03 && ptr.z < SINK.z1 + .03) return { kind: 'sink', c: V3(clamp(ptr.x, SINK.x0 + .05, SINK.x1 - .05), 0, clamp(ptr.z, SINK.z0 + .05, SINK.z1 - .05)), R: .04 };
+  for (const v of vessels) if (v !== o && hasMechanicalCapability(v, 'receiveLiquid') && !v.held && !v.stowed) { const d = Math.hypot(ptr.x - v.g.position.x, ptr.z - v.g.position.z); if (d < v.R + .045) return { kind: 'vessel', v, c: V3(v.g.position.x, rimY(v), v.g.position.z), R: v.Ri }; }
+  const carriesMatter = hasMechanicalCapability(o, 'drawLiquid') || canTransferPhase(o, 'liquid') || (canTransferPhase(o, 'solid') && GRAVITY_SOLIDS.has(o));
+  if (carriesMatter && ptr.x > SINK.x0 - .03 && ptr.x < SINK.x1 + .03 && ptr.z > SINK.z0 - .03 && ptr.z < SINK.z1 + .03) return { kind: 'sink', c: V3(clamp(ptr.x, SINK.x0 + .05, SINK.x1 - .05), 0, clamp(ptr.z, SINK.z0 + .05, SINK.z1 - .05)), R: .04 };
   return null;
 }
 function poseTilted(o, spoutLocal, dir, th) { const axis = V3(dir.z, 0, -dir.x).normalize(); const q = new THREE.Quaternion().setFromAxisAngle(axis, D2R(th)); o.g.quaternion.copy(q); o.g.position.copy(o.spout).sub(spoutLocal.clone().applyQuaternion(q)); }
@@ -5490,7 +5503,7 @@ function poseTilted(o, spoutLocal, dir, th) { const axis = V3(dir.z, 0, -dir.x).
    only its base is insufficient: the shoulder can otherwise pass through a
    beaker while the mouth is correctly positioned above the rim. */
 function separateBottlePose(o) {
-  if (o.kind !== 'bottle') return;
+  if (mechanicalGeometry(o) !== 'necked-bottle') return;
   const samples = [.025, .055, .085];
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
@@ -5522,12 +5535,18 @@ function deliver(tg, comp, dV, at, rate) {
    Bring the container over a target: it tilts to just below the pouring angle. Drag down to tilt further,
    drag up to tilt back. Liquid above the capacity at the current tilt flows out; turned mouth-down it empties. */
 const buzz = ms => { try { if (navigator.vibrate) { navigator.vibrate(ms); return; } } catch (_) { } const p = document.querySelector('.pill'); if (p) { p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); } };
-const contents = o => o.kind === 'vessel' ? o.chem.V : o.V;
+const isSolutionContainer = o => !!(o && o.mechanics && o.mechanics.liquidStore === 'solution');
+const contents = o => isSolutionContainer(o) ? o.chem.V : o.V;
+const removeContainerLiquid = (o, dV) => {
+  if (isSolutionContainer(o)) return removeLiquid(o, dV);
+  const moved = Math.min(dV, Math.max(0, o.V || 0)); o.V -= moved; return moved;
+};
+const containerComposition = o => isSolutionContainer(o) ? compOfVessel(o) : compOf(o.id);
 const sameTg = (a, b) => a && b && a.kind === b.kind && a.v === b.v && a.b === b.b;
 /* a target engages only after the pointer has rested over it for a moment, so passing over a beaker does not grab the object */
 function dwell(o, f, dt) { if (!f) { o.cand = null; return null; } if (sameTg(f, o.cand)) o.candT += dt; else { o.cand = f; o.candT = 0; } return o.candT > .22 ? f : null; }
 function updatePourer(o, dt, t) {
-  const isV = o.kind === 'vessel';
+  const isV = isSolutionContainer(o);
   if (o.demoPose) {
     o.g.position.copy(o.demoPose.p); o.g.quaternion.setFromAxisAngle(V3(0, 0, 1), o.demoPose.tilt || 0); o.g.updateMatrixWorld();
     if (!isV) { o.cap.visible = true; animLid(o, dt); o.liq.visible = o.V > .05; o.plane.constant = o.g.position.y + o.shape.levelAt(Math.abs((o.demoPose.tilt || 0) * 180 / Math.PI), Math.max(o.V, .05)); o.sh.position.set(o.g.position.x, .0006, o.g.position.z); }
@@ -5592,22 +5611,22 @@ function updatePourer(o, dt, t) {
   }
 }
 function flowFrom(o, tg, dt) {
-  const isV = o.kind === 'vessel', V = contents(o);
-  const ex = V - o.shape.capAt(o.tilt) - (isV ? 0 : 0);
+  const isV = isSolutionContainer(o), V = contents(o);
+  const ex = V - o.shape.capAt(o.tilt);
   let streamed = false;
   if (tg && ex > .02 && V > (isV ? FILM + .005 : .005)) {
-    const Q = Math.min(o.Qmax, 4 * ex + .25), comp = isV ? compOfVessel(o) : compOf(o.id);
+    const Q = Math.min(o.Qmax, 4 * ex + .25), comp = containerComposition(o);
     if (Q < .8) {
       o.acc = (o.acc || 0) + Q * dt;
-      if (o.acc >= .05) { o.acc = 0; const dV = isV ? removeLiquid(o, .05) : Math.min(.05, o.V); if (!isV) o.V -= dV; if (dV > 0 && o.pour) { o.pour.amt += dV; buzz(4); } if (dV > 0) spawnDrop(o.spout.clone().add(V3(0, -.003, 0)), comp, tg.kind === 'vessel' ? tg.v : 'sink'); }
+      if (o.acc >= .05) { o.acc = 0; const dV = removeContainerLiquid(o, .05); if (dV > 0 && o.pour) { o.pour.amt += dV; buzz(4); } if (dV > 0) spawnDrop(o.spout.clone().add(V3(0, -.003, 0)), comp, tg.kind === 'vessel' ? tg.v : 'sink'); }
     } else {
-      let dV = Math.min(ex, Q * dt); if (isV) dV = removeLiquid(o, dV); else { dV = Math.min(dV, o.V); o.V -= dV; }
+      let dV = removeContainerLiquid(o, Math.min(ex, Q * dt));
       if (dV > 0) { streamed = true; o.flow = Q; if (o.pour) { o.pour.amt += dV; if (!o.pour.flowing) { o.pour.flowing = true; buzz(12); } } const at = landPoint(tg, o.spout, o.dir); drawStream(o, o.spout.clone(), at, Math.min(Q, 8) * .5); deliver(tg, comp, dV, at, Math.min(Q, 8)); }
     }
     if (isV && o.chem.V <= FILM + .02 && tg.kind === 'sink' && !o.emptiedLog) { o.emptiedLog = true; logE('info', [['x.emptied', { v: o.letter, f: fmt(FILM, 1) }]]); }
     if (!isV && o.V <= .005 && !o.emptyLog) { o.emptyLog = true; logE('info', [['x.bottleEmptied', { b: { k: REAG[o.id].name } }]]); }
   }
-  if (isV) GRAVITY_SOLIDS.update(o, tg, dt);
+  if (canTransferPhase(o, 'solid')) GRAVITY_SOLIDS.update(o, tg, dt);
   if (!streamed) drawStream(o, null);
   if (isV && o.chem.V > FILM + .05) o.emptiedLog = false;
 }
@@ -6147,5 +6166,5 @@ function frame() {
 buildTags(); resetState(); setupTask(TASKS[0]); setInspector(inspectorOpen); resize(); drawLCD(null); drawBalance('', false);
 $('loading').remove();
 requestAnimationFrame(frame);
-window.__lab3d = { reactions: window.ReactionSimulation, BAYS, setupTask, TASKS, get TASK() { return TASK; }, DEMO, startDemo, nextDemo, stopDemo, lightLamp, moveArea, toggleProp, setPPE, checkAnswers, addLiquid, compOf, REAG, FX, rodHolder, propInfo, takeProp, BAL, BURETTE, eyeLevel, sampleInfo, HOOD, toggleDoorZ: z => toggleDoor(PT.doors.find(d => d.Z === z)), takeSampleZ: z => takeSample(PT.doors.find(d => d.Z === z)), updateThermo, thermos, tester, probes, conductivity, EVAP, RIG, updateRig, ITEMS, takeItem, PT, SLOTS, DECOR_PICK, PROPS, GRAVITY_SOLIDS, goShelf, viewShelf, touchView: () => { viewTouched = true; }, TAP, spatula, onShake, MOTION, Q, MOBILE, scene, pipettes, METER, controls, vessels, bottles, droppers, wash, spatula, electrode, rod, camera, renderer, BAL, NB, balanceButton, panLoad, vesselMass, endSession, placeVessel };
+window.__lab3d = { reactions: window.ReactionSimulation, mechanics: MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, BAYS, setupTask, TASKS, get TASK() { return TASK; }, DEMO, startDemo, nextDemo, stopDemo, lightLamp, moveArea, toggleProp, setPPE, checkAnswers, addLiquid, compOf, REAG, FX, rodHolder, propInfo, takeProp, BAL, BURETTE, eyeLevel, sampleInfo, HOOD, toggleDoorZ: z => toggleDoor(PT.doors.find(d => d.Z === z)), takeSampleZ: z => takeSample(PT.doors.find(d => d.Z === z)), updateThermo, thermos, tester, probes, conductivity, EVAP, RIG, updateRig, ITEMS, takeItem, PT, SLOTS, DECOR_PICK, PROPS, GRAVITY_SOLIDS, goShelf, viewShelf, touchView: () => { viewTouched = true; }, TAP, spatula, onShake, MOTION, Q, MOBILE, scene, pipettes, METER, controls, vessels, bottles, droppers, wash, spatula, electrode, rod, camera, renderer, BAL, NB, balanceButton, panLoad, vesselMass, endSession, placeVessel };
 </script>

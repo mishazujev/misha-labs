@@ -23,6 +23,7 @@ const NONMETAL_TEXT = {
   'x.oxideAbsorbed': '{oxide} was absorbed in the indicator water in beaker {v}; the solution became acidic.',
   'x.halogenReaction': 'Beaker {v}: {equation}. The new molecular halogen gives the observed colour.',
   'x.halogenNoReaction': 'Beaker {v}: iodine does not displace bromide; no colour change beyond dilution.',
+  'x.solidPoured': 'Solid particles fell from beaker {v} into beaker {to}.',
   'x.nonmetalsSpc.goal': 'Burn carbon, phosphorus and sulfur, absorb their oxides in water, test the pH change, then neutralise the acidic products with sodium hydroxide.',
   'x.nonmetalsSpc.desc': 'A combustion and acid–base investigation of three nonmetals and their oxides.',
   'x.nonmetalsSpc.start': 'The S/P/C combustion apparatus and three labelled indicator-water receivers are ready inside the fume cupboard.',
@@ -396,7 +397,7 @@ function doEq(v) {
   if (v.temp - v.warmLogT > 1.5) { v.warmLogT = v.temp; logE('obs', [[v.rxHot ? 'x.warmRx' : 'x.warm', { t: fmt(v.temp, 1) }]], { v: v.letter, amt: '', f: '' }); }
 }
 function liquidMass(v) { return solutionMass(v.chem, MW); }
-function vesselMass(v) { return v.glassMass + liquidMass(v) + v.solid + (v.metal ? v.metal.reduce((a, p) => a + p.m, 0) : 0); }
+function vesselMass(v) { return v.glassMass + liquidMass(v) + v.solid + (v.particles ? v.particles.reduce((a, p) => a + p.m, 0) : 0); }
 
 /* ---------- plumes ---------- */
 function spawnPlume(v, wx, wz, rgb, n) {
@@ -1482,20 +1483,20 @@ const WATERRX = { Li: .02, Na: .06, K: .12, Rb: .15, Cs: .2, Ca: .006, Sr: .008,
 const ACIDRX = { Mg: .03, Zn: .012, Fe: .005, Al: .006, Mn: .02, Ni: .002, Co: .002, Cd: .004, Sn: .002, Ca: .03, Sr: .03, Ba: .03, Li: .05, Na: .08, K: .12, Rb: .15, Cs: .2 };
 const ION = { Li: 'Na', Na: 'Na', K: 'K', Rb: 'K', Cs: 'K', Sr: 'Ca', Fe: 'Fe2' };
 const FLOATS = { Li: 1, Na: 1, K: 1 };
-function clearPieces(v) { if (v.metal) for (const p of v.metal) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); } v.metal = []; }
+function clearPieces(v) { if (v.particles) for (const p of v.particles) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); } v.particles = []; }
 function landPiece(p) {
-  const v = p.v; if (!v.metal) v.metal = []; if (!v.rxLog) v.rxLog = new Set();
-  if (v.metal.length >= 50) { const q = v.metal[Math.floor(Math.random() * v.metal.length)]; q.m += p.m; q.m0 += p.m; scene.remove(p.mesh); return; }
+  const v = p.v; if (!v.particles) v.particles = []; if (!v.rxLog) v.rxLog = new Set();
+  if (v.particles.length >= 50) { const q = v.particles[Math.floor(Math.random() * v.particles.length)]; q.m += p.m; q.m0 += p.m; scene.remove(p.mesh); return; }
   v.g.updateMatrixWorld(); v.g.attach(p.mesh); const a = Math.random() * 6.283, r = Math.sqrt(Math.random()) * v.Ri * .75;
   p.mesh.position.set(Math.sin(a) * r, v.b + p.sz * .7, Math.cos(a) * r);
-  v.metal.push({ sym: p.sym, e: p.e, cmp: p.cmp, m: p.m, m0: p.m, mesh: p.mesh, sz: p.sz, ang: a, r }); v.eqDirty = true;
+  v.particles.push({ sym: p.sym, e: p.e, cmp: p.cmp, m: p.m, m0: p.m, mesh: p.mesh, sz: p.sz, ang: a, r }); v.eqDirty = true;
 }
-function updateMetals(dt) {
+function updateSolidReactions(dt) {
   for (let i = ELP.length - 1; i >= 0; i--) { const p = ELP[i], v = p.v; p.vy -= 9.8 * dt; p.mesh.position.y += p.vy * dt; p.mesh.rotation.x += dt * 4;
     const vc = v.g.position; if (p.mesh.position.y <= vc.y + v.b + p.sz) { ELP.splice(i, 1); if (!v.held && !v.stowed) landPiece(p); else scene.remove(p.mesh); } }
-  for (const v of vessels) { if (!v.metal || !v.metal.length) continue;
+  for (const v of vessels) { if (!v.particles || !v.particles.length) continue;
     const wet = v.chem.V > .5, H = wet ? Math.pow(10, -((v.chem.eq && v.chem.eq.pH) ?? 7)) : 0, lv = levelOf(v);
-    for (let k = v.metal.length - 1; k >= 0; k--) { const p = v.metal[k];
+    for (let k = v.particles.length - 1; k >= 0; k--) { const p = v.particles[k];
       if (!wet) { p.mesh.position.y += (v.b + p.sz * .7 - p.mesh.position.y) * .2; continue; }
       const C = p.cmp, rate = C ? (C.water || 0) + (C.acid || 0) * Math.min(1, H / .1) : (WATERRX[p.sym] || 0) + (ACIDRX[p.sym] || 0) * Math.min(1, H / .1);
       const key = (C ? C.f : p.sym) + (rate > 1e-5 ? ':rx' : ':none');
@@ -1504,13 +1505,13 @@ function updateMetals(dt) {
         logE(rate > 1e-5 ? 'success' : 'info', [[msg, { n, v: v.letter }]]); }
       if (C) { if (rate <= 1e-5) continue; const dm = Math.min(p.m, rate * dt); p.m -= dm; const mmol = dm / (C.M || 100) * 1000; for (const k in C.tot) v.chem.tot[k] = (v.chem.tot[k] || 0) + C.tot[k] * mmol;
         { const e = excessOf(C.tot) * mmol; if (e > 0) v.chem.acidEq = (v.chem.acidEq || 0) + e; else v.chem.baseEq = (v.chem.baseEq || 0) - e; }
-        v.eqDirty = true; p.mesh.scale.setScalar(Math.max(.05, Math.cbrt(Math.max(p.m, 0) / p.m0))); if (p.m <= 1e-4) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); v.metal.splice(k, 1); } continue; }
+        v.eqDirty = true; p.mesh.scale.setScalar(Math.max(.05, Math.cbrt(Math.max(p.m, 0) / p.m0))); if (p.m <= 1e-4) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); v.particles.splice(k, 1); } continue; }
       if (FLOATS[p.sym]) { p.ang += dt * 2.5; const rr = v.Ri * .55; p.mesh.position.set(Math.sin(p.ang) * rr, lv - p.sz * .2, Math.cos(p.ang) * rr); }
       if (rate <= 1e-5) continue;
       const dm = Math.min(p.m, rate * dt); p.m -= dm; const Ar = +p.e[1] || 50, mmol = dm / Ar * 1000, ion = ION[p.sym] || p.sym, z = (METALS[ion] && METALS[ion].z) || 1;
       v.chem.tot[ion] = (v.chem.tot[ion] || 0) + mmol; v.gas += mmol * z * .5 * .1; v.temp += mmol * (WATERRX[p.sym] ? 184 : 150) / (v.chem.V * 4.18); v.rxHot = true; v.eqDirty = true;
       const f = Math.cbrt(Math.max(p.m, 0) / p.m0); p.mesh.scale.setScalar(Math.max(.05, f));
-      if (p.m <= 1e-4) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); v.metal.splice(k, 1); }
+      if (p.m <= 1e-4) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); v.particles.splice(k, 1); }
     } }
 }
 /* the lid is a separate object in the room: on the jar it moves with the jar; taken off, it stays where it was put */
@@ -1935,7 +1936,7 @@ function putBack(it) {
   const o = it.obj;
   if (o.held) return 'x.pbHeld';
   if (o.kind === 'vessel') {
-    if (o.chem.V > 1 || o.solid > .01 || (o.metal && o.metal.length)) return 'x.pbEmpty';
+    if (o.chem.V > 1 || o.solid > .01 || (o.particles && o.particles.length)) return 'x.pbEmpty';
     if (residue(o.chem) > .05) logE('mistake', [['x.pbDirty', { v: o.letter }]]);
   }
   if (o.kind === 'pipette' && o.chem.V > .004) return 'x.pbPip';
@@ -2393,7 +2394,7 @@ function resetState() {
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
-  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
+  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
   for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.lidT = 0; b.lidHome = null; b.area = 'bench'; }
   for (const q of pipettes) { q.chem = { V: 0, tot: {}, ind: {} }; q.src = null; q.held = false; }
   for (const d of droppers) { unpark(d); d.held = false; }
@@ -2904,9 +2905,40 @@ function findSpot(self, x, z, r) {
   }
   return V3(x, 0, z);
 }
+/* A single name-independent gravity behaviour for every solid carried by a
+   vessel. Chemistry decides colour and reaction; this layer only sees either
+   discrete particles or an aggregate powder mass. */
+const GRAVITY_SOLIDS = {
+  has: v => !!v && ((v.solid || 0) > .005 || (v.particles && v.particles.some(p => p.m > 1e-4))),
+  update(v, tg, dt) {
+    if (!this.has(v) || !tg || v.tilt < 82) { if (v.tilt < 35) { v.solidPourAcc = 0; v.solidPourTarget = null; } return; }
+    const drive = clamp((v.tilt - 78) / 55, .08, 1.5);
+    v.solidPourAcc = (v.solidPourAcc || 0) + dt * (3 + 10 * drive);
+    const targetKey = tg.kind === 'vessel' ? 'v:' + tg.v.letter : 'sink';
+    if (v.solidPourTarget !== targetKey) {
+      v.solidPourTarget = targetKey;
+      logE(tg.kind === 'sink' ? 'mistake' : 'info', [[tg.kind === 'sink' ? 'x.piecesSink' : 'x.solidPoured', { v: v.letter, to: tg.kind === 'vessel' ? tg.v.letter : '' }]]);
+      analyticsActivity(tg.kind === 'sink' ? 'solid:discarded' : 'solid:transferred');
+    }
+    while (v.solidPourAcc >= 1 && v.particles && v.particles.length) {
+      v.solidPourAcc -= 1;
+      const p = v.particles.pop();
+      scene.attach(p.mesh); p.mesh.position.copy(v.spout).add(V3((Math.random() - .5) * .006, -.004, (Math.random() - .5) * .006));
+      if (tg.kind === 'vessel') ELP.push({ ...p, v: tg.v, vy: -.08 });
+      else { scene.remove(p.mesh); p.mesh.geometry.dispose(); }
+    }
+    if ((v.solid || 0) > .005) {
+      const dm = Math.min(v.solid, dt * (1.5 + 7 * drive)); v.solid -= dm;
+      if (tg.kind === 'vessel' && dm > 0) {
+        const n = Math.max(1, Math.min(6, Math.ceil(dm / .03)));
+        for (let i = 0; i < n; i++) GR.push({ x: v.spout.x + (Math.random() - .5) * .005, y: v.spout.y - .004, z: v.spout.z + (Math.random() - .5) * .005, vy: -.08, m: dm / n, s: .001 + Math.random() * .0007, v: tg.v });
+      }
+    }
+  }
+};
 function findTarget(o) {
   for (const v of vessels) if (v !== o && !v.held && !v.stowed) { const d = Math.hypot(ptr.x - v.g.position.x, ptr.z - v.g.position.z); if (d < v.R + .045) return { kind: 'vessel', v, c: V3(v.g.position.x, rimY(v), v.g.position.z), R: v.Ri }; }
-  if ((o.kind === 'bottle' || o.kind === 'pipette' || (o.kind === 'vessel' && (o.chem.V > FILM + .3 || (o.metal && o.metal.length)))) && ptr.x > SINK.x0 - .03 && ptr.x < SINK.x1 + .03 && ptr.z > SINK.z0 - .03 && ptr.z < SINK.z1 + .03) return { kind: 'sink', c: V3(clamp(ptr.x, SINK.x0 + .05, SINK.x1 - .05), 0, clamp(ptr.z, SINK.z0 + .05, SINK.z1 - .05)), R: .04 };
+  if ((o.kind === 'bottle' || o.kind === 'pipette' || (o.kind === 'vessel' && (o.chem.V > FILM + .3 || GRAVITY_SOLIDS.has(o)))) && ptr.x > SINK.x0 - .03 && ptr.x < SINK.x1 + .03 && ptr.z > SINK.z0 - .03 && ptr.z < SINK.z1 + .03) return { kind: 'sink', c: V3(clamp(ptr.x, SINK.x0 + .05, SINK.x1 - .05), 0, clamp(ptr.z, SINK.z0 + .05, SINK.z1 - .05)), R: .04 };
   return null;
 }
 function poseTilted(o, spoutLocal, dir, th) { const axis = V3(dir.z, 0, -dir.x).normalize(); const q = new THREE.Quaternion().setFromAxisAngle(axis, D2R(th)); o.g.quaternion.copy(q); o.g.position.copy(o.spout).sub(spoutLocal.clone().applyQuaternion(q)); }
@@ -3031,7 +3063,7 @@ function flowFrom(o, tg, dt) {
     if (isV && o.chem.V <= FILM + .02 && tg.kind === 'sink' && !o.emptiedLog) { o.emptiedLog = true; logE('info', [['x.emptied', { v: o.letter, f: fmt(FILM, 1) }]]); }
     if (!isV && o.V <= .005 && !o.emptyLog) { o.emptyLog = true; logE('info', [['x.bottleEmptied', { b: { k: REAG[o.id].name } }]]); }
   }
-  if (isV && tg && tg.kind === 'sink' && o.tilt > 1.1 && o.metal && o.metal.length) { clearPieces(o); logE('mistake', [['x.piecesSink', { v: o.letter }]]); }
+  if (isV) GRAVITY_SOLIDS.update(o, tg, dt);
   if (!streamed) drawStream(o, null);
   if (isV && o.chem.V > FILM + .05) o.emptiedLog = false;
 }
@@ -3554,7 +3586,7 @@ function frame() {
   updateWash(wash, dt); if (!spatula.stowed) updateSpatula(spatula, dt); updateStick(electrode, dt); if (!rod.stowed) updateStick(rod, dt); for (const q of probes) if (!q.stowed) updateThermo(q, dt); updateRig(dt); updateBurette(dt); for (const q of pipettes) if (!q.stowed) updatePipette(q, dt, t);
   for (const v of vessels) if (!v.stowed) updateVessel(v, dt, t);
   checkTask();
-  updateDrops(dt, t); updateSplashes(dt); updateGrains(dt); updateBalance(dt); updateCable(); updateCounter(); updateAutoZoom(); updateTap(dt); updateGuides(t); updateHolder(dt); updateElements(dt); updateProps(dt); updateHood(dt); updateMetals(dt); updateFX(dt);
+  updateDrops(dt, t); updateSplashes(dt); updateGrains(dt); updateBalance(dt); updateCable(); updateCounter(); updateAutoZoom(); updateTap(dt); updateGuides(t); updateHolder(dt); updateElements(dt); updateProps(dt); updateHood(dt); updateSolidReactions(dt); updateFX(dt);
   if (NB.session && performance.now() - NB.session.last > 800 && !droppers.some(d => d.parked === NB.session.v && NB.session.id === d.id)) endSession();
   const ev = electrode.in && !electrode.in.held && electrode.in.chem.V > .3 ? electrode.in : vesselAtPoint(electrode.g.position);
   if (METER.boot > 0) METER.boot -= dt;
@@ -3571,4 +3603,4 @@ function frame() {
 buildTags(); resetState(); setupTask(TASKS[0]); setInspector(inspectorOpen); resize(); drawLCD(null); drawBalance('', false);
 $('loading').remove();
 requestAnimationFrame(frame);
-window.__lab3d = { reactions: window.ReactionSimulation, BAYS, setupTask, TASKS, get TASK() { return TASK; }, DEMO, startDemo, nextDemo, stopDemo, lightLamp, moveArea, toggleProp, setPPE, checkAnswers, addLiquid, compOf, REAG, FX, rodHolder, propInfo, takeProp, BAL, BURETTE, eyeLevel, sampleInfo, HOOD, toggleDoorZ: z => toggleDoor(PT.doors.find(d => d.Z === z)), takeSampleZ: z => takeSample(PT.doors.find(d => d.Z === z)), updateThermo, thermos, tester, probes, conductivity, EVAP, RIG, updateRig, ITEMS, takeItem, PT, SLOTS, DECOR_PICK, PROPS, goShelf, viewShelf, touchView: () => { viewTouched = true; }, TAP, spatula, onShake, MOTION, Q, MOBILE, scene, pipettes, METER, controls, vessels, bottles, droppers, wash, spatula, electrode, rod, camera, renderer, BAL, NB, balanceButton, panLoad, vesselMass, endSession, placeVessel };
+window.__lab3d = { reactions: window.ReactionSimulation, BAYS, setupTask, TASKS, get TASK() { return TASK; }, DEMO, startDemo, nextDemo, stopDemo, lightLamp, moveArea, toggleProp, setPPE, checkAnswers, addLiquid, compOf, REAG, FX, rodHolder, propInfo, takeProp, BAL, BURETTE, eyeLevel, sampleInfo, HOOD, toggleDoorZ: z => toggleDoor(PT.doors.find(d => d.Z === z)), takeSampleZ: z => takeSample(PT.doors.find(d => d.Z === z)), updateThermo, thermos, tester, probes, conductivity, EVAP, RIG, updateRig, ITEMS, takeItem, PT, SLOTS, DECOR_PICK, PROPS, GRAVITY_SOLIDS, goShelf, viewShelf, touchView: () => { viewTouched = true; }, TAP, spatula, onShake, MOTION, Q, MOBILE, scene, pipettes, METER, controls, vessels, bottles, droppers, wash, spatula, electrode, rod, camera, renderer, BAL, NB, balanceButton, panLoad, vesselMass, endSession, placeVessel };

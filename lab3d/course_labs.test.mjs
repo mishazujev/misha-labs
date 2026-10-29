@@ -79,6 +79,9 @@ assert.ok(source.includes('function reactHalogens'), 'the halogen lab must calcu
 assert.ok(source.includes('function stageTaskInHood'), 'hazardous nonmetal labs must stage their apparatus in the fume cupboard');
 assert.match(source, /id: 'nonmetals-spc'.*hoodLab: true/, 'the S/P/C lab must launch in the fume cupboard');
 assert.match(source, /id: 'nonmetals-halogens'.*hoodLab: true/, 'the halogen lab must launch in the fume cupboard');
+assert.ok(source.includes('const GRAVITY_SOLIDS'), 'all vessel-borne solids must share one name-independent gravity behaviour');
+assert.ok(source.includes('GRAVITY_SOLIDS.update(o, tg, dt)'), 'solid gravity must run through the generic vessel pouring path');
+assert.ok(!source.includes('o.metal && o.metal.length'), 'pouring must not depend on a metal-specific contents field');
 assert.ok(source.includes('function runActivityTrial'), 'controlled evidence labs must use the reusable activity station');
 for (const item of ['beaker:A', 'bottle:water', 'bottle:hcl01', 'bottle:acetic01', 'bottle:vinegar', 'bottle:naoh01', 'cond', 'glass:lamp', 'glass:matches', 'decor:ethanol', 'decor:acetone', 'thermo:1', 'thermo:2', 'thermo:3']) {
   assert.ok(source.includes(`'${item}'`), `${item} must be included in the K1 lab inventory`);

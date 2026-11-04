@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { C4H10O_ISOMERS, conductivityBrightness, conductivityCategory, carbonateReactionTime, evaporativeCoolingAt, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, peroxideOxygenRate, reagentBottleMass, solutionMass, UNKNOWN_SOLIDS, unknownSolidObservation } from './course_lab_models.mjs';
-import { MECHANICAL_PROFILES, PHYSICAL_PHASES, applyMechanicalProfile, hasMechanicalCapability, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, phaseMechanics } from './mechanics.mjs';
+import { MECHANICAL_PROFILES, PHYSICAL_PHASES, applyMechanicalProfile, hasMechanicalCapability, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, phaseMechanics, containerProfileForPhase } from './mechanics_core.mjs';
 
 const waterBottle = applyMechanicalProfile({ chemical: 'water' }, 'reagentBottle');
 const acidBottle = applyMechanicalProfile({ chemical: 'hydrochloric-acid' }, 'reagentBottle');
@@ -19,6 +19,13 @@ assert.equal(PHYSICAL_PHASES.gas.flowsOnTilt, false);
 assert.equal(mechanicalRadius(genericFlask), .05);
 assert.equal(mechanicalCarryHeight(genericFlask), .16);
 assert.ok(Object.keys(MECHANICAL_PROFILES).includes('probe'));
+assert.equal(containerProfileForPhase('liquid'), 'chemicalBottle');
+assert.equal(containerProfileForPhase('liquid', 'dropper'), 'chemicalDropper');
+assert.equal(containerProfileForPhase('powder'), 'solidJar');
+assert.equal(containerProfileForPhase('gas'), 'gasCylinder');
+assert.equal(canTransferPhase(applyMechanicalProfile({}, 'chemicalDropper'), 'liquid'), true);
+assert.equal(canTransferPhase(applyMechanicalProfile({}, 'solidJar'), 'powder'), true);
+assert.equal(canTransferPhase(applyMechanicalProfile({}, 'gasCylinder'), 'gas'), true);
 
 const pureWater = { V: 30, tot: {}, eq: { pH: 7, ppt: {} } };
 const saltSolution = { V: 30, tot: { Na: 3, Cl: 3 }, eq: { pH: 7, ppt: {} } };
@@ -101,6 +108,11 @@ assert.ok(source.includes("if (canTransferPhase(o, 'solid')) GRAVITY_SOLIDS.upda
 assert.ok(!source.includes('o.metal && o.metal.length'), 'pouring must not depend on a metal-specific contents field');
 assert.ok(source.includes("applyMechanicalProfile(v, 'openVessel'"), 'working vessels must receive a reusable mechanics profile');
 assert.ok(source.includes("applyMechanicalProfile(o, 'reagentBottle'"), 'all reagent identities must share the bottle mechanics profile');
+assert.ok(source.includes('containerProfileForPhase(S.chem.phase, I.it.form)'), 'cabinet chemicals must receive mechanics from phase and container form');
+assert.ok(source.includes("hasMechanicalCapability(S, 'dispenseLiquid') ? 7 : 30"), 'dropper bottles must dispense more slowly than ordinary pouring bottles');
+assert.ok(source.includes("applyMechanicalProfile(state, 'gasCylinder')"), 'gas cylinders must use the shared valve-and-vent profile');
+assert.ok(source.includes('updateGasCylinders(dt)'), 'open cylinder valves must vent through the global update loop');
+assert.ok(source.includes("tox: 'ox', wr: 'ox'"), 'toxic and water-reactive stock must be rendered as individual usable containers');
 assert.ok(source.includes("const HELD_R = mechanicalRadius"), 'collision radius must come from geometry rather than object names');
 assert.ok(source.includes('const carryH = mechanicalCarryHeight'), 'carry behaviour must come from the mechanics profile');
 assert.ok(source.includes("hasMechanicalCapability(o, 'tilt') && o.pour"), 'release/docking must use capabilities rather than named container classes');
@@ -146,5 +158,5 @@ assert.ok(built.includes('landingOnPan'), 'the generated page must contain the b
 assert.ok(built.includes('drawStream(container, mouth, landing'), 'the generated page must contain aligned demo pouring');
 assert.ok(built.includes('const functionalChem = new Set'), 'the generated page must omit duplicate working chemical models');
 assert.ok(built.includes('v.sinkDrain'), 'the generated page must contain sink draining behavior');
-assert.ok(built.includes("from './mechanics.mjs'"), 'the generated page must load the shared mechanics layer');
+assert.ok(built.includes("from './mechanics_core.mjs'"), 'the generated page must load the shared mechanics layer');
 console.log('course_labs: models, inventory, demos and generated page passed');

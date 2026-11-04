@@ -2487,7 +2487,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, UNKNOWN_SOLIDS, carbonateReactionTime, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, peroxideOxygenRate, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
-import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase } from './mechanics.mjs';
+import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -2514,6 +2514,11 @@ const NONMETAL_TEXT = {
   'x.heatingStop': 'Heating of beaker {v} stopped.',
   'x.boiling': 'Beaker {v} reached its boiling point; steady bubbles are visible.',
   'x.tripodBusy': 'Remove the beaker from the tripod before moving or returning it.',
+  'x.gasOpenValve': 'Open valve', 'x.gasCloseValve': 'Close valve',
+  'x.gasValveOpened': '{gas} cylinder valve opened; compressed gas is escaping.',
+  'x.gasValveClosed': '{gas} cylinder valve closed.',
+  'x.gasJarVenting': '{gas} escaped from the open jar instead of falling like a solid.',
+  'x.gasRemaining': '{n}% remaining',
   'x.man.heatstand.app': 'Take a tripod with wire gauze from the closet. Place a beaker near its centre to snap it onto the gauze, then place a spirit lamp or Bunsen burner beneath it and light the burner. Any liquid will warm; immerse a digital thermometer to follow the temperature.',
   'x.nonmetalsSpc.goal': 'Burn carbon, phosphorus and sulfur, absorb their oxides in water, test the pH change, then neutralise the acidic products with sodium hydroxide.',
   'x.nonmetalsSpc.desc': 'A combustion and acid–base investigation of three nonmetals and their oxides.',
@@ -3776,7 +3781,7 @@ const DECOR_PICK = [], DECOR_MESH = {}, PROPS = [];
     P.length = 0;
   }
   for (const it of D.glass) { const [w, d] = SH[it.shape](it); emit('glass:' + it.sh, w, d, { type: 'glass', it }); }
-  const CAB = { acid: 'acid', base: 'base', gen: 'gen', ind: 'gen', met: 'gen', org: 'gen', ox: 'ox' };
+  const CAB = { acid: 'acid', base: 'base', gen: 'gen', ind: 'gen', met: 'gen', org: 'gen', ox: 'ox', tox: 'ox', wr: 'ox' };
   // Usable stock containers already occupy these cabinet slots. Rendering a
   // second display-only model underneath them made one bottle appear to remain
   // after its working counterpart was taken.
@@ -3791,9 +3796,6 @@ const DECOR_PICK = [], DECOR_MESH = {}, PROPS = [];
     const p = V3(-.2 + col * .10, 0, -.075).applyAxisAngle(V3(0, 1, 0), ROOM.flam.ry);
     place(null, w, d, { type: 'chem', it }, { x: ROOM.flam.x + p.x, y: FLOOR + .08 + row * .30, z: ROOM.flam.z + p.z, ry: ROOM.flam.ry });
   });
-  // locked box (toxic), sealed box (water-reactive) in the oxidiser/locked cabinet
-  part(box(.28, .16, .22), 'opaque', .14, 0, 0, 0x7A8288); part(box(.06, .03, .004), 'opaque', .14, .1, .112, 0xE2B714); emit('ox:M1', .29, .23, { type: 'group', key: 'tox', items: D.chem.filter(i => i.grp === 'tox') });
-  part(box(.16, .1, .14), 'opaque', .08, 0, 0, 0x4A5257); part(box(.05, .025, .004), 'opaque', .08, .06, .072, 0x3E7CC4); emit('ox:B', .17, .15, { type: 'group', key: 'wr', items: D.chem.filter(i => i.grp === 'wr') });
   flushQueue();
   // gas cylinders, chained to the wall to the right of the cabinets
   D.gases.forEach((gs, i) => { const z = ROOM.gas.z0 + i * ROOM.gas.step, x = ROOM.gas.x, y = FLOOR;
@@ -3805,7 +3807,9 @@ const DECOR_PICK = [], DECOR_MESH = {}, PROPS = [];
     const ch = new THREE.TorusGeometry(.095, .006, 6, 24); ch.rotateX(Math.PI / 2); ch.translate(x, y + .95, z); P.push({ g: ch, b: 'opaque', c: 0xC9CFD1 });
     { const uv = labelCell({ f: gs.f, c: '', hz: [], grp: null }), lg = new THREE.PlaneGeometry(.09, .045), a = lg.attributes.uv; for (let k = 0; k < a.count; k++) a.setXY(k, uv[0] + a.getX(k) / 8, uv[1] + a.getY(k) / 16); lg.rotateY(-Math.PI / 2); lg.translate(x - .092, y + 1.0, z); P.push({ g: lg, b: 'label' }); }
     const bx = new THREE.Box3(); for (const q of P) { if (q.b === 'opaque') col(q.g, q.c); q.g.computeBoundingBox(); bx.union(q.g.boundingBox); buckets[q.b].push(q.g); } P.length = 0;
-    DECOR_PICK.push({ box: bx, info: { type: 'gas', it: gs } }); });
+    const state = { open: false, left: 100, acc: 0, outlet: V3(x - .065, y + 1.4, z), colour: gs.col, id: gs.k };
+    applyMechanicalProfile(state, 'gasCylinder');
+    DECOR_PICK.push({ box: bx, info: { type: 'gas', it: gs, state } }); });
   // The sign opens the cabinet note; the open front remains free so individual bottles can be selected.
   { const bx = new THREE.Box3(V3(ROOM.flam.x - .25, -.29, ROOM.flam.z - .3), V3(ROOM.flam.x - .18, -.15, ROOM.flam.z + .3)); DECOR_PICK.push({ box: bx, info: { type: 'group', key: 'flam', items: D.chem.filter(i => i.grp === 'flam') } }); }
   const mats = {
@@ -4030,7 +4034,18 @@ function pourJar(S, tg, dt) {
   const mouth = V3(vc.x + dir.x * v.Ri * .3, rimY(v) + .02, vc.z + dir.z * v.Ri * .3);
   const pos = mouth.clone().sub(V3(0, .05, 0).applyQuaternion(q));
   S.g.position.lerp(pos, 1 - Math.exp(-dt * 12)); S.g.quaternion.slerp(q, 1 - Math.exp(-dt * 12));
-  const form = formOf(S.e), [sz, pm] = PIECE[form] || PIECE.lump;
+  const form = formOf(S.e);
+  if (S.phase === 'liquid') {
+    if (th > 1.2 && S.left > 0) {
+      S.pz.acc += dt * (th - 1.1) * 22;
+      const comp = { id: 'element:' + S.e[0], tot: S.e[0] === 'Br' ? { Br2: .02 } : {}, ind: {}, solv: S.e[0] === 'Hg' ? { mercury: 1 } : {}, f: S.e[0] };
+      while (S.pz.acc >= 1 && S.left > 0) { S.pz.acc -= 1; S.left = Math.max(0, S.left - .05); spawnDrop(mouth.clone().add(V3((Math.random() - .5) * .003, -.003, (Math.random() - .5) * .003)), comp, v); }
+      if (!S.pz.logged) { S.pz.logged = true; analyticsActivity('liquid:' + S.e[0], 1, 0, 'liquid:transferred'); logE('info', [['x.jarPoured', { n: elName(S.e), v: v.letter }]]); }
+      const c = S.g.userData.content; if (c) { const f = S.left / S.full; c.scale.y = Math.max(.05, f); c.visible = f > .01; }
+    }
+    return;
+  }
+  const [sz, pm] = PIECE[form] || PIECE.lump;
   if (th > 1.2 && S.left > 0) {
     S.pz.acc += dt * (th - 1.1) * 6;
     while (S.pz.acc >= 1 && S.left > 0) { S.pz.acc -= 1;
@@ -4043,6 +4058,13 @@ function pourJar(S, tg, dt) {
     const c = S.g.userData.content; if (c) { const f = S.left / S.full; c.scale.y = Math.max(.05, f); c.visible = f > .01; }
     if (S.left <= 0 && !S.emptyLogged) { S.emptyLogged = true; logE('info', [['x.jarEmpty', { n: elName(S.e) }]]); }
   }
+}
+function ventElementGas(S, dt) {
+  S.gasAcc = (S.gasAcc || 0) + dt * 5; S.left = Math.max(0, S.left - dt * .7);
+  S.g.updateMatrixWorld(); const mouth = V3(0, .07, 0).applyMatrix4(S.g.matrixWorld);
+  while (S.gasAcc >= 1) { S.gasAcc -= 1; puff(mouth, GASCOL[S.e[0]] || 0xDDE8EC); }
+  if (!S.gasLogged) { S.gasLogged = true; analyticsActivity('gas:' + S.e[0] + ':vented'); logE('info', [['x.gasJarVenting', { gas: elName(S.e) }]]); }
+  const c = S.g.userData.content; if (c) { const f = S.left / S.full; c.material.opacity = .08 + .24 * f; c.visible = f > .01; }
 }
 function cornerNote(title, lines, wp, actions) {
   const r = stage.getBoundingClientRect(), p = wp.clone().project(camera), left = p.x > 0;
@@ -4071,8 +4093,10 @@ function takeSample(D) {
   const home = findSpot(null, .12 + (Math.random() - .5) * .2, .06, .03);
   const big = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, .07, 10), new THREE.MeshBasicMaterial({ visible: false })); big.position.y = .03; m.add(big);
   m.updateMatrixWorld(); const S = { kind: 'sample', D, e: D.e, g: m, proxy: big, home: V3(home.x, 0, home.z), held: false, open: false, onBal: false, noTip: true, label: () => elName(D.e) + ' (' + D.e[0] + ')' };
-  applyMechanicalProfile(S, 'sampleJar');
-  { const form = formOf(D.e), metal = ['am', 'ae', 'tm', 'pt', 'la', 'ac'].includes(D.e[3]); S.full = S.left = form === 'atoms' ? 1e-6 : form === 'oil' ? 1.2 : form === 'lump' ? 6 : 10;
+  { const form = formOf(D.e), metal = ['am', 'ae', 'tm', 'pt', 'la', 'ac'].includes(D.e[3]);
+    S.phase = form === 'gas' ? 'gas' : form === 'oil' ? 'liquid' : form === 'powder' ? 'powder' : form === 'granules' || form === 'crystals' ? 'granularSolid' : 'solidPiece';
+    applyMechanicalProfile(S, S.phase === 'gas' ? 'gasJar' : containerProfileForPhase(S.phase), { collisionRadius: .026 });
+    S.full = S.left = form === 'atoms' ? 1e-6 : form === 'oil' ? 1.2 : form === 'lump' ? 6 : 10;
     S.mat = sMat(SAMPLE_LOOK[D.e[0]] ?? (metal ? 0xA8ADB2 : 0x8A8F8C), metal || D.e[0] === 'Ge' || D.e[0] === 'Sb'); }
   { const L = m.userData.lid; if (L) { m.updateMatrixWorld(); const wp = L.getWorldPosition(V3()); m.remove(L); L.position.copy(wp); scene.add(L); S.lid = L;
       const lp = new THREE.Mesh(new THREE.CylinderGeometry(.026, .026, .02, 10), new THREE.MeshBasicMaterial({ visible: false })); L.add(lp);
@@ -4093,7 +4117,8 @@ function updateElements(dt) {
   for (const D of PT.doors) { if (Math.abs(D.ang - D.target) > .001) { D.ang += (D.target - D.ang) * (1 - Math.exp(-dt * 10)); D.hinge.rotation.y = -1.75 * D.ang; }
     if (!D.target && D.ang < .05 && D.sample) { const { m, proxy } = D.sample; removeButton(proxy); scene.remove(m); m.traverse(q => { if (q.userData.draw) JAR_LABELS.delete(q.userData.draw); }); D.sample = null; D.stocked = true; } }
   for (const S of PT.samples) {
-    let tg = S.held && ptrOK && S.open && S.left > 0 ? findTarget(S) : null;
+    if (S.phase === 'gas' && S.open && S.left > 0) ventElementGas(S, dt);
+    let tg = S.phase !== 'gas' && S.held && ptrOK && S.open && S.left > 0 && canTransferPhase(S, S.phase) ? findTarget(S) : null;
     // once lined up over a vessel, dragging down tilts the jar there; dragging up or sideways moves it away again
     if (S.held && S.pz && S.open && Math.abs(scr.x - S.pz.x0) < 90 && scr.y > S.pz.y0 - 40) tg = { kind: 'vessel', v: S.pz.v };
     if (S.fly) { flyStep(S, dt); animLid(S, dt); continue; }
@@ -4143,7 +4168,10 @@ function takeProp(d) {
     lid.userData.off = cc.clone(); scene.add(lid); S.lid = lid;
     const lp = new THREE.Mesh(new THREE.BoxGeometry(.05, .03, .05), new THREE.MeshBasicMaterial({ visible: false })); lid.add(lp);
     const lo = { kind: 'button', name: 'lid', noTip: true, proxy: lp, label: () => '' }; lo.tap = () => { if (S.open) toggleProp(S); }; lp.userData.obj = lo; balButtons.push(lp); S.lidProxy = lp; }
-  if (I.type === 'chem') { S.chem = chemOfProp(I.it); S.left = S.full = S.chem.left; }
+  if (I.type === 'chem') {
+    S.chem = chemOfProp(I.it); S.left = S.full = S.chem.left;
+    applyMechanicalProfile(S, containerProfileForPhase(S.chem.phase, I.it.form), { collisionRadius: R, carryHeight: Math.max(.12, Math.min(.25, S.H + .06)) });
+  }
   propSetup(S);
   S.tap = () => S.lid && S.chem ? toggleProp(S) : propInfo(S); px.userData.obj = S; I.taken = S; PROPS.push(S); refreshPickables(); flyArc(S, S.home);
   analyticsActivity('take:' + I.it.k); logE('info', [['x.took', { n: nm() }]]); buzz(10);
@@ -4199,7 +4227,7 @@ const SOLIDCOL = { 'CuSO₄·5H₂O': 0x3C8CE0, 'FeSO₄·7H₂O': 0xA8D8A0, 'Mn
 function pourProp(S, tg, dt) {
   const { th, mouth, v } = poseOver(S, tg, dt, S.H), C = S.chem, it = S.d.info.it;
   if (th <= 1.2 || S.left <= 0) return;
-  if (C.kind === 'liquid') { S.pz.acc += dt * (th - 1.1) * 30;
+  if (C.phase === 'liquid') { S.pz.acc += dt * (th - 1.1) * (hasMechanicalCapability(S, 'dispenseLiquid') ? 7 : 30);
     while (S.pz.acc >= 1 && S.left > 0) { S.pz.acc -= 1; S.left -= .05; spawnDrop(mouth.clone().add(V3((Math.random() - .5) * .003, -.003, (Math.random() - .5) * .003)), C.comp, v); } }
   else { S.pz.acc += dt * (th - 1.1) * 5;
     while (S.pz.acc >= 1 && S.left > 0) { S.pz.acc -= 1;
@@ -4207,7 +4235,7 @@ function pourProp(S, tg, dt) {
         const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(sz, 0), sMat(SAMPLE_LOOK[C.e[0]] ?? 0xA8ADB2, metal)); mesh.position.copy(mouth); scene.add(mesh); ELP.push({ mesh, v, vy: -.1, sym: C.e[0], e: C.e, m, sz }); }
       else { const big = it.f === 'CaCO₃', sz = big ? .005 : .0022, m = Math.min(S.left, big ? 1 : .3); S.left -= m;
         const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(sz, 0), sMat(SOLIDCOL[it.f] ?? 0xF4F4F0, false)); mesh.position.copy(mouth); scene.add(mesh); ELP.push({ mesh, v, vy: -.1, cmp: { ...C.d, f: it.f }, m, sz }); } } }
-  if (!S.pz.logged) { S.pz.logged = true; analyticsActivity('solid:' + it.f.replace(/[^a-z0-9_.+-]/gi, '_'), 1, 0, 'solid:transferred'); logE('info', [['x.jarPoured', { n: it.f, v: v.letter }]]); }
+  if (!S.pz.logged) { const phase = C.phase === 'liquid' ? 'liquid' : 'solid'; S.pz.logged = true; analyticsActivity(phase + ':' + it.f.replace(/[^a-z0-9_.+-]/gi, '_'), 1, 0, phase + ':transferred'); logE('info', [['x.jarPoured', { n: it.f, v: v.letter }]]); }
   const f = Math.max(0, S.left / S.full); S.g.traverse(m => { if (m.userData.b === 'liquid') { m.scale.y = Math.max(.02, f); m.visible = f > .01; } });
   if (S.left <= 0 && !S.emptyLogged) { S.emptyLogged = true; logE('info', [['x.jarEmpty', { n: it.f }]]); }
 }
@@ -4357,8 +4385,9 @@ function updateProps(dt) {
   for (const S of PROPS) {
     if (S.demoPose) { S.g.position.copy(S.demoPose.p); S.g.quaternion.setFromAxisAngle(V3(0, 0, 1), S.demoPose.tilt || 0); S.g.updateMatrixWorld(); animLid(S, dt); if (S.tick) S.tick(dt); continue; }
     if (S.fly) { flyStep(S, dt); animLid(S, dt); if (S.tick) S.tick(dt); continue; }
-    let tg = S.held && ptrOK && S.open && S.chem && S.left > 0 ? findTarget(S) : null;
-    if (S.held && S.pz && S.open && S.chem && Math.abs(scr.x - S.pz.x0) < 90 && scr.y > S.pz.y0 - 40) tg = { kind: 'vessel', v: S.pz.v };
+    const transferable = S.chem && canTransferPhase(S, S.chem.phase);
+    let tg = S.held && ptrOK && S.open && transferable && S.left > 0 ? findTarget(S) : null;
+    if (S.held && S.pz && S.open && transferable && Math.abs(scr.x - S.pz.x0) < 90 && scr.y > S.pz.y0 - 40) tg = { kind: 'vessel', v: S.pz.v };
     if (tg && tg.kind === 'vessel') pourProp(S, tg, dt);
     else { S.pz = null; const k = 1 - Math.exp(-dt * (S.held ? 14 : 8)); if (S.held && ptrOK) S.g.position.lerp(V3(ptr.x, .05, ptr.z), k); else S.g.position.lerp(S.home, k); S.g.quaternion.slerp(QI, k); }
     animLid(S, dt); if (S.tick) S.tick(dt);
@@ -4380,11 +4409,27 @@ CHEMDATA['CH₃COCH₃'] = { tot: {}, solv: { acetone: 1 } };
 const concOf = (it, d) => { if (d && d.conc) return d.conc; const c = String(it.c || ''); const m = c.match(/([\d.]+)\s*M/); if (m) return +m[1]; if (/37 %/.test(c)) return 12; if (/98 %/.test(c)) return 18; if (/65 %/.test(c)) return 14; if (/99 %/.test(c)) return 17; return 1; };
 function chemOfProp(it) {
   const d = CHEMDATA[it.f], solid = /jar/.test(it.form), el = window.ELEMENTS.find(e => e[0] === it.f);
-  if (solid) { if (el) return { kind: 'el', e: el, left: 6 }; return { kind: 'solid', d: d || { tot: {}, M: 100 }, known: !!d, left: 20 }; }
+  if (solid) {
+    const text = String(it.c || '').toLowerCase(), phase = /gran|chip|crystal/.test(text) ? 'granularSolid' : /foil|wire|ribbon|lump/.test(text) ? 'solidPiece' : 'powder';
+    if (el) return { kind: 'el', phase, e: el, left: 6 };
+    return { kind: 'solid', phase, d: d || { tot: {}, M: 100 }, known: !!d, left: 20 };
+  }
   const c = concOf(it, d), tot = {}; if (d && d.tot) for (const k in d.tot) tot[k] = d.tot[k] * c;
-  return { kind: 'liquid', comp: { id: 'cab:' + it.f, tot, ind: d && d.ind ? { [d.ind]: 20 } : {}, solv: d && d.solv ? { ...d.solv } : {}, isInd: !!(d && d.ind), f: it.f }, known: !!d, left: it.form === 'dropper' ? 20 : /big/.test(it.form) ? 500 : 100 };
+  return { kind: 'liquid', phase: 'liquid', comp: { id: 'cab:' + it.f, tot, ind: d && d.ind ? { [d.ind]: 20 } : {}, solv: d && d.solv ? { ...d.solv } : {}, isInd: !!(d && d.ind), f: it.f }, known: !!d, left: it.form === 'dropper' ? 20 : /big/.test(it.form) ? 500 : 100 };
 }
 /* tap on a closet item → take it (glassware, chemicals); boxes and gas cylinders → note */
+function toggleGasCylinder(d) {
+  const I = d && d.info, S = I && I.state; if (!S || S.left <= 0) return;
+  S.open = !S.open;
+  showMsg(T(S.open ? 'x.gasValveOpened' : 'x.gasValveClosed', { gas: I.it.f }));
+}
+function updateGasCylinders(dt) {
+  for (const d of DECOR_PICK) { const I = d.info, S = I && I.type === 'gas' && I.state; if (!S || !S.open || S.left <= 0) continue;
+    S.left = Math.max(0, S.left - dt * 1.5); S.acc += dt * 7;
+    while (S.acc >= 1) { S.acc -= 1; puff(S.outlet, S.colour || 0xDDE8EC); }
+    if (S.left <= 0) S.open = false;
+  }
+}
 const LVL = { MS: 'x.lvMS', HS: 'x.lvHS', Uni: 'x.lvUni' };
 function decorAt(e) {
   setNdc(e); let best = null, bd = Infinity; const hit = V3();
@@ -4397,9 +4442,10 @@ function decorNote(d, x, y, taken) {
   let title, body;
   if (I.type === 'glass') { title = nm(I.it); body = [(I.it.sz ? I.it.sz + ' · ' : '') + T(LVL[I.it.lv]), T(taken ? 'x.propTaken' : 'x.propTap')]; }
   else if (I.type === 'chem') { const it = I.it; title = nm(it); body = [it.f + (it.c && it.c !== 's' ? ' · ' + it.c : '') + ' · ' + T(LVL[it.lv]), (it.hz.length ? it.hz.map(h => T('x.hz_' + h)).join(', ') : T('x.hz_none')) + ' · ' + T('x.grp_' + it.grp), T(taken ? 'x.propTaken' : 'x.propTap')]; }
-  else if (I.type === 'gas') { const it = I.it; title = nm(it) + ' (' + it.f + ')'; body = [T(LVL[it.lv]) + ' · ' + it.hz.map(h => T('x.hz_' + h)).join(', '), T('x.gasNote'), T('x.notYet')]; }
+  else if (I.type === 'gas') { const it = I.it; title = nm(it) + ' (' + it.f + ')'; body = [T(LVL[it.lv]) + ' · ' + it.hz.map(h => T('x.hz_' + h)).join(', '), T('x.gasNote'), T('x.gasRemaining', { n: Math.round(I.state.left) })]; }
   else { title = T('x.box_' + I.key); body = [T('x.boxNote_' + I.key), I.items.map(it => nm(it) + ' (' + it.f + ')').join(', '), T('x.notYet')]; }
-  showNoteRaw(title, body, x, y);
+  const actions = I.type === 'gas' ? [[T(I.state.open ? 'x.gasCloseValve' : 'x.gasOpenValve'), () => { toggleGasCylinder(d); decorNote(d, x, y, taken); }]] : undefined;
+  showNoteRaw(title, body, x, y, actions);
 }
 for (const d of droppers) { d.bx0 = d.bx; d.bz0 = d.bz; } JAR.x0 = JAR.x; JAR.z0 = JAR.z;
 const ITEMS = [
@@ -5231,7 +5277,7 @@ function startHold(o, e, part) {
   if (o.heatStand && mountedVessel(o)) { showMsg(T('x.tripodBusy')); return; }
   // Dragging a closed working bottle is an intent to use it: remove its cap
   // first so the familiar drag-to-pour gesture cannot silently do nothing.
-  if (o.mechanics && o.mechanics.requiresOpen && !o.open) toggleBottle(o);
+  if (o.mechanics && o.mechanics.autoOpenOnDrag && !o.open) toggleBottle(o);
   if (o.docked) {
     o.docked = false;
     if (o.kind === 'pipette') { o.pz = null; o.tg = null; o.cand = null; o.block = null; }
@@ -5368,7 +5414,7 @@ function release() {
   }
   if (hasMechanicalCapability(o, 'sink')) placeVessel(o);
   if (o.kind === 'sample') setOnBalance(o, false);
-  if (o.mechanics && o.mechanics.requiresOpen) { o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, mechanicalRadius(o))); o.emptyLog = o.V <= .005; }
+  if (o.mechanics && o.mechanics.autoOpenOnDrag) { o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, mechanicalRadius(o))); o.emptyLog = o.V <= .005; }
   if (o.kind === 'wash') o.home.copy(findSpot(o, o.g.position.x, o.g.position.z, .032));
   if (o.kind === 'holder') { const q = findSpot(o, o.g.position.x, o.g.position.z, .022); o.home.set(q.x, 0, q.z); }
   if (o.kind === 'sample' || o.kind === 'prop') { setOnBalance(o, false); if (!(o.kind === 'prop' && snapHeatSource(o))) { const q = findSpot(o, o.g.position.x, o.g.position.z, o.R || .03); o.home.set(q.x, 0, q.z); } }
@@ -6149,7 +6195,7 @@ function frame() {
   updateWash(wash, dt); if (!spatula.stowed) updateSpatula(spatula, dt); updateStick(electrode, dt); if (!rod.stowed) updateStick(rod, dt); for (const q of probes) if (!q.stowed) updateThermo(q, dt); updateRig(dt); updateBurette(dt); for (const q of pipettes) if (!q.stowed) updatePipette(q, dt, t);
   for (const v of vessels) if (!v.stowed) updateVessel(v, dt, t);
   checkTask();
-  updateDrops(dt, t); updateSplashes(dt); updateGrains(dt); updateBalance(dt); updateCable(); updateCounter(); updateAutoZoom(); updateTap(dt); updateGuides(t); updateHolder(dt); updateElements(dt); updateProps(dt); updateHood(dt); updateSolidReactions(dt); updateFX(dt);
+  updateDrops(dt, t); updateSplashes(dt); updateGrains(dt); updateBalance(dt); updateCable(); updateCounter(); updateAutoZoom(); updateTap(dt); updateGuides(t); updateHolder(dt); updateElements(dt); updateProps(dt); updateGasCylinders(dt); updateHood(dt); updateSolidReactions(dt); updateFX(dt);
   if (NB.session && performance.now() - NB.session.last > 800 && !droppers.some(d => d.parked === NB.session.v && NB.session.id === d.id)) endSession();
   const ev = electrode.in && !electrode.in.held && electrode.in.chem.V > .3 ? electrode.in : vesselAtPoint(electrode.g.position);
   if (METER.boot > 0) METER.boot -= dt;

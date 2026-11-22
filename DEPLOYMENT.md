@@ -19,6 +19,7 @@ Create a separate GitHub repository named `misha-labs`, push this project to its
 Environment secrets:
 
 - `ZONE_SSH_PRIVATE_KEY` — private half of the dedicated Labs deployment key.
+- `ZONE_SSH_KEY_PASSPHRASE` — passphrase for the current encrypted private key. The workflow unlocks the temporary runner copy; leave unset for a future key generated without a passphrase.
 - No known-hosts secret is needed; the trusted server fingerprint is a production variable.
 
 Environment variables:

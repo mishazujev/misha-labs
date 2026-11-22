@@ -4,7 +4,7 @@
 
 ## Daily development status — 22 November 2026
 
-The daily job now works in **mishazujev/misha-labs**, using the maintained sources in this repository. The old `classroom-connect-91` chemistry branch is preserved as a migration reference; its completed checkboxes do not establish that a feature exists here or on the public site. See [the migration audit](CHEMISTRY_MIGRATION.md) and the [curriculum roadmap and journey](https://app.notion.com/p/4069e7589a238073b9faf331f2e3fd06).
+The daily job now works in **mishazujev/misha-labs**, using the maintained sources in this repository. This run is prepared in [misha-labs draft PR #1](https://github.com/mishazujev/misha-labs/pull/1), with GitHub validation passing. The old `classroom-connect-91` chemistry branch is preserved as a migration reference; its completed checkboxes do not establish that a feature exists here or on the public site. See [the migration audit](CHEMISTRY_MIGRATION.md) and the [curriculum roadmap and journey](https://app.notion.com/p/4069e7589a238073b9faf331f2e3fd06).
 
 This run selected the three transition steps:
 

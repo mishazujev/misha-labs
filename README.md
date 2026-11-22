@@ -2,7 +2,19 @@
 
 **Public Chemistry lab:** <https://labs.mishazujev.com/chemistry/lab3d/lab3d.html>
 
-## Daily development status — 22 November 2026
+## Current development — inspection, overflow and caps
+
+The next three scheduled actions are implemented in [draft PR #5](https://github.com/mishazujev/misha-labs/pull/5), on `chemistry/inspection-overflow-caps` in this repository. This batch is prepared for review and has not been merged or published; the live baseline is documented below.
+
+- [x] F4 — Inspect a selected sample without changing it. Select a beaker in the lab guide or tap one on the bench. The report shows volume, temperature, analytical amounts/concentrations, organic solvent amounts, indicator identity and solid residue. Refresh and switching samples preserve the sample. When the guide is open the report stays inside it, with scrollable mobile controls; otherwise tapping a beaker opens a floating note. English, Estonian, Russian and Ukrainian controls are provided. Concentrations include analytical material in precipitates; they are not free-ion concentrations or proof of separate liquid layers.
+- [x] F3 — Preserve overflow. A receiver accepts exactly its remaining capacity. Excess liquid becomes a persistent, chemistry-coloured puddle with its solutes, indicators, solvents and thermal/reaction history retained. A pipette or partial pour consumes the released dose only once, including a full receiver and 0.05 mL falling drops. Clean liquid spills moves their contents into a collected-waste ledger while keeping the current vessels and trial intact. Reset clears waste, puddles and in-flight drops/grains. Solid-spill cleanup and disposal compatibility remain separate work.
+- [x] F3 — Stop flow at a closed cap or stopcock. Stock-bottle flow, cabinet pouring and closed-bottle pipetting respect the shared gate. An active bottle has a close/open cap control. Explicit cap choices persist through later drags; automatic opening still supports the original first-use gesture. The existing burette closed mode remains available.
+
+`npm test` passes, including 18 transfer/language/deployment/host-identity checks and the existing reaction, indicator, course, distillation and analytics suites. The page was regenerated from maintained sources, and `npm run deploy:prepare` includes the new `bench_state.mjs` module in the production package and server route. Local Chrome checked actual sample selection/Refresh, four language controls, overflow composition, liquid cleanup, full-vessel pipetting, a falling 0.05 mL overflow drop, cap stop/restart, closed-bottle pipetting and reset. Desktop/mobile screenshots were inspected. Test samples and active-pour state were prepared through the debug API with physics paused; a full pointer-driven apparatus-to-conclusion attempt remains a release check.
+
+Next developer work is condition-limited dissolution, binary liquid layers and visible AgCl precipitation/settling, respecting K1/K3 priority. The K3-19 mapping decision remains with the user. Layer equilibria, selective layer withdrawal and solid-spill accounting are not supplied by this batch.
+
+## Published baseline — 22 November 2026
 
 The daily job now works in **mishazujev/misha-labs**, using the maintained sources in this repository. This run was merged through [misha-labs PR #1](https://github.com/mishazujev/misha-labs/pull/1), with GitHub validation passing. The old `classroom-connect-91` chemistry branch is preserved as a migration reference; its completed checkboxes do not establish that a feature exists here or on the public site. See [the migration audit](CHEMISTRY_MIGRATION.md) and the [curriculum roadmap and journey](https://app.notion.com/p/4069e7589a238073b9faf331f2e3fd06).
 

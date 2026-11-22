@@ -16,6 +16,7 @@ const files = [
   "lab3d/course_lab_models.mjs",
   "lab3d/mechanics.mjs",
   "lab3d/mechanics_core.mjs",
+  "lab3d/sample_transfer.mjs",
   "hub-assets/lab-biology.jpg",
   "hub-assets/lab-chemistry.jpg",
   "hub-assets/lab-geography.jpg",

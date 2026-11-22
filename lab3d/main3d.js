@@ -5,6 +5,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, UNKNOWN_SOLIDS, carbonateReactionTime, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, peroxideOxygenRate, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
 import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
+import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -94,10 +95,8 @@ const SOL = {
 };
 const SOLF = { HCl: 'HCl', NaOH: 'NaOH', H2O: 'H₂O', NaCl: 'NaCl', Na2CO3: 'Na₂CO₃', NH4Cl: 'NH₄Cl', CH3COOH: 'CH₃COOH', NH3: 'NH₃', CH3COONa: 'CH₃COONa', Na2SO4: 'Na₂SO₄', NaNO3: 'NaNO₃', CuSO4: 'CuSO₄', FeCl3: 'FeCl₃', FeSO4: 'FeSO₄', PbNO32: 'Pb(NO₃)₂', KI: 'KI', AgNO3: 'AgNO₃' };
 /* acid/base equivalents of a composition (per mL): >0 excess acid, <0 excess base; used for the heat of neutralisation */
-const Z2 = ['Ba', 'Ca', 'Cu', 'Fe2', 'Pb', 'Mg', 'Zn', 'Mn', 'Ni', 'Co', 'Cd', 'Sn'];
-const excessOf = t => { const g = k => t[k] || 0; let e = g('Cl') + g('Br') + g('NO3') + 2 * g('SO4') + g('I') + g('Ac') - g('Na') - g('K') - g('NH3') - g('Ag') - 3 * (g('Fe3') + g('Al')); for (const k of Z2) e -= 2 * g(k); return e; };
-const compOf = id => { const r = REAG[id]; return { id, tot: r.tot, ind: r.ind ? { [r.ind]: 20 } : {}, isInd: !!r.ind, f: r.f }; };
-const compOfVessel = v => { const tot = {}, ind = {}, solv = {}; for (const k in v.chem.tot) tot[k] = v.chem.tot[k] / v.chem.V; for (const k in v.chem.ind) ind[k] = v.chem.ind[k] / v.chem.V; for (const k in (v.chem.solv || {})) solv[k] = v.chem.solv[k] / v.chem.V; return { id: 'v' + v.letter, tot, ind, solv, isInd: false, f: T('x.beaker') + ' ' + v.letter }; };
+const compOf = id => { const r = REAG[id]; return { id, tot: r.tot, ind: r.ind ? { [r.ind]: 20 } : {}, solv: r.solv || {}, isInd: !!r.ind, f: r.f }; };
+const compOfVessel = v => sampleComposition(v.chem, { id: 'v' + v.letter, f: T('x.beaker') + ' ' + v.letter, temp: v.temp, neutralised: v.neutPrev });
 const MW = { Na: 23, Cl: 35.45, Ct: 60, Ac: 59, NH3: 17 };
 const FILM = 0.4; // mL that stays on the walls after emptying
 
@@ -386,8 +385,12 @@ function addLiquid(v, comp, dV, wx, wz) {
   if (!NB.session || NB.session.v !== v || NB.session.id !== comp.id) { endSession(); NB.session = { v, id: comp.id, comp, before: snap(v), startV: v.chem.V, amt: 0, gas: 0, last: 0 }; }
   const s = NB.session; s.amt += dV; s.last = performance.now();
   const c = v.chem; const bulk = {}, bulkInd = {}; if (c.V > 0) { for (const k in c.tot) bulk[k] = c.tot[k] / c.V; for (const k in c.ind) bulkInd[k] = c.ind[k] / c.V; }
-  { const e = excessOf(comp.tot) * dV; if (e > 0) c.acidEq = (c.acidEq || 0) + e; else c.baseEq = (c.baseEq || 0) - e; }
-  c.V += dV; for (const k in comp.tot) c.tot[k] = (c.tot[k] || 0) + comp.tot[k] * dV; for (const k in comp.ind) c.ind[k] = (c.ind[k] || 0) + comp.ind[k] * dV; c.solv ||= {}; for (const k in (comp.solv || {})) c.solv[k] = (c.solv[k] || 0) + comp.solv[k] * dV;
+  const previousTemp = v.temp;
+  c.temp = v.temp; c.neutralised = v.neutPrev;
+  mixSample(c, comp, dV);
+  v.temp = c.temp; v.neutPrev = c.neutralised;
+  // Inherited sample warmth is mixing, not newly generated reaction heat.
+  v.warmLogT += v.temp - previousTemp;
   if (TASK && TASK.id === 'nonmetals-halogens') reactHalogens(v, { ...comp, _dV: dV });
   v.eqDirty = true; v.visualKick = 1;
   if (wx != null && (Object.keys(bulkInd).length || Object.keys(comp.ind).length)) {
@@ -397,7 +400,7 @@ function addLiquid(v, comp, dV, wx, wz) {
   }
   return dV;
 }
-function removeLiquid(v, dV) { const c = v.chem; const can = Math.max(0, c.V - FILM); dV = Math.min(dV, can); if (dV <= 0) return 0; const k = 1 - dV / c.V; for (const x in c.tot) c.tot[x] *= k; c.acidEq = (c.acidEq || 0) * k; c.baseEq = (c.baseEq || 0) * k; v.neutPrev *= k; for (const x in c.ind) c.ind[x] *= k; for (const x in (c.solv || {})) c.solv[x] *= k; c.V -= dV; v.eqDirty = true; return dV; }
+function removeLiquid(v, dV) { const c = v.chem; c.neutralised = v.neutPrev; const removed = drainSample(c, Math.min(dV, Math.max(0, c.V - FILM))); v.neutPrev = c.neutralised; if (removed > 0) v.eqDirty = true; return removed; }
 function doEq(v) {
   v.eqDirty = false; const c = v.chem; if (c.V <= 0.01) { c.eq = { pH: 7, ppt: {}, dis: {} }; return; }
   const gas = equilibrate(c);
@@ -895,21 +898,20 @@ function dockPipette(o, tg) {
 }
 function pipTake(o, tg, dV) {
   const c = o.chem;
-  if (tg.kind === 'vessel') { const v = tg.v; const can = Math.max(0, v.chem.V - FILM - .05); dV = Math.min(dV, can); if (dV <= 0) return 0; const f = dV / v.chem.V; for (const k in v.chem.tot) c.tot[k] = (c.tot[k] || 0) + v.chem.tot[k] * f; for (const k in v.chem.ind) c.ind[k] = (c.ind[k] || 0) + v.chem.ind[k] * f; removeLiquid(v, dV); o.srcId = 'v' + v.letter; o.srcF = T('x.beaker') + ' ' + v.letter; }
-  else if (tg.kind === 'bottle') { const b = tg.b; dV = Math.min(dV, b.V - 1); if (dV <= 0) return 0; const r = compOf(b.id); for (const k in r.tot) c.tot[k] = (c.tot[k] || 0) + r.tot[k] * dV; b.V -= dV; o.srcId = b.id; o.srcF = REAG[b.id].f; }
+  if (tg.kind === 'vessel') { const v = tg.v; const can = Math.max(0, v.chem.V - FILM - .05); dV = Math.min(dV, can); if (dV <= 0) return 0; const comp = compOfVessel(v); dV = removeLiquid(v, dV); mixSample(c, comp, dV); o.srcId = 'v' + v.letter; o.srcF = T('x.beaker') + ' ' + v.letter; }
+  else if (tg.kind === 'bottle') { const b = tg.b; dV = Math.min(dV, b.V - 1); if (dV <= 0) return 0; mixSample(c, compOf(b.id), dV); b.V -= dV; o.srcId = b.id; o.srcF = REAG[b.id].f; }
   else return 0;
-  c.V += dV; o.src = o.srcId; return dV;
+  o.src = o.srcId; return dV;
 }
 function pipGive(o, tg, dV) {
   const c = o.chem; dV = Math.min(dV, c.V); if (dV <= 0) return 0;
-  const comp = { id: 'pip' + (o.big ? 10 : 3) + o.srcId, tot: {}, ind: {}, isInd: false, f: o.srcF };
-  for (const k in c.tot) comp.tot[k] = c.tot[k] / c.V; for (const k in c.ind) comp.ind[k] = c.ind[k] / c.V;
+  const comp = sampleComposition(c, { id: 'pip' + (o.big ? 10 : 3) + o.srcId, f: o.srcF });
   const tip = o.g.position;
-  if (tg.kind === 'vessel') { const got = addLiquid(tg.v, comp, dV, tip.x, tip.z); if (got <= 0) return 0; const l = worldToLocal(tg.v, tip); if (Math.random() < .3) addWave(tg.v, l.x, l.z, .0003); }
+  if (tg.kind === 'vessel') { const got = addLiquid(tg.v, comp, dV, tip.x, tip.z); if (got <= 0) return 0; dV = got; const l = worldToLocal(tg.v, tip); if (Math.random() < .3) addWave(tg.v, l.x, l.z, .0003); }
   else if (tg.kind === 'bottle') { tg.b.V += dV; if (!o.backLogged) { o.backLogged = true; logE('mistake', [['x.backToBottle']]); } }
   else if (Math.random() < .5) SPL.push({ x: tip.x, y: tip.y, z: tip.z, vx: (Math.random() - .5) * .1, vy: .05, vz: (Math.random() - .5) * .1, r: .0005 });
-  const k = 1 - dV / c.V; for (const x in c.tot) c.tot[x] *= k; for (const x in c.ind) c.ind[x] *= k; c.V -= dV;
-  if (c.V < 1e-4) { c.V = 0; c.tot = {}; c.ind = {}; if (tg.kind === 'sink' && o.waterOnly) o.src = null; }
+  drainSample(c, dV);
+  if (c.V < 1e-4 && tg.kind === 'sink' && o.waterOnly) o.src = null;
   return dV;
 }
 function updatePipette(o, dt, t) {
@@ -3730,3 +3732,5 @@ buildTags(); resetState(); setupTask(TASKS[0]); setInspector(inspectorOpen); res
 $('loading').remove();
 requestAnimationFrame(frame);
 window.__lab3d = { reactions: window.ReactionSimulation, mechanics: MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, BAYS, setupTask, TASKS, get TASK() { return TASK; }, DEMO, startDemo, nextDemo, stopDemo, lightLamp, moveArea, toggleProp, setPPE, checkAnswers, addLiquid, compOf, REAG, FX, rodHolder, propInfo, takeProp, BAL, BURETTE, eyeLevel, sampleInfo, HOOD, toggleDoorZ: z => toggleDoor(PT.doors.find(d => d.Z === z)), takeSampleZ: z => takeSample(PT.doors.find(d => d.Z === z)), updateThermo, thermos, tester, probes, conductivity, EVAP, RIG, updateRig, ITEMS, takeItem, PT, SLOTS, DECOR_PICK, PROPS, GRAVITY_SOLIDS, goShelf, viewShelf, touchView: () => { viewTouched = true; }, TAP, spatula, onShake, MOTION, Q, MOBILE, scene, pipettes, METER, controls, vessels, bottles, droppers, wash, spatula, electrode, rod, camera, renderer, BAL, NB, balanceButton, panLoad, vesselMass, endSession, placeVessel };
+
+Object.assign(window.__lab3d, { pipTake, pipGive, compOfVessel, removeLiquid, doEq, updateVessel });

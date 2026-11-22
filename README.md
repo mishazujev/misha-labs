@@ -1,7 +1,20 @@
 # Bench Chemistry Lab
 
-**Current public preview:** <https://gutterlike-rozella-unwearied.ngrok-free.dev>  
-This is a temporary ngrok URL. It works only while the local server and ngrok are running, and it may change when ngrok is restarted.
+**Public Chemistry lab:** <https://labs.mishazujev.com/chemistry/lab3d/lab3d.html>
+
+## Daily development status — 22 November 2026
+
+The daily job now works in **mishazujev/misha-labs**, using the maintained sources in this repository. This run is prepared in [misha-labs draft PR #1](https://github.com/mishazujev/misha-labs/pull/1), with GitHub validation passing. The old `classroom-connect-91` chemistry branch is preserved as a migration reference; its completed checkboxes do not establish that a feature exists here or on the public site. See [the migration audit](CHEMISTRY_MIGRATION.md) and the [curriculum roadmap and journey](https://app.notion.com/p/4069e7589a238073b9faf331f2e3fd06).
+
+This run selected the three transition steps:
+
+- [ ] Restore publishing. The previously empty configuration is now restored: seven production variables and a dedicated private deployment-key secret are configured. The owner supplied the server fingerprint and authorized this release. The workflow verifies the scanned Ed25519 key against that fingerprint before connecting; a known-hosts secret is no longer needed. Remote target validation and public route checks remain in place. Successful deployment and live verification are still pending; see [DEPLOYMENT.md](DEPLOYMENT.md).
+- [x] Audit the previous work against this project's current source. The audit covers granular transfer, K1-16, K3-06/07, sample transfers, inspection, overflow/cleanup, caps and liquid layers. It distinguishes existing mechanisms from features still needing migration and verification.
+- [x] Port sample-preserving transfer into maintained sources. Beaker pours and pipette aliquots now carry solutes, indicators, solvents, temperature and acid/base reaction history. A neutralised sample keeps its warmth without generating or logging a second heat pulse. Dilution uses final solution volume. Existing preset acid/base samples remain reactive, including after partial transfer. The page was regenerated with `lab3d/build3d.sh`.
+
+**Verification:** `npm test` passes, including six new numerical transfer tests, five deployment-preflight tests, three host-fingerprint verification tests and the existing reaction, indicator, course, distillation and analytics checks. `npm run deploy:prepare` includes the new module, and the production server serves it at the actual chemistry route. Local Chrome checked the packaged page, actual pipette functions, conservation of salt/indicator/solvent and neutralisation history, inherited temperature, notebook, reset and EN/ET/RU/UK language controls. Desktop and 390 px mobile screenshots were inspected. Transfer samples were prepared through the debug API with simulation paused; a complete pointer-driven pouring exercise remains a release check.
+
+**Limits and next work:** temperature mixing assumes equal volumetric heat capacity. The previous project's sample inspector, overflow/waste handling, explicit cap flow gate and binary layers have not been migrated. Near-full-vessel rejection still uses the existing model; this run does not claim overflow recovery. Next developer steps are sample inspection, overflow accounting/cleanup, and explicit cap-controlled flow. K1/K3 remain first priority, K2 next, then K8/K9. The K3-19 curriculum-ID decision remains with the user. No merge or live deployment has been performed.
 
 - `lab3d/lab3d.html` — Chemistry Bench 3D, ready to open in a browser (loads three.js from a CDN).
 - `lab3d/` sources: `main3d.js` (scene and interaction), `i18n3d.js` (EN/RU/ET/UK texts), `decor3d.js` (closet and cabinet inventory), `elements3d.js` (periodic table data), `head3d.html` (page shell and styles).

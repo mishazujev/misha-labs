@@ -17,9 +17,9 @@ Previous work remains in `C:/Users/user/coding/chemistry-labs-daily`, branch `ch
 
 ## Publishing
 
-[The latest observed deployment](https://github.com/mishazujev/misha-labs/actions/runs/41769281023) failed at target validation. At the initial 22 November inspection, both repository and production environment variable lists were empty, and no secret names were listed at either scope. Code cannot recreate the dedicated private key or trusted host-key record. Later on 22 November, the owner authorized deployment and creation of a dedicated key. Seven variables and the private-key secret are now configured; the server fingerprint supplied by the owner replaces the need for a known-hosts secret. See [DEPLOYMENT.md](DEPLOYMENT.md) for current setup and verification. Remote access and successful publication remain to be confirmed.
+[Publishing is restored](https://github.com/mishazujev/misha-labs/actions/runs/45002306163). At the initial 22 November inspection, both repository and production environment variable lists were empty, and no secret names were listed at either scope. The owner authorized the release, approved a dedicated key, enabled its public half in Zone and supplied the server fingerprint. Seven variables plus the private-key/passphrase secrets are configured. The workflow unlocks its temporary key and verifies the server identity before connecting; no known-hosts secret is needed. See [DEPLOYMENT.md](DEPLOYMENT.md) for current setup and troubleshooting.
 
-The new preflight reports missing setting names together and checks path, port, URL and remote command fields before SSH configuration. It does not prove that credentials work or that the target server is reachable. The owner has authorized this release; remote access and publication checks remain pending.
+The preflight, tests, remote access, upload, PM2 restart and public route checks passed for release `1e3d445f9a90d66cd186fde9fb76aaf0c84fae32`. Independent live-file comparisons matched the source, and Chrome loaded the public Three.js scene with language controls and lab guide on desktop and mobile. This confirms publication of the migrated transfer feature, not completion of the remaining curriculum or a full pointer-driven lab attempt. New feature releases remain subject to authorization.
 
 ## Next developer actions
 

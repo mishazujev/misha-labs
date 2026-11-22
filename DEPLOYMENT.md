@@ -4,6 +4,12 @@ The Labs site follows the same deployment pattern as `classroom.mishazujev.com`:
 
 The workflow deliberately does not use `rsync --delete`. The private `.data/lab-analytics.sqlite` database on Zone is therefore never uploaded, deleted, or replaced.
 
+## Current setup required — 22 November 2026
+
+The latest observed [deployment run](https://github.com/mishazujev/misha-labs/actions/runs/41769281023) failed because `ZONE_TARGET_PATH` was empty. Both the repository and `production` environment currently list no variables, and neither scope lists deployment secret names. The live page therefore must not be assumed to contain the latest repository changes.
+
+In GitHub **Settings → Environments → production**, restore the six variables and two secrets listed below. Obtain the private deployment key and trusted host-key record from the existing Labs server setup; do not paste them into chat, commit them or reuse a guessed host key. The new `scripts/validate-deployment.mjs` preflight reports every missing setting before writing SSH files, while retaining the dedicated target-path restriction. Once setup and publication are authorized, follow the normal deployment workflow and confirm its public-route checks. A passing preflight alone does not prove SSH access or a successful deployment.
+
 ## One-time GitHub setup
 
 Create a separate GitHub repository named `misha-labs`, push this project to its `main` branch, and create a protected GitHub environment named `production`.

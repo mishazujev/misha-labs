@@ -4,11 +4,13 @@ The Labs site follows the same deployment pattern as `classroom.mishazujev.com`:
 
 The workflow deliberately does not use `rsync --delete`. The private `.data/lab-analytics.sqlite` database on Zone is therefore never uploaded, deleted, or replaced.
 
-## Current setup required — 22 November 2026
+## Deployment access — 22 November 2026
 
-The latest observed [deployment run](https://github.com/mishazujev/misha-labs/actions/runs/41769281023) failed because `ZONE_TARGET_PATH` was empty. Both the repository and `production` environment currently list no variables, and neither scope lists deployment secret names. The live page therefore must not be assumed to contain the latest repository changes.
+The seven production variables below and `ZONE_SSH_PRIVATE_KEY` are configured in the GitHub `production` environment. A dedicated Labs key was created with the owner's approval; its private half is stored only in GitHub. The public half must be authorized for `virt71341` in Zone. The owner supplied the server's Ed25519 SHA256 fingerprint from Zone's SSH panel.
 
-In GitHub **Settings → Environments → production**, restore the six variables and two secrets listed below. Obtain the private deployment key and trusted host-key record from the existing Labs server setup; do not paste them into chat, commit them or reuse a guessed host key. The new `scripts/validate-deployment.mjs` preflight reports every missing setting before writing SSH files, while retaining the dedicated target-path restriction. Once setup and publication are authorized, follow the normal deployment workflow and confirm its public-route checks. A passing preflight alone does not prove SSH access or a successful deployment.
+The workflow scans the server's public Ed25519 key and verifies its SHA256 digest against `ZONE_HOST_FINGERPRINT` before installing a trusted host record or using the private key. `ZONE_KNOWN_HOSTS` is no longer required. It will refuse a changed or unverified server key. The preflight also checks required settings and the dedicated remote target path before connecting.
+
+The previous failed run had empty configuration. Restoring configuration is not evidence of a successful deployment: inspect the latest Actions run and public routes. If the SSH scan times out, check the server address, port and Zone SSH IP access policy. Do not disable host verification to bypass a connection failure.
 
 ## One-time GitHub setup
 
@@ -17,10 +19,11 @@ Create a separate GitHub repository named `misha-labs`, push this project to its
 Environment secrets:
 
 - `ZONE_SSH_PRIVATE_KEY` — private half of the dedicated Labs deployment key.
-- `ZONE_KNOWN_HOSTS` — trusted SSH host-key line for the Zone server.
+- No known-hosts secret is needed; the trusted server fingerprint is a production variable.
 
 Environment variables:
 
+- `ZONE_HOST_FINGERPRINT=SHA256:SCSz5G+d4bt7xE/N/aB+M/sDEJ0kc1gHdfocXIoFfBY` (confirmed in Zone by the owner)
 - `PRODUCTION_URL=https://labs.mishazujev.com`
 - `ZONE_HOST=217.146.69.31` (or the SSH hostname shown by Zone)
 - `ZONE_PORT=22`
@@ -58,5 +61,5 @@ Revert the faulty commit and push the revert to `main`. The standard deployment 
 ## Troubleshooting
 
 - `503 Service Unavailable`: inspect PM2 logs, confirm `HOST=127.1.61.189`, and confirm mod_proxy port `4173`.
-- SSH failure: confirm the public deployment key is still authorized in Zone and refresh `ZONE_KNOWN_HOSTS` only after verifying a legitimate host-key change.
+- SSH failure: confirm the public deployment key is still authorized in Zone and update `ZONE_HOST_FINGERPRINT` only after confirming a legitimate server host-key change in Zone.
 - Upload failure: confirm `ZONE_TARGET_PATH` is `/data02/virt71341/domeenid/www.mishazujev.com/labs` and `ZONE_USERNAME` is `virt71341`.

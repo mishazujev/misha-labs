@@ -37,7 +37,7 @@ jobs:
           ZONE_TARGET_PATH: ${{ vars.ZONE_TARGET_PATH }}
           ZONE_PM2_APP: ${{ vars.ZONE_PM2_APP }}
           ZONE_SSH_PRIVATE_KEY: ${{ secrets.ZONE_SSH_PRIVATE_KEY }}
-          ZONE_KNOWN_HOSTS: ${{ secrets.ZONE_KNOWN_HOSTS }}
+          ZONE_HOST_FINGERPRINT: ${{ vars.ZONE_HOST_FINGERPRINT }}
         run: node scripts/validate-deployment.mjs
 
       - name: Test
@@ -49,12 +49,15 @@ jobs:
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.ZONE_SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.ZONE_KNOWN_HOSTS }}
+          ZONE_HOST: ${{ vars.ZONE_HOST }}
+          ZONE_PORT: ${{ vars.ZONE_PORT }}
+          ZONE_HOST_FINGERPRINT: ${{ vars.ZONE_HOST_FINGERPRINT }}
         run: |
           install -m 700 -d ~/.ssh
+          ssh-keyscan -T 15 -p "$ZONE_PORT" -t ed25519 "$ZONE_HOST" > ~/.ssh/known_hosts.scan
+          node scripts/verify-ssh-host.mjs ~/.ssh/known_hosts.scan ~/.ssh/known_hosts
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/zone_deploy
           chmod 600 ~/.ssh/zone_deploy
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
 
       - name: Upload application
         env:

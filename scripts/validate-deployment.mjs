@@ -1,8 +1,9 @@
 import { pathToFileURL } from 'node:url';
 
 export function deploymentErrors(env) {
-  const required = ['PRODUCTION_URL', 'ZONE_HOST', 'ZONE_PORT', 'ZONE_USERNAME', 'ZONE_TARGET_PATH', 'ZONE_PM2_APP', 'ZONE_SSH_PRIVATE_KEY', 'ZONE_KNOWN_HOSTS'];
+  const required = ['PRODUCTION_URL', 'ZONE_HOST', 'ZONE_PORT', 'ZONE_USERNAME', 'ZONE_TARGET_PATH', 'ZONE_PM2_APP', 'ZONE_SSH_PRIVATE_KEY', 'ZONE_HOST_FINGERPRINT'];
   const errors = required.filter(key => !env[key]?.trim()).map(key => `Missing ${key}`);
+  if (env.ZONE_HOST_FINGERPRINT && !/^SHA256:[A-Za-z0-9+/]{43}$/.test(env.ZONE_HOST_FINGERPRINT)) errors.push('ZONE_HOST_FINGERPRINT must be the SHA256 server host fingerprint confirmed in Zone');
   const path = env.ZONE_TARGET_PATH;
   if (path && (!/^\/data[^/]*\/virt[^/]*\/domeenid\/[A-Za-z0-9_./-]+$/.test(path) || path.split('/').includes('..'))) {
     errors.push('ZONE_TARGET_PATH must be a dedicated Labs directory below /data*/virt*/domeenid/ without parent traversal');

@@ -17,9 +17,9 @@ Previous work remains in `C:/Users/user/coding/chemistry-labs-daily`, branch `ch
 
 ## Publishing
 
-[The latest observed deployment](https://github.com/mishazujev/misha-labs/actions/runs/41769281023) failed at target validation. On 22 November, both repository and production environment variable lists were empty, and no secret names were listed at either scope. Code cannot recreate the dedicated private key or trusted host-key record. Configure the six documented variables and two secrets in the production environment using [DEPLOYMENT.md](DEPLOYMENT.md). No production settings were changed and no deployment was triggered in this run.
+[The latest observed deployment](https://github.com/mishazujev/misha-labs/actions/runs/41769281023) failed at target validation. At the initial 22 November inspection, both repository and production environment variable lists were empty, and no secret names were listed at either scope. Code cannot recreate the dedicated private key or trusted host-key record. Later on 22 November, the owner authorized deployment and creation of a dedicated key. Seven variables and the private-key secret are now configured; the server fingerprint supplied by the owner replaces the need for a known-hosts secret. See [DEPLOYMENT.md](DEPLOYMENT.md) for current setup and verification. Remote access and successful publication remain to be confirmed.
 
-The new preflight reports missing setting names together and checks path, port, URL and remote command fields before SSH configuration. It does not prove that credentials work or that the target server is reachable. Those checks await restored configuration and authorization to publish.
+The new preflight reports missing setting names together and checks path, port, URL and remote command fields before SSH configuration. It does not prove that credentials work or that the target server is reachable. The owner has authorized this release; remote access and publication checks remain pending.
 
 ## Next developer actions
 

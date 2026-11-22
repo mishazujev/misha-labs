@@ -49,6 +49,7 @@ jobs:
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.ZONE_SSH_PRIVATE_KEY }}
+          SSH_KEY_PASSPHRASE: ${{ secrets.ZONE_SSH_KEY_PASSPHRASE }}
           ZONE_HOST: ${{ vars.ZONE_HOST }}
           ZONE_PORT: ${{ vars.ZONE_PORT }}
           ZONE_HOST_FINGERPRINT: ${{ vars.ZONE_HOST_FINGERPRINT }}
@@ -58,6 +59,9 @@ jobs:
           node scripts/verify-ssh-host.mjs ~/.ssh/known_hosts.scan ~/.ssh/known_hosts
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/zone_deploy
           chmod 600 ~/.ssh/zone_deploy
+          if [ -n "$SSH_KEY_PASSPHRASE" ]; then
+            ssh-keygen -p -P "$SSH_KEY_PASSPHRASE" -N '' -f ~/.ssh/zone_deploy
+          fi
           # Log only the public fingerprint, never the private key.
           ssh-keygen -y -f ~/.ssh/zone_deploy | ssh-keygen -lf -
 

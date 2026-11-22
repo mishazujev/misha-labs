@@ -58,6 +58,8 @@ jobs:
           node scripts/verify-ssh-host.mjs ~/.ssh/known_hosts.scan ~/.ssh/known_hosts
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/zone_deploy
           chmod 600 ~/.ssh/zone_deploy
+          # Log only the public fingerprint, never the private key.
+          ssh-keygen -y -f ~/.ssh/zone_deploy | ssh-keygen -lf -
 
       - name: Upload application
         env:
@@ -66,8 +68,8 @@ jobs:
           ZONE_TARGET_PATH: ${{ vars.ZONE_TARGET_PATH }}
           ZONE_USERNAME: ${{ vars.ZONE_USERNAME }}
         run: |
-          ssh -i ~/.ssh/zone_deploy -p "$ZONE_PORT" "$ZONE_USERNAME@$ZONE_HOST" "mkdir -p '$ZONE_TARGET_PATH'"
-          rsync -az --checksum -e "ssh -i ~/.ssh/zone_deploy -p $ZONE_PORT" .deploy/ "$ZONE_USERNAME@$ZONE_HOST:$ZONE_TARGET_PATH/"
+          ssh -v -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/zone_deploy -p "$ZONE_PORT" "$ZONE_USERNAME@$ZONE_HOST" "mkdir -p '$ZONE_TARGET_PATH'"
+          rsync -az --checksum -e "ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/zone_deploy -p $ZONE_PORT" .deploy/ "$ZONE_USERNAME@$ZONE_HOST:$ZONE_TARGET_PATH/"
 
       - name: Restart application
         env:
@@ -76,7 +78,7 @@ jobs:
           ZONE_PORT: ${{ vars.ZONE_PORT }}
           ZONE_USERNAME: ${{ vars.ZONE_USERNAME }}
         run: |
-          ssh -i ~/.ssh/zone_deploy -p "$ZONE_PORT" "$ZONE_USERNAME@$ZONE_HOST" "pm2 restart '$ZONE_PM2_APP' --update-env"
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/zone_deploy -p "$ZONE_PORT" "$ZONE_USERNAME@$ZONE_HOST" "pm2 restart '$ZONE_PM2_APP' --update-env"
 
       - name: Verify public routes
         env:

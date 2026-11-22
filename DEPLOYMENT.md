@@ -6,11 +6,11 @@ The workflow deliberately does not use `rsync --delete`. The private `.data/lab-
 
 ## Deployment access — 22 November 2026
 
-The seven production variables below and `ZONE_SSH_PRIVATE_KEY` are configured in the GitHub `production` environment. A dedicated Labs key was created with the owner's approval; its private half is stored only in GitHub. The public half must be authorized for `virt71341` in Zone. The owner supplied the server's Ed25519 SHA256 fingerprint from Zone's SSH panel.
+The seven production variables below and `ZONE_SSH_PRIVATE_KEY` are configured in the GitHub `production` environment. A dedicated Labs key was created with the owner's approval; its private half is stored only in GitHub. The owner confirmed enabling its public half for `virt71341` in Zone on 22 November. The owner also supplied the server's Ed25519 SHA256 fingerprint from Zone's SSH panel.
 
 The workflow scans the server's public Ed25519 key and verifies its SHA256 digest against `ZONE_HOST_FINGERPRINT` before installing a trusted host record or using the private key. `ZONE_KNOWN_HOSTS` is no longer required. It will refuse a changed or unverified server key. The preflight also checks required settings and the dedicated remote target path before connecting.
 
-The previous failed run had empty configuration. Restoring configuration is not evidence of a successful deployment: inspect the latest Actions run and public routes. If the SSH scan times out, check the server address, port and Zone SSH IP access policy. Do not disable host verification to bypass a connection failure.
+The old failed run had empty configuration. The current [release deployment](https://github.com/mishazujev/misha-labs/actions/runs/45000740401) passes configuration, tests and server identity verification, but its first two attempts were rejected at SSH authentication before upload. The newly enabled public key may take up to ten minutes to propagate, according to [Zone's SSH setup guide](https://www.zone.ee/help/en/kb/establishing-an-ssh-connection/). Inspect the latest Actions attempt and public routes to establish deployment status. If SSH remains blocked, check the user, key and Zone SSH IP access policy. Do not disable host verification to bypass a connection failure.
 
 ## One-time GitHub setup
 

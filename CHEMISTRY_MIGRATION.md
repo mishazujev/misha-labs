@@ -10,9 +10,9 @@ Previous work remains in `C:/Users/user/coding/chemistry-labs-daily`, branch `ch
 | K1-16 standard solution | No K1-16 task/catalogue entry or equivalent standard-solution workflow found. Existing balance and sample chemistry can support a native activity. Port the lesson only after reconciling equipment and curriculum IDs. |
 | K3-06/07 molecular editor | K3.04 shape views and K3.05 isomer/property comparisons exist. They do not implement the previous editable valence-aware molecular graph. The editor and its specific error feedback remain unmigrated. |
 | Sample-preserving liquid transfer | **Ported this run.** Previously beaker transfers omitted thermal/reaction history and pipettes also omitted solvents. `sample_transfer.mjs` now supplies one composition/mixing/draining model to the actual bench paths. Six numerical tests cover conservation, dilution, temperature, heat history, preset reagents and partial/rejected dosing. |
-| Read-only sample inspector | The current inspector is the procedure/action-log panel; it is not the previous sample selector showing component amounts and concentrations. Migration and language verification pending. |
-| Overflow and spill cleanup | `addLiquid` still rejects a dose near capacity, and upstream pour paths can already have removed liquid. Splash effects do not establish a persistent, conserved spill/waste ledger. The previous capacity/overflow/cleanup feature remains pending. |
-| Cap-controlled flow | Cabinet caps and phase-based mechanical profiles exist. The stock-bottle `flowFrom` path lacks the previous explicit cap/stopcock flow gate. Port and test controls against these mechanics instead of replacing the mechanics layer. |
+| Read-only sample inspector | **Implemented in the current review branch.** Beaker selection/tap and Refresh show analytical amounts, concentration, temperature and liquid/solid inventory without changing the sample. The report is inside the open guide, and four languages were checked in Chrome. Not yet published. |
+| Overflow and spill cleanup | **Liquid overflow/cleanup implemented in the current review branch.** Capacity acceptance, persistent coloured puddles, composition and collected waste are conserved through pour, pipette and 0.05 mL drop paths. Cleanup preserves the trial. Solid-spill accounting/cleanup remains pending. Not yet published. |
+| Cap-controlled flow | **Implemented in the current review branch.** The shared gate blocks closed caps/stopcocks, including stock flow, cabinet pouring and closed-bottle pipetting. Explicit cap choices survive later drags; an active bottle has close/open controls. Numerical and actual UI stop/restart checks passed. Not yet published. |
 | Density layers and shaken separation | Solvent amounts, evaporation models and shake interactions exist. No equivalent binary layer renderer/state model found. Water/hexane and water/DCM layer and recovery checks remain pending. |
 
 ## Publishing
@@ -23,8 +23,11 @@ The preflight, tests, remote access, upload, PM2 restart and public route checks
 
 ## Next developer actions
 
-- [ ] Port read-only sample inspection and verify amounts, concentration, temperature and all existing languages.
-- [ ] Port capacity-limited acceptance, overflow composition and cleanup/waste accounting together; verify both pour and pipette paths.
-- [ ] Port explicit cap-controlled flow using the current mechanical profiles; verify immediate stop/restart and closed-bottle pipetting.
+- [x] Port read-only sample inspection and verify amounts, concentration, temperature and all existing languages (review branch; not published).
+- [x] Port capacity-limited acceptance, liquid overflow composition and cleanup/waste accounting; verify pour, pipette and small-drop paths (review branch; solid-spill handling remains pending).
+- [x] Port explicit cap-controlled flow using the current mechanical profiles; verify immediate stop/restart and closed-bottle pipetting (review branch; not published).
+- [ ] Limit dissolution to the amount supported by the sample conditions.
+- [ ] Implement density-ordered binary liquid layers.
+- [ ] Show AgCl particles and settling driven by the precipitation model.
 
 Then reconcile the granular and lesson ports, condition-limited dissolution, AgCl settling, and K3-11 solvent comparisons. Keep the Notion history linked to its original project while marking migration state explicitly. A checked implementation item is not proof of deployment.

@@ -3,6 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
+import { doseCapacity, flowAllowed, sampleSnapshot } from './bench_state.mjs';
 
 // Exercise the actual bench entry points, with rendering/logging isolated.
 const source = fs.readFileSync(new URL('./main3d.js', import.meta.url), 'utf8');
@@ -15,14 +16,21 @@ function namedFunction(name) {
 const engine = fs.readFileSync(new URL('../lab/engine.js', import.meta.url), 'utf8');
 function bench() {
   const logs = [];
-  const context = vm.createContext({ sampleComposition, mixSample, drainSample, excessOf, performance, console, window: {},
+  const spills = { V: 0, tot: {}, ind: {}, solv: {} };
+  const context = vm.createContext({ sampleComposition, mixSample, drainSample, excessOf, doseCapacity, flowAllowed, sampleSnapshot, performance, console, window: {},
     NB: { session: null }, TASK: {}, FILM: .4,
     logE: (...args) => logs.push(args), endSession() {}, ppeCheck() {}, spawnPlume() {}, addWave() {},
+    spillLiquid: (comp, volume) => mixSample(spills, comp, volume),
+    drawStream() {}, isSolutionContainer: o => !!o.chem, contents: o => o.chem ? o.chem.V : o.V,
+    canTransferPhase: () => false, landPoint: () => ({ x: 0, z: 0 }), buzz() {},
     snap: v => ({ V: v.chem.V }), T: key => key, fmt: x => String(x), worldToLocal: () => ({ x: 0, z: 0 }), SPL: [] });
   const remove = source.slice(source.indexOf('function removeLiquid('), source.indexOf('\nfunction doEq('));
   const comp = source.slice(source.indexOf('const compOfVessel ='), source.indexOf('\nconst MW ='));
-  vm.runInContext(engine + '\n' + comp + '\n' + remove + '\n' + ['addLiquid', 'doEq', 'pipTake', 'pipGive'].map(namedFunction).join('\n') + '\nthis.compOfVessel = compOfVessel;', context);
-  return { ...context, logs };
+  vm.runInContext(engine + '\n' + comp + '\n' + remove + '\n' + ['addLiquid', 'doEq', 'pipTake', 'pipGive', 'flowFrom'].map(namedFunction).join('\n') + '\nthis.compOfVessel = compOfVessel;', context);
+  context.containerComposition = o => context.compOfVessel(o);
+  context.removeContainerLiquid = (o, n) => context.removeLiquid(o, n);
+  context.deliver = (target, composition, n) => context.addLiquid(target.v, composition, n);
+  return { ...context, logs, spills };
 }
 const vessel = (V = 0) => ({ letter: 'A', chem: { V, tot: {}, ind: {}, solv: {}, cap: 250 }, temp: 22, neutPrev: 0, warmLogT: 22, gas: 0 });
 const pipette = () => ({ chem: { V: 0, tot: {}, ind: {} }, g: { position: { x: 0, z: 0 } } });
@@ -75,15 +83,60 @@ test('preset acid without historical fields remains reactive after a partial pip
   near(from.chem.acidEq, 1); near(to.chem.acidEq, 1); near(to.chem.baseEq, 1);
 });
 
-test('partial pipette release and rejected full-vessel dose preserve the remaining sample', () => {
+test('partial release and a full-vessel dose drain the pipette once and conserve spilled solvent', () => {
   const core = bench(), from = vessel(20), to = vessel(), pip = pipette();
   from.chem.solv = { ethanol: 16 }; from.temp = 40;
   core.pipTake(pip, { kind: 'vessel', v: from }, 8);
   core.pipGive(pip, { kind: 'vessel', v: to }, 3);
   near(pip.chem.V, 5); near(pip.chem.solv.ethanol, 4); near(to.chem.solv.ethanol, 2.4);
-  const full = vessel(244), before = JSON.stringify(pip.chem);
-  assert.equal(core.pipGive(pip, { kind: 'vessel', v: full }, 1), 0);
-  assert.equal(JSON.stringify(pip.chem), before);
+  const full = vessel(250);
+  assert.equal(core.pipGive(pip, { kind: 'vessel', v: full }, 1), 1);
+  near(pip.chem.V, 4); near(core.spills.V, 1); near(core.spills.solv.ethanol, .8);
+  near(full.chem.V, 250);
+});
+
+test('a near-full receiver retains its capacity and preserves every overflow component', () => {
+  const core = bench(), target = vessel(248);
+  const comp = { id: 'sample', tot: { Na: .1, Cl: .1 }, ind: { univ: .5 }, solv: { ethanol: .25 }, temp: 35, acidEq: .1, baseEq: .1, neutralised: .1 };
+  assert.equal(core.addLiquid(target, comp, 5), 2);
+  near(target.chem.V, 250); near(core.spills.V, 3);
+  for (const [field, key, total] of [['tot', 'Na', .5], ['ind', 'univ', 2.5], ['solv', 'ethanol', 1.25]]) near(target.chem[field][key] + core.spills[field][key], total);
+  assert.equal(core.addLiquid(target, comp, .05), 0); near(core.spills.V, 3.05);
+  near(target.neutPrev + core.spills.neutralised, .505);
+});
+
+test('sample inspection returns independent amounts without mutating current chemistry', () => {
+  const v = vessel(40); v.temp = 35; v.solid = .4; v.chem.tot = { Na: 2, Cl: 2 }; v.chem.solv = { ethanol: 4 }; v.chem.eq = { ppt: { AgCl: .2 } };
+  const before = JSON.stringify(v), snapshot = sampleSnapshot(v);
+  assert.equal(snapshot.temperature, 35); assert.equal(snapshot.components[0].concentration, .05);
+  assert.equal(snapshot.solids.length, 2); assert.equal(snapshot.solvents[0].volume, 4);
+  snapshot.components[0].amount = 999; snapshot.solids[0].amount = 999;
+  assert.equal(JSON.stringify(v), before);
+  assert.equal(sampleSnapshot(vessel()).liquid, false);
+});
+
+test('legacy course-language fallbacks do not overwrite translated inspection controls', () => {
+  const context = vm.createContext({ I18N: { en: {}, et: {}, ru: {}, uk: {} } });
+  vm.runInContext(fs.readFileSync(new URL('./i18n3d.js', import.meta.url), 'utf8'), context);
+  for (const key of ['sampleInspect', 'sampleLiquid', 'sampleComponents', 'sampleRefresh']) {
+    const english = context.I18N.en['x.' + key];
+    assert.ok(english);
+    for (const lang of ['et', 'ru', 'uk']) { assert.ok(context.I18N[lang]['x.' + key]); assert.notEqual(context.I18N[lang]['x.' + key], english); }
+  }
+});
+
+test('cap and stopcock gates stop actual flow before any material is removed', () => {
+  const core = bench(), from = vessel(40), to = vessel();
+  from.open = false; from.shape = { capAt: () => 0 }; from.tilt = 120; from.Qmax = 25;
+  from.spout = { clone: () => ({}) };
+  core.flowFrom(from, { kind: 'vessel', v: to }, .1);
+  near(from.chem.V, 40); near(to.chem.V, 0);
+  from.open = true; core.flowFrom(from, { kind: 'vessel', v: to }, .1);
+  near(from.chem.V, 37.5); near(to.chem.V, 2.5);
+  from.stopcock = 0; core.flowFrom(from, { kind: 'vessel', v: to }, .1);
+  near(from.chem.V, 37.5); near(to.chem.V, 2.5);
+  const pip = pipette(); assert.equal(core.pipTake(pip, { kind: 'bottle', b: { open: false, V: 100 } }, 2), 0);
+  assert.equal(core.pipGive({ ...pip, chem: { V: 2, tot: {}, ind: {} } }, { kind: 'bottle', b: { open: false, V: 100 } }, 2), 0);
 });
 
 test('mixing temperatures and aliquots are read-only and concentration correct', () => {

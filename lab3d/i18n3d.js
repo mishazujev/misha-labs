@@ -341,6 +341,8 @@
   });
 })();
 
+
+
 /* K1.14, K1.15, K3.04 and K3.05 evidence-station laboratories. */
 (function () {
   Object.assign(I18N.en, {
@@ -878,4 +880,25 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
     'x.lab.k113.done': 'Правильно для змодельованих однакових умов: найбільше охолоджує ацетон, далі етанол, найменше — вода. Випаровування забирає енергію. Ацетон дуже леткий і не утворює між власними молекулами водневих зв’язків як донор; етанол і вода утворюють водневі зв’язки, причому у воді мережа розвиненіша. Результат залежить і від швидкості випаровування, і від ентальпії пароутворення.',
     'x.lab.k113.sensory': 'Запишіть початкові та мінімальні температури й час випаровування. Рідини прозорі й безбарвні; бульбашок, диму чи полум’я бути не повинно. Не нюхайте розчинники безпосередньо.',
   });
+})();
+
+// Bench inspection and spill controls share the same four supported languages.
+(() => {
+  const rows = {
+    full: ['Beaker {v} is full; excess liquid has spilled onto the bench.', 'Keeduklaas {v} on täis; liigne vedelik voolas lauale.', 'Стакан {v} полон; избыток жидкости пролился на стол.', 'Склянка {v} повна; надлишок рідини пролився на стіл.'],
+    sampleInspect: ['Inspect sample', 'Uuri proovi', 'Исследовать пробу', 'Дослідити пробу'],
+    sampleRefresh: ['Refresh', 'Värskenda', 'Обновить', 'Оновити'],
+    sampleLiquid: ['Liquid sample', 'Vedel proov', 'Жидкая проба', 'Рідка проба'],
+    sampleSolid: ['Solid residue', 'Tahke jääk', 'Твёрдый остаток', 'Твердий залишок'],
+    sampleEmpty: ['Empty vessel', 'Tühi anum', 'Пустой сосуд', 'Порожня посудина'],
+    sampleComponents: ['Analytical totals and concentrations (including any precipitate)', 'Aine üldkogused ja kontsentratsioonid (ka sade)', 'Общие количества и концентрации (включая осадок)', 'Загальні кількості та концентрації (включно з осадом)'],
+    sampleSolvents: ['Organic solvent amounts', 'Orgaaniliste lahustite kogused', 'Количество органических растворителей', 'Кількість органічних розчинників'],
+    sampleIndicators: ['Indicators', 'Indikaatorid', 'Индикаторы', 'Індикатори'],
+    cleanSpills: ['Clean liquid spills', 'Korista vedelikuleke', 'Убрать пролитую жидкость', 'Прибрати пролиту рідину'],
+    spillStatus: ['Spilled: {v} mL · Collected waste: {w} mL', 'Lekkinud: {v} mL · Kogutud jäätmed: {w} mL', 'Пролито: {v} мл · Собрано отходов: {w} мл', 'Пролито: {v} мл · Зібрано відходів: {w} мл'],
+    spillCleaned: ['Collected {v} mL of spilled liquid as waste; the trial is unchanged.', 'Koguti {v} mL lekkinud vedelikku jäätmeteks; katse jätkub.', 'Собрано {v} мл пролитой жидкости; опыт продолжается.', 'Зібрано {v} мл пролитої рідини; дослід триває.'],
+    closeCap: ['Close bottle cap', 'Sulge pudeli kork', 'Закрыть крышку бутылки', 'Закрити кришку пляшки'],
+    openCap: ['Open bottle cap', 'Ava pudeli kork', 'Открыть крышку бутылки', 'Відкрити кришку пляшки']
+  };
+  for (const [index, lang] of ['en', 'et', 'ru', 'uk'].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]['x.' + key] = values[index];
 })();

@@ -2217,6 +2217,23 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
   };
   for (const [index, lang] of ['en', 'et', 'ru', 'uk'].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]['x.' + key] = values[index];
 })();
+
+// Keep new phase strings after legacy language fallback blocks.
+(() => {
+  const rows = {
+    solubilityUnknown: ['Solubility is not modelled for these solvent or temperature conditions.', 'Nendel lahusti- või temperatuuritingimustel lahustuvust ei modelleerita.', 'Растворимость при этих условиях растворителя или температуры не моделируется.', 'Розчинність за цих умов розчинника або температури не моделюється.'],
+    phaseUnknown: ['Liquid layers are not modelled for this solvent combination.', 'Selle lahustite kombinatsiooni vedelikukihte ei modelleerita.', 'Слои для этой смеси растворителей не моделируются.', 'Шари для цієї суміші розчинників не моделюються.'],
+    phaseSingle: ['One liquid phase', 'Üks vedelfaas', 'Одна жидкая фаза', 'Одна рідка фаза'],
+    phaseSeparated: ['Two separated liquid phases', 'Kaks eraldunud vedelfaasi', 'Две разделённые жидкие фазы', 'Дві розділені рідкі фази'],
+    phaseSeparating: ['Dispersed liquid phases; allow to separate', 'Hajutatud vedelfaasid; lase eralduda', 'Жидкие фазы перемешаны; дайте им разделиться', 'Рідкі фази перемішані; дайте їм розділитися'],
+    phaseBottom: ['Bottom', 'All', 'Снизу', 'Знизу'],
+    phaseTop: ['Top', 'Ülal', 'Сверху', 'Зверху'],
+    agclSettled: ['AgCl: settled white precipitate', 'AgCl: settinud valge sade', 'AgCl: осевший белый осадок', 'AgCl: осілий білий осад'],
+    agclSuspended: ['AgCl: white precipitate in suspension', 'AgCl: valge sade suspensioonis', 'AgCl: белый осадок во взвеси', 'AgCl: білий осад у зависі'],
+    shakeSample: ['Shake sample', 'Loksuta proovi', 'Встряхнуть пробу', 'Струсити пробу']
+  };
+  for (const [index, lang] of ['en', 'et', 'ru', 'uk'].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]['x.' + key] = values[index];
+})();
 /* Lab inventory shown on the closet and cabinet shelves (see "Virtual Lab Inventory" doc).
    Items here are display-only for now: tapping one opens a note; later rounds make them usable.
    n = [en, ru, et]; lv = MS | HS | Uni; sh = shelf T | M2 | M1 | B (top, eye level, lower middle, bottom).
@@ -2522,6 +2539,7 @@ import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODE
 import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
 import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
 import { doseCapacity, flowAllowed, sampleSnapshot } from './bench_state.mjs';
+import { waterVolume, dissolutionDomain, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, NACL } from './phase_state.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -2667,7 +2685,7 @@ function describe(b, a, gas, addedInd) {
   if (a.inds) { if (addedInd || a.ind !== b.ind) out.push(['obs.ind', { c: { k: 'col.' + a.ind } }]); }
   else if (a.base !== b.base && a.base !== 'colourless') out.push(['obs.colour', { c: { k: 'col.' + a.base } }]);
   if (!out.length) out.push(['obs.none']); return out; }
-function lookWithCloud(chem) { const lk = vesselLook(chem); if (lk.cloud) { const w = Math.min(.85, lk.pptTotal * 8); lk.rgb = lerpC(lk.rgb, hex2rgb(lk.cloud), w); lk.a = Math.max(lk.a, .3 + w * .65); } return lk; }
+function lookWithCloud(chem, settled = 0) { const lk = vesselLook(chem); if (lk.cloud) { const suspended = Math.max(0, lk.pptTotal - (chem.eq?.ppt?.AgCl || 0) * settled); const w = Math.min(.85, suspended * 8); lk.rgb = lerpC(lk.rgb, hex2rgb(lk.cloud), w); lk.a = Math.max(lk.a, .3 + w * .65); } return lk; }
 function endSession() {
   const s = NB.session; if (!s) return; NB.session = null; const v = s.v;
   if (v.eqDirty) doEq(v);
@@ -2863,6 +2881,7 @@ function makeBeaker(letter, x, z, glassMass, init) {
   if (init) { v.chem.V = init.V; v.chem.tot = { ...init.tot }; }
   equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v);
   applyMechanicalProfile(v, 'openVessel', { collisionRadius: R + .002 });
+  addPhaseVisuals(v);
   v.tap = () => inspectSample(v);
   proxy.userData.obj = v; vessels.push(v); return v;
 }
@@ -2936,7 +2955,7 @@ function addLiquid(v, comp, dV, wx, wz) {
   // Inherited sample warmth is mixing, not newly generated reaction heat.
   v.warmLogT += v.temp - previousTemp;
   if (TASK && TASK.id === 'nonmetals-halogens') reactHalogens(v, { ...comp, _dV: dV });
-  v.eqDirty = true; v.visualKick = 1;
+  v.eqDirty = true; v.visualKick = 1; v.layerSettle = 0;
   if (wx != null && (Object.keys(bulkInd).length || Object.keys(comp.ind).length)) {
     const loc = { V: 1, tot: {}, ind: {} }; for (const k in bulk) loc.tot[k] = bulk[k] / 2; for (const k in comp.tot) loc.tot[k] = (loc.tot[k] || 0) + comp.tot[k] / 2;
     for (const k of new Set([...Object.keys(bulkInd), ...Object.keys(comp.ind)])) loc.ind[k] = 2;
@@ -2975,11 +2994,12 @@ function clearFx(v) { for (const p of v.plumes) { v.g.remove(p); p.material.disp
 /* ---------- per-frame vessel update ---------- */
 function updateVessel(v, dt, t) {
   if (v.eqDirty && t - v.lastEq > .06) { v.lastEq = t; doEq(v); }
-  if (v.solid > 0 && v.chem.V > .5) { const cap = Math.max(0, .36 * v.chem.V - ((v.chem.tot.Cl || 0) * 58.44 / 1000)); const dm = Math.min(v.solid, cap, .07 * dt * (1 + 6 * v.stir)); if (dm > 0) { v.solid -= dm; const n = dm / 58.44 * 1000; v.chem.tot.Na = (v.chem.tot.Na || 0) + n; v.chem.tot.Cl = (v.chem.tot.Cl || 0) + n; v.eqDirty = true; } }
+  dissolveSalt(v, dt);
+  advancePhases(v, dt);
   const sp = v.g.position.distanceTo(v.last) / Math.max(dt, 1e-3); v.last.copy(v.g.position);
   if (v.held && v.tilt < 5 && sp > .05) { v.stir = Math.min(1, v.stir + sp * dt * 3); if (Math.random() < .3) addWave(v, (Math.random() - .5) * .03, (Math.random() - .5) * .03, .0004); }
   v.level += (levelOf(v) - v.level) * (1 - Math.exp(-dt * 8));
-  const lk = lookWithCloud(v.chem); const k = 1 - Math.exp(-dt * (.8 + v.stir * 4 + v.visualKick * 9));
+  const lk = lookWithCloud(v.chem, v.agclState?.settled || 0); const k = 1 - Math.exp(-dt * (.8 + v.stir * 4 + v.visualKick * 9));
   v.rgb = v.rgb.map((x, i) => x + (lk.rgb[i] - x) * k); v.a += (lk.a - v.a) * k;
   const c = new THREE.Color().setRGB(v.rgb[0] / 255, v.rgb[1] / 255, v.rgb[2] / 255, THREE.SRGBColorSpace);
   const kk = clamp((v.a - .26) * 1.7, 0, .92);
@@ -2998,6 +3018,7 @@ function updateVessel(v, dt, t) {
     v.surfGeo.attributes.position.needsUpdate = true; v.surfGeo.computeVertexNormals();
     v.side.scale.y = Math.max(.0005, v.level + .0011 - v.b);
   }
+  renderPhases(v, t);
   v.waves = v.waves.filter(w => t - w.t0 < 2.5);
   if (v.solid > .005) { const s = .004 + .0075 * Math.cbrt(v.solid); v.pile.visible = true; v.pile.scale.set(s, s, s); v.pile.position.set(0, v.b + s * .3, 0); } else v.pile.visible = false;
   for (let i = v.plumes.length - 1; i >= 0; i--) {
@@ -4063,17 +4084,18 @@ function updateSolidReactions(dt) {
   for (let i = ELP.length - 1; i >= 0; i--) { const p = ELP[i], v = p.v; p.vy -= 9.8 * dt; p.mesh.position.y += p.vy * dt; p.mesh.rotation.x += dt * 4;
     const vc = v.g.position; if (p.mesh.position.y <= vc.y + v.b + p.sz) { ELP.splice(i, 1); if (!v.held && !v.stowed) landPiece(p); else scene.remove(p.mesh); } }
   for (const v of vessels) { if (!v.particles || !v.particles.length) continue;
-    const wet = v.chem.V > .5, H = wet ? Math.pow(10, -((v.chem.eq && v.chem.eq.pH) ?? 7)) : 0, lv = levelOf(v);
+    const wet = waterVolume(v.chem) > .5, H = wet ? Math.pow(10, -((v.chem.eq && v.chem.eq.pH) ?? 7)) : 0, lv = levelOf(v);
     for (let k = v.particles.length - 1; k >= 0; k--) { const p = v.particles[k];
       if (!wet) { p.mesh.position.y += (v.b + p.sz * .7 - p.mesh.position.y) * .2; continue; }
-      const C = p.cmp, rate = C ? (C.water || 0) + (C.acid || 0) * Math.min(1, H / .1) : (WATERRX[p.sym] || 0) + (ACIDRX[p.sym] || 0) * Math.min(1, H / .1);
+      const C = p.cmp, room = C ? dissolutionRoom(v.chem, C, v.temp) : null;
+      const rate = C ? (room === 0 ? 0 : (C.water || 0) * (1 + 6 * v.stir)) + (C.acid || 0) * Math.min(1, H / .1) : (WATERRX[p.sym] || 0) + (ACIDRX[p.sym] || 0) * Math.min(1, H / .1);
       const key = (C ? C.f : p.sym) + (rate > 1e-5 ? ':rx' : ':none');
       if (!v.rxLog.has(key)) { v.rxLog.add(key); const n = C ? C.f : elName(p.e);
         const msg = rate <= 1e-5 ? 'x.rxNone' : C ? (C.msg && H > 1e-4 ? C.msg : C.water ? 'x.dissolves' : 'x.rxAcid') : (WATERRX[p.sym] && H < 1e-3 ? 'x.rxWater' : 'x.rxAcid');
         logE(rate > 1e-5 ? 'success' : 'info', [[msg, { n, v: v.letter }]]); }
-      if (C) { if (rate <= 1e-5) continue; const dm = Math.min(p.m, rate * dt); p.m -= dm; const mmol = dm / (C.M || 100) * 1000; for (const k in C.tot) v.chem.tot[k] = (v.chem.tot[k] || 0) + C.tot[k] * mmol;
+      if (C) { if (rate <= 1e-5) continue; const dm = Math.min(p.m, rate * Math.max(0, dt), room ?? Infinity); if (dm <= 0) continue; p.m -= dm; const mmol = dm / (C.M || 100) * 1000; for (const k in C.tot) v.chem.tot[k] = (v.chem.tot[k] || 0) + C.tot[k] * mmol;
         { const e = excessOf(C.tot) * mmol; if (e > 0) v.chem.acidEq = (v.chem.acidEq || 0) + e; else v.chem.baseEq = (v.chem.baseEq || 0) - e; }
-        v.eqDirty = true; p.mesh.scale.setScalar(Math.max(.05, Math.cbrt(Math.max(p.m, 0) / p.m0))); if (p.m <= 1e-4) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); v.particles.splice(k, 1); } continue; }
+        v.eqDirty = true; p.mesh.scale.setScalar(Math.max(.05, Math.cbrt(Math.max(p.m, 0) / p.m0))); if (p.m <= 1e-10) { v.g.remove(p.mesh); p.mesh.geometry.dispose(); v.particles.splice(k, 1); } continue; }
       if (FLOATS[p.sym]) { p.ang += dt * 2.5; const rr = v.Ri * .55; p.mesh.position.set(Math.sin(p.ang) * rr, lv - p.sz * .2, Math.cos(p.ang) * rr); }
       if (rate <= 1e-5) continue;
       const dm = Math.min(p.m, rate * dt); p.m -= dm; const Ar = +p.e[1] || 50, mmol = dm / Ar * 1000, ion = ION[p.sym] || p.sym, z = (METALS[ion] && METALS[ion].z) || 1;
@@ -4472,6 +4494,9 @@ const CHEMDATA = {
 };
 CHEMDATA['C₁₂H₂₂O₁₁'].tot = { Suc: 1 };
 CHEMDATA['C₆H₁₂O₆'].tot = { Suc: 1 };
+CHEMDATA['NaCl'] = { ...NACL, water: .03 };
+CHEMDATA['C₆H₁₄'] = { tot: {}, solv: { hexane: 1 } };
+CHEMDATA['CH₂Cl₂'] = { tot: {}, solv: { dcm: 1 } };
 CHEMDATA['C₂H₅OH'] = { tot: {}, solv: { ethanol: .96 } };
 CHEMDATA['CH₃COCH₃'] = { tot: {}, solv: { acetone: 1 } };
 const concOf = (it, d) => { if (d && d.conc) return d.conc; const c = String(it.c || ''); const m = c.match(/([\d.]+)\s*M/); if (m) return +m[1]; if (/37 %/.test(c)) return 12; if (/98 %/.test(c)) return 18; if (/65 %/.test(c)) return 14; if (/99 %/.test(c)) return 17; return 1; };
@@ -5060,7 +5085,7 @@ function resetState() {
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
-  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.heatSupport = null; v.heatSource = null; v.heatBoilLogged = false; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
+  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.layerSettle = 1; v.agclState = { amount: 0, settled: 0 }; v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.heatSupport = null; v.heatSource = null; v.heatBoilLogged = false; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
   for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.capManual = false; b.lidT = 0; b.lidHome = null; b.area = 'bench'; }
   for (const q of pipettes) { q.chem = { V: 0, tot: {}, ind: {} }; q.src = null; q.held = false; }
   for (const d of droppers) { unpark(d); d.held = false; }
@@ -5282,7 +5307,7 @@ const MOTION = { shakeOK: false, tiltOK: false, gamma: null, peaks: [], asked: f
 function onShake(src) {
   const o = held; if (!o || o.pour || o.pz) return;
   if (hasMechanicalCapability(o, 'shake')) {
-    o.stir = 1; o.swirl = Math.max(o.swirl, .8);
+    shakeSample(o); o.swirl = Math.max(o.swirl, .8);
     for (let i = 0; i < 4; i++) addWave(o, (Math.random() - .5) * .04, (Math.random() - .5) * .04, .0009);
     if (o.chem.V > 150) for (let k = 0; k < 4; k++) SPL.push({ x: o.g.position.x + (Math.random() - .5) * .05, y: o.g.position.y + o.H, z: o.g.position.z + (Math.random() - .5) * .05, vx: (Math.random() - .5) * .3, vy: .3, vz: (Math.random() - .5) * .3, r: .0007 });
     if (!o.shakeT || performance.now() - o.shakeT > 4000) { o.shakeT = performance.now(); logE('info', [['x.shaken', { v: o.letter }]]); }
@@ -5860,7 +5885,16 @@ function inspectSample(v) {
   inspectedSample = v.letter; inspectionShown = true;
   const s = sampleSnapshot(v);
   const amount = n => Number(n).toPrecision(4).replace('.', LANG === 'en' ? '.' : ',');
+  const phases = liquidLayers(v.chem);
   const body = [T(s.liquid ? 'x.sampleLiquid' : s.solids.length ? 'x.sampleSolid' : 'x.sampleEmpty'), `${fmt(s.volume, 2)} mL · ${fmt(s.temperature, 1)} °C`];
+  const compounds = [...(v.solid > 1e-8 ? [NACL] : []), ...(v.particles || []).filter(p => p.m > 1e-8 && p.cmp).map(p => p.cmp)];
+  if (compounds.some(c => dissolutionDomain(v.chem, c, v.temp) === 'unsupported')) body.push(T('x.solubilityUnknown'));
+  if (!phases.supported) body.push(T('x.phaseUnknown'));
+  else if (phases.layers.length > 1) {
+    body.push(T((v.layerSettle ?? 1) > .95 ? 'x.phaseSeparated' : 'x.phaseSeparating'));
+    for (const [i, layer] of phases.layers.entries()) body.push(T(i === 0 ? 'x.phaseBottom' : 'x.phaseTop') + ': ' + T('x.solv_' + layer.id) + ' · ' + fmt(layer.volume, 2) + ' mL');
+  } else if (s.liquid) body.push(T('x.phaseSingle'));
+  if (v.agclState?.amount > 1e-8) body.push(T(v.agclState.settled > .95 ? 'x.agclSettled' : 'x.agclSuspended'));
   if (s.components.length) body.push(T('x.sampleComponents'), ...s.components.map(q => `${q.name}: ${amount(q.amount)} mmol${q.concentration == null ? '' : ' · ' + amount(q.concentration) + ' mol/L'}`));
   if (s.solvents.length) body.push(T('x.sampleSolvents'), ...s.solvents.map(q => `${T('x.solv_' + q.name)}: ${fmt(q.volume, 3)} mL`));
   if (s.indicators.length) body.push(T('x.sampleIndicators'), ...s.indicators.map(q => T(REAG[q.name]?.name || q.name)));
@@ -5871,8 +5905,9 @@ function inspectSample(v) {
     const title = document.createElement('h3'); title.textContent = T('x.beaker') + ' ' + v.letter; report.append(title);
     for (const text of body) { const p = document.createElement('p'); p.textContent = text; report.append(p); }
     const refresh = document.createElement('button'); refresh.type = 'button'; refresh.className = 'btn'; refresh.textContent = T('x.sampleRefresh'); refresh.addEventListener('click', () => inspectSample(v)); report.append(refresh);
+    const shake = document.createElement('button'); shake.type = 'button'; shake.className = 'btn'; shake.textContent = T('x.shakeSample'); shake.addEventListener('click', () => { shakeSample(v); inspectSample(v); }); report.append(shake);
     const selector = $('sampleSelect'); if (selector) selector.value = v.letter;
-  } else cornerNote(T('x.beaker') + ' ' + v.letter, body, v.g.position, [[T('x.sampleRefresh'), () => inspectSample(v)]]);
+  } else cornerNote(T('x.beaker') + ' ' + v.letter, body, v.g.position, [[T('x.sampleRefresh'), () => inspectSample(v)], [T('x.shakeSample'), () => { shakeSample(v); inspectSample(v); }]]);
 }
 function updateBenchStatus() {
   const e = $('spillStatus');
@@ -6329,4 +6364,53 @@ requestAnimationFrame(frame);
 window.__lab3d = { reactions: window.ReactionSimulation, mechanics: MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, BAYS, setupTask, TASKS, get TASK() { return TASK; }, DEMO, startDemo, nextDemo, stopDemo, lightLamp, moveArea, toggleProp, setPPE, checkAnswers, addLiquid, compOf, REAG, FX, rodHolder, propInfo, takeProp, BAL, BURETTE, eyeLevel, sampleInfo, HOOD, toggleDoorZ: z => toggleDoor(PT.doors.find(d => d.Z === z)), takeSampleZ: z => takeSample(PT.doors.find(d => d.Z === z)), updateThermo, thermos, tester, probes, conductivity, EVAP, RIG, updateRig, ITEMS, takeItem, PT, SLOTS, DECOR_PICK, PROPS, GRAVITY_SOLIDS, goShelf, viewShelf, touchView: () => { viewTouched = true; }, TAP, spatula, onShake, MOTION, Q, MOBILE, scene, pipettes, METER, controls, vessels, bottles, droppers, wash, spatula, electrode, rod, camera, renderer, BAL, NB, balanceButton, panLoad, vesselMass, endSession, placeVessel };
 
 Object.assign(window.__lab3d, { pipTake, pipGive, compOfVessel, removeLiquid, doEq, updateVessel, inspectSample, sampleSnapshot, liquidSpills, cleanedLiquid, spillLiquid, cleanLiquidSpills, flowFrom, toggleBottle, updateCapControl, updateDrops, drops });
+
+Object.assign(window.__lab3d, { dissolveSalt, dissolutionRoom, liquidLayers, shakeSample, advancePhases, updateSolidReactions, chemOfProp });
+
+// Presentation only: phase and precipitate meshes never own chemical amounts.
+function addPhaseVisuals(v) {
+  const layers = [0, 1].map(() => {
+    const material = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: .7, transparent: true, opacity: .75, thickness: .003, roughness: .08, depthWrite: false, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(v.Ri * .995, v.Ri * .995, 1, 48), material);
+    mesh.visible = false; mesh.renderOrder = 2; v.g.add(mesh); return mesh;
+  });
+  const line = new THREE.Mesh(new THREE.RingGeometry(v.Ri * .96, v.Ri, 64), new THREE.MeshBasicMaterial({ color: 0x5b777c, transparent: true, opacity: .65, side: THREE.DoubleSide, depthWrite: false }));
+  line.rotation.x = -Math.PI / 2; line.visible = false; line.renderOrder = 4; v.g.add(line);
+  const grains = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: .9 }), 96);
+  grains.count = 0; grains.frustumCulled = false; grains.renderOrder = 2; v.g.add(grains);
+  const bed = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 32), new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: .9 }));
+  bed.visible = false; v.g.add(bed);
+  v.phaseVisuals = { layers, line, grains, bed };
+}
+function renderPhases(v, t) {
+  const visuals = v.phaseVisuals, phase = liquidLayers(v.chem), upright = v.tilt < 1;
+  const stratified = upright && phase.supported && phase.layers.length === 2 && (v.layerSettle ?? 1) > .95;
+  visuals.line.visible = stratified;
+  v.surf.material = stratified ? visuals.layers[1].material : v.mat;
+  v.bottom.material = stratified ? visuals.layers[0].material : v.mat;
+  if (stratified) v.side.visible = false;
+  let floor = v.b;
+  for (const [i, mesh] of visuals.layers.entries()) {
+    mesh.visible = stratified;
+    if (!stratified) continue;
+    const layer = phase.layers[i], height = (v.level - v.b) * layer.volume / v.chem.V;
+    mesh.position.y = floor + height / 2; mesh.scale.y = Math.max(.00001, height);
+    mesh.material.color.copy(layer.id === 'water' ? v.mat.color : new THREE.Color(0xffffff));
+    floor += height;
+    if (i === 0) visuals.line.position.y = floor + .0001;
+  }
+  const state = v.agclState || { amount: 0, settled: 0 };
+  const count = upright && state.amount > 1e-8 ? Math.min(96, Math.max(8, Math.ceil(state.amount * 160))) : 0;
+  visuals.grains.count = count;
+  for (let i = 0; i < count; i++) {
+    const angle = i * 2.399963, radius = v.Ri * .85 * Math.sqrt((i + .5) / count);
+    const fraction = ((i * 37 % 97) + .5) / 97;
+    const y = v.b + .001 + Math.max(0, v.level - v.b - .003) * fraction * (1 - state.settled);
+    M4.compose(P3.set(Math.sin(angle) * radius, y, Math.cos(angle) * radius), QI, SC.setScalar(.0007)); visuals.grains.setMatrixAt(i, M4);
+  }
+  visuals.grains.instanceMatrix.needsUpdate = true;
+  visuals.bed.visible = upright && state.amount * state.settled > 1e-5;
+  const radius = Math.min(v.Ri * .9, .004 + .012 * Math.cbrt(state.amount * state.settled)), height = .001 * Math.cbrt(state.amount * state.settled);
+  visuals.bed.scale.set(radius, Math.max(.00001, height), radius); visuals.bed.position.y = v.b + height / 2;
+}
 </script>

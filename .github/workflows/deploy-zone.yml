@@ -93,6 +93,8 @@ jobs:
                curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/" >/dev/null && \
                curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/lab3d/lab3d.html" >/dev/null && \
                curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/lab3d/sample_transfer.mjs" >/dev/null && \
+               curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/lab3d/bench_state.mjs" >/dev/null && \
+               curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/lab3d/phase_state.mjs" >/dev/null && \
                curl --fail --silent --show-error "$PRODUCTION_URL/chemistry/lab3d/course_lab_models.mjs" >/dev/null && \
                curl --fail --silent --show-error "$PRODUCTION_URL/hub-assets/lab-chemistry.jpg" >/dev/null && \
                curl --fail --silent --show-error "$PRODUCTION_URL/hub-assets/chemistry-motion.webm" >/dev/null; then

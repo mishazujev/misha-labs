@@ -902,3 +902,20 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
   };
   for (const [index, lang] of ['en', 'et', 'ru', 'uk'].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]['x.' + key] = values[index];
 })();
+
+// Keep new phase strings after legacy language fallback blocks.
+(() => {
+  const rows = {
+    solubilityUnknown: ['Solubility is not modelled for these solvent or temperature conditions.', 'Nendel lahusti- või temperatuuritingimustel lahustuvust ei modelleerita.', 'Растворимость при этих условиях растворителя или температуры не моделируется.', 'Розчинність за цих умов розчинника або температури не моделюється.'],
+    phaseUnknown: ['Liquid layers are not modelled for this solvent combination.', 'Selle lahustite kombinatsiooni vedelikukihte ei modelleerita.', 'Слои для этой смеси растворителей не моделируются.', 'Шари для цієї суміші розчинників не моделюються.'],
+    phaseSingle: ['One liquid phase', 'Üks vedelfaas', 'Одна жидкая фаза', 'Одна рідка фаза'],
+    phaseSeparated: ['Two separated liquid phases', 'Kaks eraldunud vedelfaasi', 'Две разделённые жидкие фазы', 'Дві розділені рідкі фази'],
+    phaseSeparating: ['Dispersed liquid phases; allow to separate', 'Hajutatud vedelfaasid; lase eralduda', 'Жидкие фазы перемешаны; дайте им разделиться', 'Рідкі фази перемішані; дайте їм розділитися'],
+    phaseBottom: ['Bottom', 'All', 'Снизу', 'Знизу'],
+    phaseTop: ['Top', 'Ülal', 'Сверху', 'Зверху'],
+    agclSettled: ['AgCl: settled white precipitate', 'AgCl: settinud valge sade', 'AgCl: осевший белый осадок', 'AgCl: осілий білий осад'],
+    agclSuspended: ['AgCl: white precipitate in suspension', 'AgCl: valge sade suspensioonis', 'AgCl: белый осадок во взвеси', 'AgCl: білий осад у зависі'],
+    shakeSample: ['Shake sample', 'Loksuta proovi', 'Встряхнуть пробу', 'Струсити пробу']
+  };
+  for (const [index, lang] of ['en', 'et', 'ru', 'uk'].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]['x.' + key] = values[index];
+})();

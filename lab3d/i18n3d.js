@@ -919,3 +919,177 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
   };
   for (const [index, lang] of ['en', 'et', 'ru', 'uk'].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]['x.' + key] = values[index];
 })();
+
+// K3-11 and mounted separator controls.
+(() => {
+ const rows = {
+  "k311.title": [
+    "K3-11 · Salt in water and hexane",
+    "K3-11 · Sool vees ja heksaanis",
+    "K3-11 · Соль в воде и гексане",
+    "K3-11 · Сіль у воді та гексані"
+  ],
+  "k311.goal": [
+    "Compare equal salt doses in two solvents and explain the result using polarity and ion hydration.",
+    "Võrdle võrdseid soolakoguseid kahes lahustis ning selgita tulemust polaarsuse ja ioonide hüdratatsiooni abil.",
+    "Сравните равные навески соли в двух растворителях и объясните результат полярностью и гидратацией ионов.",
+    "Порівняйте рівні наважки солі у двох розчинниках і поясніть результат полярністю та гідратацією іонів."
+  ],
+  "k311.desc": [
+    "A measured bench comparison with solvent blanks, solid residue and an evidence-based conclusion.",
+    "Mõõdetav katse lahusti nullproovide, tahke jäägi ja tõenduspõhise järeldusega.",
+    "Опыт с холостыми пробами растворителей, твёрдым остатком и выводом по наблюдениям.",
+    "Дослід із холостими пробами розчинників, твердим залишком і висновком за спостереженнями."
+  ],
+  "k311.steps": [
+    "Wear goggles, switch on the hood fan and keep flames away from hexane.|Predict which solvent dissolves ionic NaCl. Keep solvent volume, salt mass, temperature and stirring comparable.|A contains 40 mL water; B contains 40 mL hexane at 22 °C. Record the solvent blanks before adding salt.|Use the spatula and balance to deliver 0.50 g NaCl to each (accepted: 0.45–0.55 g). Let all grains land.|Stir each sample comparably. Wait until the salt in water has dissolved; inspect the solid remaining in hexane.|Record the comparison. Choose the supported conclusion: polar water hydrates Na⁺ and Cl⁻; nonpolar hexane does not. Reset to repeat.",
+    "Pane kaitseprillid ette, lülita tõmbekapi ventilaator sisse ja hoia leegid heksaanist eemal.|Ennusta, kumb lahusti lahustab ioonilist NaCl. Hoia lahusti ruumala, soola mass, temperatuur ja segamine võrreldavad.|A-s on 40 mL vett; B-s 40 mL heksaani temperatuuril 22 °C. Salvesta lahustite nullproovid enne soola lisamist.|Lisa spaatli ja kaalu abil kummassegi 0,50 g NaCl (lubatud 0,45–0,55 g). Lase teradel põhja langeda.|Sega mõlemat võrreldavalt. Oota soola lahustumist vees; vaata heksaani jäävat tahket soola.|Salvesta võrdlus ja vali põhjendatud järeldus: polaarne vesi hüdreerib Na⁺ ja Cl⁻ ioone; mittepolaarne heksaan ei hüdreeri. Kordamiseks lähtesta.",
+    "Наденьте очки, включите вытяжку и уберите пламя от гексана.|Предскажите, какой растворитель растворит ионный NaCl. Сравнивайте при равных объёмах, массе соли, температуре и перемешивании.|В A — 40 мл воды; в B — 40 мл гексана при 22 °C. Запишите холостые пробы до добавления соли.|Шпателем и весами отмерьте по 0,50 г NaCl (допуск 0,45–0,55 г). Дождитесь оседания всех крупинок.|Одинаково перемешайте пробы. Дождитесь растворения соли в воде; рассмотрите остаток в гексане.|Запишите сравнение и выберите вывод: полярная вода гидратирует Na⁺ и Cl⁻; неполярный гексан — нет. Сбросьте опыт для повтора.",
+    "Надягніть окуляри, увімкніть витяжку й віддаліть полум’я від гексану.|Передбачте, який розчинник розчинить йонний NaCl. Порівнюйте за рівних об’ємів, маси солі, температури й перемішування.|В A — 40 мл води; у B — 40 мл гексану при 22 °C. Запишіть холості проби до додавання солі.|Шпателем і терезами відміряйте по 0,50 г NaCl (допуск 0,45–0,55 г). Дочекайтеся осідання всіх крупинок.|Однаково перемішайте проби. Дочекайтеся розчинення солі у воді; розгляньте залишок у гексані.|Запишіть порівняння та виберіть висновок: полярна вода гідратує Na⁺ і Cl⁻; неполярний гексан — ні. Скиньте дослід для повтору."
+  ],
+  "k311.start": [
+    "K3-11 reference comparison started: A water, B hexane; record blanks first.",
+    "K3-11 võrdlus algas: A vesi, B heksaan; esmalt salvesta nullproovid.",
+    "Начато сравнение K3-11: A вода, B гексан; сначала запишите холостые пробы.",
+    "Розпочато порівняння K3-11: A вода, B гексан; спочатку запишіть холості проби."
+  ],
+  "k311.done": [
+    "Comparison and conclusion verified. This NaCl reference does not predict every substance’s solubility.",
+    "Võrdlus ja järeldus kontrollitud. See NaCl näidiskatse ei ennusta kõigi ainete lahustuvust.",
+    "Сравнение и вывод проверены. Этот пример с NaCl не предсказывает растворимость всех веществ.",
+    "Порівняння й висновок перевірено. Цей приклад із NaCl не передбачає розчинність усіх речовин."
+  ],
+  "k311.sensory": [
+    "Observe dissolved material and solid residue; never smell or ignite hexane.",
+    "Vaata lahustumist ja tahket jääki; ära nuusuta ega süüta heksaani.",
+    "Наблюдайте растворение и твёрдый остаток; не нюхайте и не поджигайте гексан.",
+    "Спостерігайте розчинення й твердий залишок; не нюхайте й не підпалюйте гексан."
+  ],
+  "k311.blank": [
+    "Record solvent blanks",
+    "Salvesta lahustite nullproovid",
+    "Записать холостые пробы",
+    "Записати холості проби"
+  ],
+  "k311.compare": [
+    "Record comparison",
+    "Salvesta võrdlus",
+    "Записать сравнение",
+    "Записати порівняння"
+  ],
+  "k311.row.outcome": [
+    "Which conclusion fits your observations?",
+    "Milline järeldus sobib vaatlustega?",
+    "Какой вывод соответствует наблюдениям?",
+    "Який висновок відповідає спостереженням?"
+  ],
+  "k311.option.water": [
+    "Water hydrates the salt ions.",
+    "Vesi hüdreerib soola ioone.",
+    "Вода гидратирует ионы соли.",
+    "Вода гідратує йони солі."
+  ],
+  "k311.option.hexane": [
+    "Nonpolar hexane dissolves more.",
+    "Mittepolaarne heksaan lahustab rohkem.",
+    "Неполярный гексан растворяет больше.",
+    "Неполярний гексан розчиняє більше."
+  ],
+  "k311.option.same": [
+    "Both solvents dissolve the same amount.",
+    "Mõlemad lahustid lahustavad sama koguse.",
+    "Оба растворителя растворяют одинаковое количество.",
+    "Обидва розчинники розчиняють однакову кількість."
+  ],
+  "k311.measurement": [
+    "{v}: {volume} mL · {temp} °C · added {dose} g · dissolved {dissolved} g · residue {residue} g",
+    "{v}: {volume} mL · {temp} °C · lisatud {dose} g · lahustunud {dissolved} g · jääk {residue} g",
+    "{v}: {volume} мл · {temp} °C · добавлено {dose} г · растворено {dissolved} г · остаток {residue} г",
+    "{v}: {volume} мл · {temp} °C · додано {dose} г · розчинено {dissolved} г · залишок {residue} г"
+  ],
+  "k311.notReady": [
+    "Record blanks first. Use 40 mL of each pure solvent, 0.45–0.55 g salt each, 22 ± 2 °C (within 1 °C of each other), and wait for water to dissolve its dose.",
+    "Salvesta esmalt nullproovid. Kasuta kumbagi puhast lahustit 40 mL, soola 0,45–0,55 g, temperatuuri 22 ± 2 °C (erinevus kuni 1 °C) ning oota soola lahustumist vees.",
+    "Сначала запишите холостые пробы. Нужно по 40 мл чистых растворителей и 0,45–0,55 г соли, 22 ± 2 °C (разница до 1 °C); дождитесь растворения соли в воде.",
+    "Спочатку запишіть холості проби. Потрібно по 40 мл чистих розчинників і 0,45–0,55 г солі, 22 ± 2 °C (різниця до 1 °C); дочекайтеся розчинення солі у воді."
+  ],
+  "k311.safety": [
+    "Wear goggles and switch on the hood fan.",
+    "Pane kaitseprillid ette ja lülita tõmbekapi ventilaator sisse.",
+    "Наденьте очки и включите вытяжку.",
+    "Надягніть окуляри й увімкніть витяжку."
+  ],
+  "sepOpen": [
+    "Open separator stopcock",
+    "Ava jaotuslehtri kraan",
+    "Открыть кран воронки",
+    "Відкрити кран лійки"
+  ],
+  "sepClose": [
+    "Close separator stopcock",
+    "Sulge jaotuslehtri kraan",
+    "Закрыть кран воронки",
+    "Закрити кран лійки"
+  ],
+  "sepOn": [
+    "open",
+    "avatud",
+    "открыт",
+    "відкритий"
+  ],
+  "sepOff": [
+    "closed",
+    "suletud",
+    "закрыт",
+    "закритий"
+  ],
+  "sepStatus": [
+    "Sample: {v} / {cap} mL · Stopcock {state}",
+    "Proov: {v} / {cap} mL · Kraan {state}",
+    "Проба: {v} / {cap} мл · Кран {state}",
+    "Проба: {v} / {cap} мл · Кран {state}"
+  ],
+  "sepReceiver": [
+    "Place beaker {v} under outlet",
+    "Aseta keeduklaas {v} väljalaske alla",
+    "Поставить стакан {v} под выход",
+    "Поставити склянку {v} під вихід"
+  ],
+  "sepHelp": [
+    "Pour into the top opening. Let layers settle, then open the stopcock. It closes at the interface; change receiver before reopening. Layer tint is a guide, not natural solvent colour.",
+    "Vala ülemisse avasse. Lase kihtidel eralduda ja ava kraan. Kraan sulgub piirpinnal; vaheta vastuvõtuanum enne uuesti avamist. Kihi toon on abimärgis, mitte lahusti loomulik värvus.",
+    "Налейте через верх. Дождитесь разделения слоёв и откройте кран. На границе фаз он закроется; замените приёмник перед повторным открытием. Цвет слоёв условный.",
+    "Налийте через верх. Дочекайтеся розділення шарів і відкрийте кран. На межі фаз він закриється; замініть приймач перед повторним відкриттям. Колір шарів умовний."
+  ],
+  "sepUnsupported": [
+    "Reference model: water with hexane or DCM and aqueous NaCl only. Other solutes, indicators, solids and mixed organic solvents cannot be separated here.",
+    "Näidismudel: vesi heksaani või DCM-iga ja NaCl vesilahus. Muid lahustunud aineid, indikaatoreid, tahkiseid ega orgaaniliste lahustite segusid siin ei eraldata.",
+    "Модель: вода с гексаном или ДХМ и водный NaCl. Другие вещества, индикаторы, твёрдые частицы и смеси органических растворителей здесь не разделяются.",
+    "Модель: вода з гексаном або ДХМ і водний NaCl. Інші речовини, індикатори, тверді частинки й суміші органічних розчинників тут не розділяються."
+  ],
+  "sepEmptyFirst": [
+    "Empty the separator into labelled receivers before returning it.",
+    "Tühjenda jaotuslehter märgistatud anumatesse enne tagasipanekut.",
+    "Слейте пробу в подписанные приёмники перед возвратом воронки.",
+    "Злийте пробу в підписані приймачі перед поверненням лійки."
+  ],
+  "sepNotReady": [
+    "Place a beaker below the outlet, stop moving the funnel and allow supported layers to settle.",
+    "Aseta keeduklaas väljalaske alla, lõpeta lehtri liigutamine ja lase toetatud kihtidel eralduda.",
+    "Поставьте стакан под выход, прекратите движение воронки и дождитесь разделения поддерживаемых фаз.",
+    "Поставте склянку під вихід, припиніть рух лійки й дочекайтеся розділення підтримуваних фаз."
+  ],
+  "sepBoundary": [
+    "Collected lower phase {phase} into {v}. Stopcock closed at the phase boundary; change receiver.",
+    "Alumine faas {phase} koguti anumasse {v}. Kraan sulgus faaside piirpinnal; vaheta anumat.",
+    "Нижняя фаза {phase} собрана в {v}. Кран закрыт на границе фаз; смените приёмник.",
+    "Нижня фаза {phase} зібрана в {v}. Кран закрито на межі фаз; змініть приймач."
+  ]
+};
+ for (const [index, lang] of ["en", "et", "ru", "uk"].entries()) for (const [key, values] of Object.entries(rows)) I18N[lang]["x." + key] = values[index];
+})();
+
+(() => {
+ const rows={sepWaste:['Collect separator sample as waste','Kogu jaotuslehtri proov jäätmeteks','Собрать пробу из воронки в отходы','Зібрати пробу з лійки у відходи'],sepWasteCollected:['Collected separator sample: {v} mL of waste.','Jaotuslehtrist koguti {v} mL jäätmeid.','Из воронки собрано {v} мл отходов.','Із лійки зібрано {v} мл відходів.']};
+ for(const [i,lang] of ['en','et','ru','uk'].entries()) for(const [key,values] of Object.entries(rows)) I18N[lang]['x.'+key]=values[i];
+})();

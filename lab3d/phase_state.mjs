@@ -1,18 +1,20 @@
+import { sampleComposition, drainSample } from './sample_transfer.mjs';
 // Water/solute reference model. Amounts: grams, mL, mmol; temperature: Celsius.
 // g solute / 100 g water at 0,20,40,60,80,100 C:
 // https://www.sigmaaldrich.com/US/en/support/calculators-and-apps/solubility-table-compounds-water-temperature
 const CURVES = {
   NaCl: [35.6, 35.8, 36.42, 37.05, 38.05, 39.2],
   KNO3: [13.25, 31.66, 63.9, 109.9, 169, 245.2],
-  NH4Cl: [29.7, 37.56, 46, 55.3, 65.6, 77.3]
+  NH4Cl: [29.7, 37.56, 46, 55.3, 65.6, 77.3],
+  NaHCO3: [6.89, 9.6, 12.7] // Conservative 0–40 C domain; no thermal decomposition model.
 };
 const canonical = f => String(f || '').replace(/[₀-₉]/g, c => String(c.charCodeAt(0) - 0x2080));
 export const NACL = Object.freeze({ f: 'NaCl', M: 58.44, tot: { Na: 1, Cl: 1 } });
 export const waterVolume = c => Math.max(0, c.V - Object.values(c.solv || {}).reduce((sum, n) => sum + n, 0));
 export function solubilityAt(formula, temperature) {
   const curve = CURVES[canonical(formula)];
-  if (!curve || temperature < 0 || temperature > 100 || !Number.isFinite(temperature)) return null;
-  const i = Math.min(4, Math.floor(temperature / 20)), f = (temperature - i * 20) / 20;
+  if (!curve || temperature < 0 || temperature > (curve.length - 1) * 20 || !Number.isFinite(temperature)) return null;
+  const i = Math.min(curve.length - 2, Math.floor(temperature / 20)), f = (temperature - i * 20) / 20;
   return curve[i] + (curve[i + 1] - curve[i]) * f;
 }
 export function dissolutionDomain(c, compound, temperature) {
@@ -73,4 +75,60 @@ export function advancePhases(v, dt) {
 export function shakeSample(v) {
   v.stir = 1; v.layerSettle = 0;
   if (v.agclState) v.agclState = { ...v.agclState, settled: 0 };
+}
+
+// Selective withdrawal is deliberately limited to the verified reference system:
+// water/hexane or water/DCM, with NaCl confined to the aqueous phase. No
+// distribution coefficients or organic-solute/indicator partitioning are inferred.
+export function separatorSupported(c) {
+  const phase = liquidLayers(c);
+  return phase.supported && Math.abs((c.tot?.Na || 0) - (c.tot?.Cl || 0)) < 1e-7 && phase.layers.every(l => ['water', 'hexane', 'dcm'].includes(l.id)) &&
+    Object.entries(c.tot || {}).every(([k, n]) => n < 1e-8 || ['Na', 'Cl'].includes(k)) &&
+    Object.values(c.ind || {}).every(n => n < 1e-8) &&
+    Object.values(c.eq?.ppt || {}).every(n => n < 1e-8) &&
+    (waterVolume(c) > 1e-8 || Object.values(c.tot || {}).every(n => n < 1e-8));
+}
+export function drainLowerPhase(c, requested) {
+  const empty = { volume: 0, boundary: false, comp: null };
+  if (!Number.isFinite(requested) || requested <= 0 || !separatorSupported(c)) return empty;
+  const layers = liquidLayers(c).layers, lower = layers[0];
+  if (!lower) return empty;
+  const volume = Math.min(requested, lower.volume), aqueous = lower.id === 'water';
+  // Build an independent phase sample; drainSample carries the reaction history
+  // without scaling solutes by total (water + organic) volume.
+  const phase = { V: lower.volume, temp: c.temp ?? 22,
+    tot: aqueous ? { ...c.tot } : {}, ind: {},
+    solv: aqueous ? {} : { [lower.id]: lower.volume },
+    acidEq: aqueous ? c.acidEq : 0, baseEq: aqueous ? c.baseEq : 0,
+    neutralised: aqueous ? c.neutralised : 0 };
+  const comp = sampleComposition(phase, { id: 'separator:' + lower.id, f: lower.id });
+  drainSample(phase, volume);
+  if (aqueous) {
+    c.tot = phase.tot; c.ind = phase.ind;
+    for (const key of ['acidEq', 'baseEq', 'neutralised']) c[key] = phase[key];
+  } else c.solv[lower.id] = Math.max(0, (c.solv[lower.id] || 0) - volume);
+  c.V = Math.max(0, c.V - volume);
+  if (c.V < 1e-8) { c.V = 0; c.tot = {}; c.ind = {}; c.solv = {}; }
+  return { volume, comp, phase: lower.id, boundary: volume >= lower.volume - 1e-8 };
+}
+
+// K3-11 is assessed from actual controlled bench samples, never preset results.
+export function solubilityTrial(samples, doses, blank = false) {
+  const rows = [];
+  for (const [i, v] of samples.entries()) {
+    if (!v || v.stowed || v.held || v.fly || Math.abs(v.temp - 22) > 2 || Math.abs(v.chem.V - 40) > .2) return null;
+    const c = v.chem, expected = i === 0 ? 0 : 40;
+    if (Math.abs((c.solv?.hexane || 0) - expected) > .2 ||
+      Object.entries(c.solv || {}).some(([k, n]) => k !== 'hexane' && n > 1e-8) ||
+      Object.entries(c.tot || {}).some(([k, n]) => !['Na', 'Cl'].includes(k) && n > 1e-8) ||
+      Object.values(c.ind || {}).some(n => n > 1e-8) || (v.particles || []).some(p => p.m > 1e-8)) return null;
+    const na = c.tot.Na || 0, cl = c.tot.Cl || 0;
+    if (Math.abs(na - cl) > 1e-7) return null;
+    const dissolved = na * NACL.M / 1000, residue = v.solid || 0, dose = doses[v.letter] || 0;
+    if (blank ? dissolved + residue > 1e-8 || dose > 0 : dose < .45 || dose > .55 || Math.abs(dissolved + residue - dose) > .001) return null;
+    rows.push({ vessel: v.letter, volume: c.V, temperature: v.temp, dose, dissolved, residue });
+  }
+  if (samples.length !== 2 || Math.abs(samples[0].temp - samples[1].temp) > 1) return null;
+  if (!blank && (rows[0].residue > .01 || rows[1].dissolved > .001)) return null;
+  return rows;
 }

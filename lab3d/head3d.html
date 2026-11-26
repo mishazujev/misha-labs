@@ -165,6 +165,13 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .ans .btn { justify-self: start; }
 .solubility-answer .arow { grid-template-columns: minmax(0, 1fr); }
 .solubility-answer select { width: 100%; }
+.hypothesis { display: grid; gap: 8px; min-width: 0; margin: 8px 0; border: 1px solid var(--line); border-radius: 10px; }
+.hypothesis select, .hypothesis textarea { box-sizing: border-box; width: 100%; min-width: 0; font: inherit; padding: 7px; border: 1px solid var(--line); border-radius: 7px; }
+.hydration { margin-top: 12px; padding: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.hydration svg { display: block; width: 100%; height: auto; background: #f7fbfc; border-radius: 8px; }
+.hydration-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.hydration-tabs [aria-pressed="true"] { background: var(--accent, #0c7069); color: white; }
+.schematic-note { font-size: 12px; }
 .activity { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
 .activity-row { display: grid; gap: 5px; }
 .activity-row .btn { justify-self: stretch; text-align: left; background: var(--surface); }

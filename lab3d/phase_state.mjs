@@ -66,15 +66,21 @@ export function advancePhases(v, dt) {
   const time = Math.max(0, dt), stirring = (v.stir || 0) > .1;
   if (liquidLayers(v.chem).layers.length < 2) v.layerSettle = 1;
   else v.layerSettle = stirring ? 0 : 1 - (1 - (v.layerSettle ?? 1)) * Math.exp(-time / 3);
-  const amount = Math.max(0, v.chem.eq?.ppt?.AgCl || 0), prev = v.agclState || { amount: 0, settled: 0 };
-  let settled = amount > 0 ? prev.settled : 0;
-  if (amount > prev.amount) settled *= prev.amount / amount;
-  if (amount > 0) settled = stirring ? 0 : 1 - (1 - settled) * Math.exp(-time / 8);
-  v.agclState = { amount, settled };
+  v.precipitates ||= {};
+  for (const id of ['AgCl', 'CuOH2']) {
+    const amount = Math.max(0, v.chem.eq?.ppt?.[id] || 0), prev = v.precipitates[id] || (id === 'AgCl' ? v.agclState : null) || { amount: 0, settled: 0 };
+    let settled = amount > 0 ? prev.settled : 0;
+    if (amount > prev.amount) settled *= prev.amount / amount;
+    if (amount > 0) settled = stirring ? 0 : 1 - (1 - settled) * Math.exp(-time / 8);
+    v.precipitates[id] = { amount, settled };
+  }
+  v.agclState = v.precipitates.AgCl;
 }
 export function shakeSample(v) {
   v.stir = 1; v.layerSettle = 0;
-  if (v.agclState) v.agclState = { ...v.agclState, settled: 0 };
+  for (const id of Object.keys(v.precipitates || {})) v.precipitates[id] = { ...v.precipitates[id], settled: 0 };
+  if (v.precipitates?.AgCl) v.agclState = v.precipitates.AgCl;
+  else if (v.agclState) v.agclState = { ...v.agclState, settled: 0 };
 }
 
 // Selective withdrawal is deliberately limited to the verified reference system:
@@ -131,4 +137,16 @@ export function solubilityTrial(samples, doses, blank = false) {
   if (samples.length !== 2 || Math.abs(samples[0].temp - samples[1].temp) > 1) return null;
   if (!blank && (rows[0].residue > .01 || rows[1].dissolved > .001)) return null;
   return rows;
+}
+
+export function makeSolubilityHypothesis(samples, task, prediction, reason, recordedAt) {
+  const text = String(reason || '').trim();
+  if (task.hypothesis || task.saltStarted || !['water', 'hexane', 'same'].includes(prediction) || text.length < 8 || text.length > 500 || !solubilityTrial(samples, task.doses, true)) return null;
+  return { prediction, reason: text, recordedAt };
+}
+export function hydrationEvidence(samples, task) {
+  if (!task.hypothesis || !task.comparison || !solubilityTrial(samples, task.doses)) return null;
+  const rows = task.comparison;
+  const observed = rows[0].dissolved > rows[1].dissolved + .01 ? 'water' : rows[1].dissolved > rows[0].dissolved + .01 ? 'hexane' : 'same';
+  return { rows: rows.map(r => ({ ...r })), observed, supported: task.hypothesis.prediction === observed };
 }

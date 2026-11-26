@@ -1093,3 +1093,162 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
  const rows={sepWaste:['Collect separator sample as waste','Kogu jaotuslehtri proov jäätmeteks','Собрать пробу из воронки в отходы','Зібрати пробу з лійки у відходи'],sepWasteCollected:['Collected separator sample: {v} mL of waste.','Jaotuslehtrist koguti {v} mL jäätmeid.','Из воронки собрано {v} мл отходов.','Із лійки зібрано {v} мл відходів.']};
  for(const [i,lang] of ['en','et','ru','uk'].entries()) for(const [key,values] of Object.entries(rows)) I18N[lang]['x.'+key]=values[i];
 })();
+
+// Evidence-first K3-11 and independent copper hydroxide observations.
+(() => {
+ const rows = {
+  "k311.hypothesisTitle": [
+    "Your prediction before adding salt",
+    "Sinu ennustus enne soola lisamist",
+    "Ваш прогноз до добавления соли",
+    "Ваш прогноз до додавання солі"
+  ],
+  "k311.predict": [
+    "Which solvent will dissolve more NaCl?",
+    "Kumb lahusti lahustab rohkem NaCl?",
+    "Какой растворитель растворит больше NaCl?",
+    "Який розчинник розчинить більше NaCl?"
+  ],
+  "k311.reason": [
+    "Why? Write 8–500 characters.",
+    "Miks? Kirjuta 8–500 tähemärki.",
+    "Почему? Напишите 8–500 символов.",
+    "Чому? Напишіть 8–500 символів."
+  ],
+  "k311.saveHypothesis": [
+    "Save prediction",
+    "Salvesta ennustus",
+    "Сохранить прогноз",
+    "Зберегти прогноз"
+  ],
+  "k311.hypothesisLocked": [
+    "Prediction saved and locked",
+    "Ennustus salvestatud ja lukustatud",
+    "Прогноз сохранён и закреплён",
+    "Прогноз збережено й зафіксовано"
+  ],
+  "k311.savedAt": [
+    "Recorded at {t} s, before salt delivery.",
+    "Salvestatud ajal {t} s, enne soola lisamist.",
+    "Записано на {t} с, до переноса соли.",
+    "Записано на {t} с, до перенесення солі."
+  ],
+  "k311.hypothesisFirst": [
+    "Save a prediction and reason with clean solvent blanks before delivering any salt. If salt was already delivered, reset and retry; an incorrect prediction is welcome.",
+    "Salvesta ennustus ja põhjendus puhaste lahustitega enne soola lisamist. Kui sool on juba lisatud, lähtesta ja proovi uuesti; vale ennustus on lubatud.",
+    "Сохраните прогноз и объяснение на чистых растворителях до переноса соли. Если соль уже добавлена, начните заново; ошибочный прогноз допустим.",
+    "Збережіть прогноз і пояснення на чистих розчинниках до перенесення солі. Якщо сіль уже додано, почніть заново; помилковий прогноз допустимий."
+  ],
+  "k311.hypothesisSaved": [
+    "Prediction: {prediction} Reason: {reason}",
+    "Ennustus: {prediction} Põhjendus: {reason}",
+    "Прогноз: {prediction} Объяснение: {reason}",
+    "Прогноз: {prediction} Пояснення: {reason}"
+  ],
+  "k311.predictionSupported": [
+    "Your recorded comparison supports your prediction. Use the measured amounts to justify the conclusion.",
+    "Salvestatud võrdlus toetab sinu ennustust. Põhjenda järeldust mõõdetud kogustega.",
+    "Записанное сравнение подтверждает ваш прогноз. Обоснуйте вывод измеренными количествами.",
+    "Записане порівняння підтверджує ваш прогноз. Обґрунтуйте висновок виміряними кількостями."
+  ],
+  "k311.predictionRevised": [
+    "Your recorded comparison differs from your prediction. Revise your explanation using the measured amounts; the original prediction stays in the notebook.",
+    "Salvestatud võrdlus erineb sinu ennustusest. Muuda selgitust mõõdetud koguste põhjal; algne ennustus jääb päevikusse.",
+    "Сравнение отличается от вашего прогноза. Пересмотрите объяснение по измерениям; исходный прогноз остаётся в журнале.",
+    "Порівняння відрізняється від вашого прогнозу. Перегляньте пояснення за вимірюваннями; початковий прогноз залишається в журналі."
+  ],
+  "k311.explainTitle": [
+    "Explain your recorded result",
+    "Selgita salvestatud tulemust",
+    "Объясните записанный результат",
+    "Поясніть записаний результат"
+  ],
+  "k311.view.water": [
+    "Ion hydration",
+    "Ioonide hüdratatsioon",
+    "Гидратация ионов",
+    "Гідратація йонів"
+  ],
+  "k311.view.hexane": [
+    "Nonpolar solvent",
+    "Mittepolaarne lahusti",
+    "Неполярный растворитель",
+    "Неполярний розчинник"
+  ],
+  "k311.view.hbond": [
+    "Water–water bonds",
+    "Vee molekulide vahel",
+    "Связи между молекулами воды",
+    "Зв’язки між молекулами води"
+  ],
+  "k311.diagram.water": [
+    "Hydration: water oxygen faces Na+, water hydrogen faces Cl−. Dashed lines show ion–dipole attractions.",
+    "Hüdratatsioon: vee hapnik on Na+ ja vesinik Cl− poole. Katkendjooned näitavad iooni-dipooli tõmmet.",
+    "Гидратация: кислород воды обращён к Na+, водород — к Cl−. Пунктир показывает ион-дипольное притяжение.",
+    "Гідратація: кисень води спрямований до Na+, водень — до Cl−. Пунктир показує йон-дипольне притягання."
+  ],
+  "k311.diagram.hexane": [
+    "Nonpolar hexane molecules above an ionic NaCl solid; no water hydration shell.",
+    "Mittepolaarsed heksaani molekulid ioonilise NaCl tahkise kohal; vee hüdratatsioonikihti pole.",
+    "Неполярные молекулы гексана над твёрдым ионным NaCl; водной гидратной оболочки нет.",
+    "Неполярні молекули гексану над твердим йонним NaCl; водної гідратної оболонки немає."
+  ],
+  "k311.diagram.hbond": [
+    "A hydrogen bond from a water hydrogen to another water oxygen, distinct from the covalent O–H bonds.",
+    "Vesinikside vee vesiniku ja teise vee hapniku vahel, eraldi kovalentsetest O–H sidemetest.",
+    "Водородная связь между водородом одной молекулы воды и кислородом другой; она отличается от ковалентных O–H.",
+    "Водневий зв’язок між воднем однієї молекули води й киснем іншої; він відрізняється від ковалентних O–H."
+  ],
+  "k311.explain.water": [
+    "In your recorded A sample the salt dissolved. Polar water orients Oδ− toward Na⁺ and Hδ+ toward Cl⁻: ion–dipole hydration stabilises dispersed ions. NaCl is an ionic lattice, not separate NaCl molecules.",
+    "Salvestatud A-proovis sool lahustus. Polaarses vees on Oδ− Na⁺ ja Hδ+ Cl⁻ poole: iooni-dipooli hüdratatsioon stabiliseerib lahustunud ioone. NaCl on ioonvõre, mitte eraldi NaCl molekulid.",
+    "В записанной пробе A соль растворилась. Полярная вода направляет Oδ− к Na⁺, Hδ+ к Cl⁻: ион-дипольная гидратация стабилизирует ионы. NaCl — ионная решётка, а не отдельные молекулы NaCl.",
+    "У записаній пробі A сіль розчинилася. Полярна вода спрямовує Oδ− до Na⁺, Hδ+ до Cl⁻: йон-дипольна гідратація стабілізує йони. NaCl — йонна ґратка, а не окремі молекули NaCl."
+  ],
+  "k311.explain.hexane": [
+    "Your B sample retained solid NaCl. Nonpolar hexane does not provide water-like ion hydration. The reference model treats NaCl dissolution in pure hexane as negligible; it is not a universal rule for every solute.",
+    "B-proovi jäi tahke NaCl. Mittepolaarne heksaan ei hüdreeri ioone nagu vesi. Näidismudel käsitleb NaCl lahustumist puhtas heksaanis tühisena; see ei ole kõigi ainete üldreegel.",
+    "В пробе B остался твёрдый NaCl. Неполярный гексан не гидратирует ионы подобно воде. Модель считает растворение NaCl в чистом гексане пренебрежимо малым; это не общее правило для всех веществ.",
+    "У пробі B залишився твердий NaCl. Неполярний гексан не гідратує йони подібно до води. Модель вважає розчинення NaCl у чистому гексані нехтовно малим; це не загальне правило для всіх речовин."
+  ],
+  "k311.explain.hbond": [
+    "Water molecules also form hydrogen bonds with each other. Solid lines show covalent O–H bonds; the dashed H⋯O line is intermolecular. For the NaCl result above, use ion–dipole hydration rather than calling all attractions hydrogen bonds.",
+    "Vee molekulid moodustavad ka omavahel vesiniksidemeid. Pidevjooned on kovalentsed O–H sidemed, katkendlik H⋯O on molekulide vahel. NaCl tulemuse selgitamisel kasuta iooni-dipooli hüdratatsiooni, mitte ära nimeta kõiki tõmbeid vesiniksidemeteks.",
+    "Молекулы воды также образуют водородные связи друг с другом. Сплошные линии — ковалентные O–H; пунктир H⋯O — межмолекулярная связь. Результат с NaCl объясняйте ион-дипольной гидратацией, не называя все взаимодействия водородными связями.",
+    "Молекули води також утворюють водневі зв’язки між собою. Суцільні лінії — ковалентні O–H; пунктир H⋯O — міжмолекулярний зв’язок. Результат із NaCl пояснюйте йон-дипольною гідратацією, не називаючи всі взаємодії водневими зв’язками."
+  ],
+  "k311.schematic": [
+    "Schematic explanation, not to scale or particle count. Read the actual amounts above.",
+    "Selgitav skeem; mõõtkava ega osakeste arv ei ole tegelik. Tegelikud kogused on ülal.",
+    "Схема: масштаб и число частиц условные. Реальные количества приведены выше.",
+    "Схема: масштаб і число частинок умовні. Реальні кількості наведено вище."
+  ],
+  "k311.evidenceChanged": [
+    "The sample conditions changed. Restore the controlled comparison and record it again to use this explanation.",
+    "Proovi tingimused muutusid. Taasta kontrollitud võrdlus ja salvesta uuesti, et kasutada selgitust.",
+    "Условия пробы изменились. Восстановите контролируемое сравнение и запишите его снова для объяснения.",
+    "Умови проби змінилися. Відновіть контрольоване порівняння й запишіть його знову для пояснення."
+  ],
+  "k311.source": [
+    "Reference: OpenStax · Electrolytes",
+    "Allikas: OpenStax · Elektrolüüdid",
+    "Источник: OpenStax · Электролиты",
+    "Джерело: OpenStax · Електроліти"
+  ],
+  "cuoh2Settled": [
+    "Cu(OH)₂: settled blue precipitate",
+    "Cu(OH)₂: settinud sinine sade",
+    "Cu(OH)₂: осевший синий осадок",
+    "Cu(OH)₂: осілий синій осад"
+  ],
+  "cuoh2Suspended": [
+    "Cu(OH)₂: blue precipitate in suspension",
+    "Cu(OH)₂: sinine sade suspensioonis",
+    "Cu(OH)₂: синий осадок во взвеси",
+    "Cu(OH)₂: синій осад у зависі"
+  ]
+};
+ for (const [i,lang] of ["en","et","ru","uk"].entries()) for (const [key,values] of Object.entries(rows)) I18N[lang]["x."+key]=values[i];
+})();
+
+for (const [lang, step] of Object.entries({en:'Predict which solvent dissolves ionic NaCl and save your prediction with a reason before delivering salt. Keep volume, mass, temperature and stirring comparable.',et:'Ennusta, kumb lahusti lahustab ioonilist NaCl, ning salvesta ennustus ja põhjendus enne soola lisamist. Hoia ruumala, mass, temperatuur ja segamine võrreldavad.',ru:'Предскажите растворимость ионного NaCl и сохраните прогноз с объяснением до переноса соли. Сравнивайте при равных объёмах, массе, температуре и перемешивании.',uk:'Передбачте розчинність йонного NaCl і збережіть прогноз із поясненням до перенесення солі. Порівнюйте за рівних об’ємів, маси, температури й перемішування.'})) { const steps=I18N[lang]['x.k311.steps'].split('|'); steps[1]=step; I18N[lang]['x.k311.steps']=steps.join('|'); }

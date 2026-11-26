@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { NACL, waterVolume, dissolutionDomain, solubilityAt, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, separatorSupported, drainLowerPhase, solubilityTrial } from './phase_state.mjs';
+import { NACL, waterVolume, dissolutionDomain, solubilityAt, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, separatorSupported, drainLowerPhase, solubilityTrial, makeSolubilityHypothesis, hydrationEvidence } from './phase_state.mjs';
 import { mixSample, excessOf } from './sample_transfer.mjs';
 const near = (a, b, tolerance = 1e-9) => assert.ok(Math.abs(a - b) < tolerance, `${a} != ${b}`);
 const vessel = (water = 10) => ({ chem: { V: water, tot: {}, ind: {}, solv: {}, eq: { ppt: {}, pH: 7 } }, solid: 20, temp: 20, stir: 0 });
@@ -143,4 +143,45 @@ test('K3-11 needs controlled solvent blanks, equal real doses, complete water di
 test('new activity and separator labels are translated in all supported languages',()=>{
   const c=vm.createContext({I18N:{en:{},et:{},ru:{},uk:{}}});vm.runInContext(fs.readFileSync(new URL('./i18n3d.js',import.meta.url),'utf8'),c);
   for(const key of ['k311.steps','k311.notReady','k311.option.water','sepHelp','sepNotReady','sepUnsupported']) for(const lang of ['et','ru','uk']) {assert.ok(c.I18N[lang]['x.'+key]);assert.notEqual(c.I18N[lang]['x.'+key],c.I18N.en['x.'+key]);}
+});
+
+test('copper hydroxide forms, settles, resuspends, and redissolves using the actual engine ledger',()=>{
+  const v=vessel(40);v.solid=0;v.chem.tot={Cu:2,SO4:2,Na:4};v.chem.eq=chemistry.speciate(v.chem.tot,40);
+  const before=JSON.stringify(v.chem);advancePhases(v,40);const state=v.precipitates.CuOH2;
+  assert.ok(state.amount>1.99);assert.ok(state.settled>.99);near(state.amount,v.chem.eq.ppt.CuOH2);
+  near(state.amount+(v.chem.eq.dis.Cu||0)*40,2,1e-7);
+  shakeSample(v);near(v.precipitates.CuOH2.settled,0);assert.equal(JSON.stringify(v.chem),before);
+  v.stir=0;advancePhases(v,40);assert.ok(v.precipitates.CuOH2.settled>.99);
+  v.chem.tot.Cl=6;v.chem.eq=chemistry.speciate(v.chem.tot,40);advancePhases(v,.1);
+  assert.ok(v.precipitates.CuOH2.amount<1e-8);near(v.precipitates.CuOH2.settled,0);near(v.chem.eq.dis.Cu*40,2,1e-7);
+  const control=vessel(40);control.chem.tot={Cu:2,SO4:2,Cl:.2};control.chem.eq=chemistry.speciate(control.chem.tot,40);advancePhases(control,40);near(control.precipitates.CuOH2.amount,0);
+});
+test('AgCl and Cu(OH)2 visual histories remain independent and never alter mixed-sample amounts',()=>{
+  const v=vessel(40);v.chem.eq={ppt:{AgCl:1,CuOH2:2}};const before=JSON.stringify(v.chem);
+  advancePhases(v,40);assert.ok(v.precipitates.AgCl.settled>.99);assert.ok(v.precipitates.CuOH2.settled>.99);
+  v.chem.eq.ppt.CuOH2=4;advancePhases(v,0);assert.ok(v.precipitates.AgCl.settled>.99);assert.ok(v.precipitates.CuOH2.settled<.51);
+  v.chem.eq.ppt.CuOH2=2;assert.equal(JSON.stringify(v.chem),before);shakeSample(v);advancePhases(v,.1);
+  near(v.precipitates.AgCl.settled,0);near(v.precipitates.CuOH2.settled,0);assert.equal(v.agclState,v.precipitates.AgCl);
+});
+function cleanComparison(){const a=vessel(40),b=vessel(40);a.letter='A';b.letter='B';a.temp=b.temp=22;a.solid=b.solid=0;b.chem.solv.hexane=40;return[a,b];}
+test('a pre-dose hypothesis retains incorrect predictions and rejects late, missing, mutable or invalid records',()=>{
+  const samples=cleanComparison(),task={doses:{},saltStarted:false};
+  const h=makeSolubilityHypothesis(samples,task,'hexane','I predict a nonpolar solvent dissolves it.',1.5);
+  assert.equal(h.prediction,'hexane');near(h.recordedAt,1.5);assert.equal(task.hypothesis,undefined);
+  for(const [patch,pred,reason] of [[{hypothesis:h},'water','The reason is saved.'],[{saltStarted:true},'water','The salt is in flight.'],[{doses:{A:.1}},'water','There is salt already.'],[{},'oops','Reason text.'],[{},'water','short']]) assert.equal(makeSolubilityHypothesis(samples,{...task,...patch},pred,reason,2),null);
+  samples[0].chem.tot.Na=1;assert.equal(makeSolubilityHypothesis(samples,task,'water','Sample is contaminated.',2),null);
+});
+test('hydration explanation requires actual recorded observations and compares rather than grades the hypothesis',()=>{
+  const samples=cleanComparison(),task={doses:{A:.5,B:.5},hypothesis:{prediction:'hexane'}};
+  assert.equal(hydrationEvidence(samples,task),null);
+  samples[0].chem.tot={Na:.5/58.44*1000,Cl:.5/58.44*1000};samples[1].solid=.5;
+  task.comparison=solubilityTrial(samples,task.doses);const before=JSON.stringify(samples);
+  const e=hydrationEvidence(samples,task);assert.equal(e.observed,'water');assert.equal(e.supported,false);
+  e.rows[0].dissolved=99;near(task.comparison[0].dissolved,.5);assert.equal(JSON.stringify(samples),before);
+  task.hypothesis.prediction='water';assert.equal(hydrationEvidence(samples,task).supported,true);
+  samples[1].chem.V=20;assert.equal(hydrationEvidence(samples,task),null);
+});
+test('hypothesis, hydration distinctions and copper observations are translated',()=>{
+  const c=vm.createContext({I18N:{en:{},et:{},ru:{},uk:{}}});vm.runInContext(fs.readFileSync(new URL('./i18n3d.js',import.meta.url),'utf8'),c);
+  for(const key of ['k311.hypothesisFirst','k311.predictionRevised','k311.diagram.water','k311.explain.hbond','cuoh2Settled','cuoh2Suspended']) for(const lang of ['et','ru','uk']){assert.ok(c.I18N[lang]['x.'+key]);assert.notEqual(c.I18N[lang]['x.'+key],c.I18N.en['x.'+key]);}
 });

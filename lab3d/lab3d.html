@@ -165,6 +165,13 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .ans .btn { justify-self: start; }
 .solubility-answer .arow { grid-template-columns: minmax(0, 1fr); }
 .solubility-answer select { width: 100%; }
+.hypothesis { display: grid; gap: 8px; min-width: 0; margin: 8px 0; border: 1px solid var(--line); border-radius: 10px; }
+.hypothesis select, .hypothesis textarea { box-sizing: border-box; width: 100%; min-width: 0; font: inherit; padding: 7px; border: 1px solid var(--line); border-radius: 7px; }
+.hydration { margin-top: 12px; padding: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.hydration svg { display: block; width: 100%; height: auto; background: #f7fbfc; border-radius: 8px; }
+.hydration-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.hydration-tabs [aria-pressed="true"] { background: var(--accent, #0c7069); color: white; }
+.schematic-note { font-size: 12px; }
 .activity { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
 .activity-row { display: grid; gap: 5px; }
 .activity-row .btn { justify-self: stretch; text-align: left; background: var(--surface); }
@@ -2410,6 +2417,165 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
  const rows={sepWaste:['Collect separator sample as waste','Kogu jaotuslehtri proov jäätmeteks','Собрать пробу из воронки в отходы','Зібрати пробу з лійки у відходи'],sepWasteCollected:['Collected separator sample: {v} mL of waste.','Jaotuslehtrist koguti {v} mL jäätmeid.','Из воронки собрано {v} мл отходов.','Із лійки зібрано {v} мл відходів.']};
  for(const [i,lang] of ['en','et','ru','uk'].entries()) for(const [key,values] of Object.entries(rows)) I18N[lang]['x.'+key]=values[i];
 })();
+
+// Evidence-first K3-11 and independent copper hydroxide observations.
+(() => {
+ const rows = {
+  "k311.hypothesisTitle": [
+    "Your prediction before adding salt",
+    "Sinu ennustus enne soola lisamist",
+    "Ваш прогноз до добавления соли",
+    "Ваш прогноз до додавання солі"
+  ],
+  "k311.predict": [
+    "Which solvent will dissolve more NaCl?",
+    "Kumb lahusti lahustab rohkem NaCl?",
+    "Какой растворитель растворит больше NaCl?",
+    "Який розчинник розчинить більше NaCl?"
+  ],
+  "k311.reason": [
+    "Why? Write 8–500 characters.",
+    "Miks? Kirjuta 8–500 tähemärki.",
+    "Почему? Напишите 8–500 символов.",
+    "Чому? Напишіть 8–500 символів."
+  ],
+  "k311.saveHypothesis": [
+    "Save prediction",
+    "Salvesta ennustus",
+    "Сохранить прогноз",
+    "Зберегти прогноз"
+  ],
+  "k311.hypothesisLocked": [
+    "Prediction saved and locked",
+    "Ennustus salvestatud ja lukustatud",
+    "Прогноз сохранён и закреплён",
+    "Прогноз збережено й зафіксовано"
+  ],
+  "k311.savedAt": [
+    "Recorded at {t} s, before salt delivery.",
+    "Salvestatud ajal {t} s, enne soola lisamist.",
+    "Записано на {t} с, до переноса соли.",
+    "Записано на {t} с, до перенесення солі."
+  ],
+  "k311.hypothesisFirst": [
+    "Save a prediction and reason with clean solvent blanks before delivering any salt. If salt was already delivered, reset and retry; an incorrect prediction is welcome.",
+    "Salvesta ennustus ja põhjendus puhaste lahustitega enne soola lisamist. Kui sool on juba lisatud, lähtesta ja proovi uuesti; vale ennustus on lubatud.",
+    "Сохраните прогноз и объяснение на чистых растворителях до переноса соли. Если соль уже добавлена, начните заново; ошибочный прогноз допустим.",
+    "Збережіть прогноз і пояснення на чистих розчинниках до перенесення солі. Якщо сіль уже додано, почніть заново; помилковий прогноз допустимий."
+  ],
+  "k311.hypothesisSaved": [
+    "Prediction: {prediction} Reason: {reason}",
+    "Ennustus: {prediction} Põhjendus: {reason}",
+    "Прогноз: {prediction} Объяснение: {reason}",
+    "Прогноз: {prediction} Пояснення: {reason}"
+  ],
+  "k311.predictionSupported": [
+    "Your recorded comparison supports your prediction. Use the measured amounts to justify the conclusion.",
+    "Salvestatud võrdlus toetab sinu ennustust. Põhjenda järeldust mõõdetud kogustega.",
+    "Записанное сравнение подтверждает ваш прогноз. Обоснуйте вывод измеренными количествами.",
+    "Записане порівняння підтверджує ваш прогноз. Обґрунтуйте висновок виміряними кількостями."
+  ],
+  "k311.predictionRevised": [
+    "Your recorded comparison differs from your prediction. Revise your explanation using the measured amounts; the original prediction stays in the notebook.",
+    "Salvestatud võrdlus erineb sinu ennustusest. Muuda selgitust mõõdetud koguste põhjal; algne ennustus jääb päevikusse.",
+    "Сравнение отличается от вашего прогноза. Пересмотрите объяснение по измерениям; исходный прогноз остаётся в журнале.",
+    "Порівняння відрізняється від вашого прогнозу. Перегляньте пояснення за вимірюваннями; початковий прогноз залишається в журналі."
+  ],
+  "k311.explainTitle": [
+    "Explain your recorded result",
+    "Selgita salvestatud tulemust",
+    "Объясните записанный результат",
+    "Поясніть записаний результат"
+  ],
+  "k311.view.water": [
+    "Ion hydration",
+    "Ioonide hüdratatsioon",
+    "Гидратация ионов",
+    "Гідратація йонів"
+  ],
+  "k311.view.hexane": [
+    "Nonpolar solvent",
+    "Mittepolaarne lahusti",
+    "Неполярный растворитель",
+    "Неполярний розчинник"
+  ],
+  "k311.view.hbond": [
+    "Water–water bonds",
+    "Vee molekulide vahel",
+    "Связи между молекулами воды",
+    "Зв’язки між молекулами води"
+  ],
+  "k311.diagram.water": [
+    "Hydration: water oxygen faces Na+, water hydrogen faces Cl−. Dashed lines show ion–dipole attractions.",
+    "Hüdratatsioon: vee hapnik on Na+ ja vesinik Cl− poole. Katkendjooned näitavad iooni-dipooli tõmmet.",
+    "Гидратация: кислород воды обращён к Na+, водород — к Cl−. Пунктир показывает ион-дипольное притяжение.",
+    "Гідратація: кисень води спрямований до Na+, водень — до Cl−. Пунктир показує йон-дипольне притягання."
+  ],
+  "k311.diagram.hexane": [
+    "Nonpolar hexane molecules above an ionic NaCl solid; no water hydration shell.",
+    "Mittepolaarsed heksaani molekulid ioonilise NaCl tahkise kohal; vee hüdratatsioonikihti pole.",
+    "Неполярные молекулы гексана над твёрдым ионным NaCl; водной гидратной оболочки нет.",
+    "Неполярні молекули гексану над твердим йонним NaCl; водної гідратної оболонки немає."
+  ],
+  "k311.diagram.hbond": [
+    "A hydrogen bond from a water hydrogen to another water oxygen, distinct from the covalent O–H bonds.",
+    "Vesinikside vee vesiniku ja teise vee hapniku vahel, eraldi kovalentsetest O–H sidemetest.",
+    "Водородная связь между водородом одной молекулы воды и кислородом другой; она отличается от ковалентных O–H.",
+    "Водневий зв’язок між воднем однієї молекули води й киснем іншої; він відрізняється від ковалентних O–H."
+  ],
+  "k311.explain.water": [
+    "In your recorded A sample the salt dissolved. Polar water orients Oδ− toward Na⁺ and Hδ+ toward Cl⁻: ion–dipole hydration stabilises dispersed ions. NaCl is an ionic lattice, not separate NaCl molecules.",
+    "Salvestatud A-proovis sool lahustus. Polaarses vees on Oδ− Na⁺ ja Hδ+ Cl⁻ poole: iooni-dipooli hüdratatsioon stabiliseerib lahustunud ioone. NaCl on ioonvõre, mitte eraldi NaCl molekulid.",
+    "В записанной пробе A соль растворилась. Полярная вода направляет Oδ− к Na⁺, Hδ+ к Cl⁻: ион-дипольная гидратация стабилизирует ионы. NaCl — ионная решётка, а не отдельные молекулы NaCl.",
+    "У записаній пробі A сіль розчинилася. Полярна вода спрямовує Oδ− до Na⁺, Hδ+ до Cl⁻: йон-дипольна гідратація стабілізує йони. NaCl — йонна ґратка, а не окремі молекули NaCl."
+  ],
+  "k311.explain.hexane": [
+    "Your B sample retained solid NaCl. Nonpolar hexane does not provide water-like ion hydration. The reference model treats NaCl dissolution in pure hexane as negligible; it is not a universal rule for every solute.",
+    "B-proovi jäi tahke NaCl. Mittepolaarne heksaan ei hüdreeri ioone nagu vesi. Näidismudel käsitleb NaCl lahustumist puhtas heksaanis tühisena; see ei ole kõigi ainete üldreegel.",
+    "В пробе B остался твёрдый NaCl. Неполярный гексан не гидратирует ионы подобно воде. Модель считает растворение NaCl в чистом гексане пренебрежимо малым; это не общее правило для всех веществ.",
+    "У пробі B залишився твердий NaCl. Неполярний гексан не гідратує йони подібно до води. Модель вважає розчинення NaCl у чистому гексані нехтовно малим; це не загальне правило для всіх речовин."
+  ],
+  "k311.explain.hbond": [
+    "Water molecules also form hydrogen bonds with each other. Solid lines show covalent O–H bonds; the dashed H⋯O line is intermolecular. For the NaCl result above, use ion–dipole hydration rather than calling all attractions hydrogen bonds.",
+    "Vee molekulid moodustavad ka omavahel vesiniksidemeid. Pidevjooned on kovalentsed O–H sidemed, katkendlik H⋯O on molekulide vahel. NaCl tulemuse selgitamisel kasuta iooni-dipooli hüdratatsiooni, mitte ära nimeta kõiki tõmbeid vesiniksidemeteks.",
+    "Молекулы воды также образуют водородные связи друг с другом. Сплошные линии — ковалентные O–H; пунктир H⋯O — межмолекулярная связь. Результат с NaCl объясняйте ион-дипольной гидратацией, не называя все взаимодействия водородными связями.",
+    "Молекули води також утворюють водневі зв’язки між собою. Суцільні лінії — ковалентні O–H; пунктир H⋯O — міжмолекулярний зв’язок. Результат із NaCl пояснюйте йон-дипольною гідратацією, не називаючи всі взаємодії водневими зв’язками."
+  ],
+  "k311.schematic": [
+    "Schematic explanation, not to scale or particle count. Read the actual amounts above.",
+    "Selgitav skeem; mõõtkava ega osakeste arv ei ole tegelik. Tegelikud kogused on ülal.",
+    "Схема: масштаб и число частиц условные. Реальные количества приведены выше.",
+    "Схема: масштаб і число частинок умовні. Реальні кількості наведено вище."
+  ],
+  "k311.evidenceChanged": [
+    "The sample conditions changed. Restore the controlled comparison and record it again to use this explanation.",
+    "Proovi tingimused muutusid. Taasta kontrollitud võrdlus ja salvesta uuesti, et kasutada selgitust.",
+    "Условия пробы изменились. Восстановите контролируемое сравнение и запишите его снова для объяснения.",
+    "Умови проби змінилися. Відновіть контрольоване порівняння й запишіть його знову для пояснення."
+  ],
+  "k311.source": [
+    "Reference: OpenStax · Electrolytes",
+    "Allikas: OpenStax · Elektrolüüdid",
+    "Источник: OpenStax · Электролиты",
+    "Джерело: OpenStax · Електроліти"
+  ],
+  "cuoh2Settled": [
+    "Cu(OH)₂: settled blue precipitate",
+    "Cu(OH)₂: settinud sinine sade",
+    "Cu(OH)₂: осевший синий осадок",
+    "Cu(OH)₂: осілий синій осад"
+  ],
+  "cuoh2Suspended": [
+    "Cu(OH)₂: blue precipitate in suspension",
+    "Cu(OH)₂: sinine sade suspensioonis",
+    "Cu(OH)₂: синий осадок во взвеси",
+    "Cu(OH)₂: синій осад у зависі"
+  ]
+};
+ for (const [i,lang] of ["en","et","ru","uk"].entries()) for (const [key,values] of Object.entries(rows)) I18N[lang]["x."+key]=values[i];
+})();
+
+for (const [lang, step] of Object.entries({en:'Predict which solvent dissolves ionic NaCl and save your prediction with a reason before delivering salt. Keep volume, mass, temperature and stirring comparable.',et:'Ennusta, kumb lahusti lahustab ioonilist NaCl, ning salvesta ennustus ja põhjendus enne soola lisamist. Hoia ruumala, mass, temperatuur ja segamine võrreldavad.',ru:'Предскажите растворимость ионного NaCl и сохраните прогноз с объяснением до переноса соли. Сравнивайте при равных объёмах, массе, температуре и перемешивании.',uk:'Передбачте розчинність йонного NaCl і збережіть прогноз із поясненням до перенесення солі. Порівнюйте за рівних об’ємів, маси, температури й перемішування.'})) { const steps=I18N[lang]['x.k311.steps'].split('|'); steps[1]=step; I18N[lang]['x.k311.steps']=steps.join('|'); }
 /* Lab inventory shown on the closet and cabinet shelves (see "Virtual Lab Inventory" doc).
    Items here are display-only for now: tapping one opens a note; later rounds make them usable.
    n = [en, ru, et]; lv = MS | HS | Uni; sh = shelf T | M2 | M1 | B (top, eye level, lower middle, bottom).
@@ -2715,7 +2881,7 @@ import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODE
 import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
 import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
 import { doseCapacity, flowAllowed, sampleSnapshot } from './bench_state.mjs';
-import { waterVolume, dissolutionDomain, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, NACL, separatorSupported, drainLowerPhase, solubilityTrial } from './phase_state.mjs';
+import { waterVolume, dissolutionDomain, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, NACL, separatorSupported, drainLowerPhase, solubilityTrial, makeSolubilityHypothesis, hydrationEvidence } from './phase_state.mjs';
 
 /* =====================================================================
    ACID–ALKALI BENCH 3D — prototype v5 (equipment library)
@@ -2861,7 +3027,7 @@ function describe(b, a, gas, addedInd) {
   if (a.inds) { if (addedInd || a.ind !== b.ind) out.push(['obs.ind', { c: { k: 'col.' + a.ind } }]); }
   else if (a.base !== b.base && a.base !== 'colourless') out.push(['obs.colour', { c: { k: 'col.' + a.base } }]);
   if (!out.length) out.push(['obs.none']); return out; }
-function lookWithCloud(chem, settled = 0) { const lk = vesselLook(chem); if (lk.cloud) { const suspended = Math.max(0, lk.pptTotal - (chem.eq?.ppt?.AgCl || 0) * settled); const w = Math.min(.85, suspended * 8); lk.rgb = lerpC(lk.rgb, hex2rgb(lk.cloud), w); lk.a = Math.max(lk.a, .3 + w * .65); } return lk; }
+function lookWithCloud(chem, precipitation = {}) { const lk = vesselLook(chem); if (lk.cloud) { const suspended = Math.max(0, lk.pptTotal - Object.entries(precipitation).reduce((sum, [id, state]) => sum + (chem.eq?.ppt?.[id] || 0) * state.settled, 0)); const w = Math.min(.85, suspended * 8); lk.rgb = lerpC(lk.rgb, hex2rgb(lk.cloud), w); lk.a = Math.max(lk.a, .3 + w * .65); } return lk; }
 function endSession() {
   const s = NB.session; if (!s) return; NB.session = null; const v = s.v;
   if (v.eqDirty) doEq(v);
@@ -3176,7 +3342,7 @@ function updateVessel(v, dt, t) {
   const sp = v.g.position.distanceTo(v.last) / Math.max(dt, 1e-3); v.last.copy(v.g.position);
   if (v.held && v.tilt < 5 && sp > .05) { v.stir = Math.min(1, v.stir + sp * dt * 3); if (Math.random() < .3) addWave(v, (Math.random() - .5) * .03, (Math.random() - .5) * .03, .0004); }
   v.level += (levelOf(v) - v.level) * (1 - Math.exp(-dt * 8));
-  const lk = lookWithCloud(v.chem, v.agclState?.settled || 0); const k = 1 - Math.exp(-dt * (.8 + v.stir * 4 + v.visualKick * 9));
+  const lk = lookWithCloud(v.chem, v.precipitates); const k = 1 - Math.exp(-dt * (.8 + v.stir * 4 + v.visualKick * 9));
   v.rgb = v.rgb.map((x, i) => x + (lk.rgb[i] - x) * k); v.a += (lk.a - v.a) * k;
   const c = new THREE.Color().setRGB(v.rgb[0] / 255, v.rgb[1] / 255, v.rgb[2] / 255, THREE.SRGBColorSpace);
   const kk = clamp((v.a - .26) * 1.7, 0, .92);
@@ -5030,19 +5196,26 @@ TASKS.push({ id: 'k311', lab: true, hoodLab: true, code: 'K3-11', title: 'x.k311
   answer: { rows: ['outcome'], rowKey: 'x.k311.row.', optKey: 'x.k311.option.', opts: ['water', 'hexane', 'same'], fixed: { outcome: 'water' }, needSeen: true }
 });
 function k311Samples() { return ['A', 'B'].map(L => vessels.find(v => v.letter === L)); }
+function saveSolubilityHypothesis() {
+  const hypothesis = makeSolubilityHypothesis(k311Samples(), TASK, TASK.hypothesisDraft, TASK.hypothesisReason, (performance.now() - NB.t0) / 1000);
+  if (!hypothesis) { logE('mistake', [['x.k311.hypothesisFirst']]); renderCard(); return; }
+  TASK.hypothesis = hypothesis;
+  logE('info', [['x.k311.hypothesisSaved', { prediction: T('x.k311.option.' + hypothesis.prediction), reason: hypothesis.reason }]]); renderCard();
+}
 function recordSolubility(blank) {
   if (!PPE.goggles || !HOOD.fan) { logE('mistake', [['x.k311.safety']]); renderCard(); return; }
+  if (!blank && !TASK.hypothesis) { logE('mistake', [['x.k311.hypothesisFirst']]); renderCard(); return; }
   const rows = solubilityTrial(k311Samples(), TASK.doses, blank);
   if (!rows || (!blank && !TASK.blank)) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
   if (blank) TASK.blank = rows;
-  else { TASK.evidence.outcome = rows; TASK.comparison = rows; }
+  else { TASK.evidence.outcome = rows; TASK.comparison = rows; const result = hydrationEvidence(k311Samples(), TASK); logE('obs', [[result.supported ? 'x.k311.predictionSupported' : 'x.k311.predictionRevised']]); }
   for (const r of rows) logE('obs', [['x.k311.measurement', { v: r.vessel, volume: fmt(r.volume, 2), temp: fmt(r.temperature, 1), dose: fmt(r.dose, 3), dissolved: fmt(r.dissolved, 3), residue: fmt(r.residue, 3) }]]);
   renderCard();
 }
 function dealUnknowns(task) {
   task.key = {}; task.picks = {}; task.num = '';
   task.evidence = task.answer && task.answer.needSeen ? {} : null;
-  task.doses = {}; task.blank = null; task.comparison = null;
+  task.doses = {}; task.blank = null; task.comparison = null; task.hypothesis = null; task.hypothesisDraft = ''; task.hypothesisReason = ''; task.saltStarted = false; task.explanationView = 'water';
   task.activityDone = new Set(); task.activityResults = {};
   for (const L of UNK) { REAG['u' + L].tot = {}; }
   if (!task.deal) return;
@@ -5063,7 +5236,7 @@ function runActivityTrial(trial) {
 }
 function checkAnswers() {
   const A = TASK.answer; let wrong = 0;
-  if (TASK.id === 'k311' && (!TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
+  if (TASK.id === 'k311' && (!TASK.hypothesis || !TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
   const rows = A.rows || Object.keys(TASK.key);
   if (A.needSeen) {
     const missing = rows.filter(L => !TASK.evidence || TASK.evidence[L] == null);
@@ -5374,7 +5547,7 @@ function resetState() {
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
-  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.layerSettle = 1; v.agclState = { amount: 0, settled: 0 }; v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.heatSupport = null; v.heatSource = null; v.heatBoilLogged = false; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
+  for (const v of vessels) { v.chem = { V: 0, tot: {}, ind: {}, solv: {}, cap: 250 }; setSampleTag(v); v.layerSettle = 1; v.agclState = { amount: 0, settled: 0 }; v.precipitates = {}; v.solid = 0; v.solidPourAcc = 0; v.solidPourTarget = null; v.temp = 22; v.heatSupport = null; v.heatSource = null; v.heatBoilLogged = false; v.warmLogT = 22; v.neutPrev = 0; v.gas = 0; v.visualKick = 0; v.sinkDrain = null; v.nonmetalLog = null; v.oxide = null; v.area = 'bench'; clearFx(v); v.rxHot = false; v.eqDirty = true; v.fullLogged = false; v.held = false; equilibrate(v.chem); const lk = vesselLook(v.chem); v.rgb = lk.rgb.slice(); v.a = lk.a; v.level = levelOf(v); }
   for (const b of bottles) { b.V = STOCK; b.emptyLog = false; b.held = false; b.open = false; b.capManual = false; b.lidT = 0; b.lidHome = null; b.area = 'bench'; }
   for (const q of pipettes) { q.chem = { V: 0, tot: {}, ind: {} }; q.src = null; q.held = false; }
   for (const d of droppers) { unpark(d); d.held = false; }
@@ -6109,7 +6282,7 @@ function updateSpatula(o, dt) {
     const tg = overJar ? null : findTarget(o); o.zoneV = tg && tg.kind === 'vessel' ? tg.v : null;
     let pos, roll = 0;
     if (overJar) { pos = V3(JAR.x, .045, JAR.z); if (!o.jarDump) o.grams = Math.min(1.6, o.grams + dt * .55); }
-    else if (o.zoneV) { const v = o.zoneV; pos = V3(v.g.position.x, rimY(v) + .006, v.g.position.z); roll = .9; if (o.grams > 0) { const dm = Math.min(o.grams, dt * .45); o.grams -= dm; for (let k = 0; k < 2; k++) GR.push({ x: pos.x + (Math.random() - .5) * .006, y: pos.y - .004, z: pos.z + (Math.random() - .5) * .006, vy: 0, s: .0007 + Math.random() * .0008, v, m: dm / 2 }); if (o.sessionV !== v) { saltLog(o); o.sessionV = v; o.sessionG = 0; } o.sessionG += dm; } }
+    else if (o.zoneV) { const v = o.zoneV; pos = V3(v.g.position.x, rimY(v) + .006, v.g.position.z); roll = .9; if (o.grams > 0) { if (TASK.id === 'k311') TASK.saltStarted = true; const dm = Math.min(o.grams, dt * .45); o.grams -= dm; for (let k = 0; k < 2; k++) GR.push({ x: pos.x + (Math.random() - .5) * .006, y: pos.y - .004, z: pos.z + (Math.random() - .5) * .006, vy: 0, s: .0007 + Math.random() * .0008, v, m: dm / 2 }); if (o.sessionV !== v) { saltLog(o); o.sessionV = v; o.sessionG = 0; } o.sessionG += dm; } }
     else pos = V3(ptr.x, .14, ptr.z);
     o.g.position.lerp(pos, 1 - Math.exp(-dt * 12)); o.g.rotation.set(roll, .5, 0);
     if (o.sessionV && (!o.zoneV || o.grams <= 0)) saltLog(o);
@@ -6187,7 +6360,7 @@ function inspectSample(v) {
     body.push(T((v.layerSettle ?? 1) > .95 ? 'x.phaseSeparated' : 'x.phaseSeparating'));
     for (const [i, layer] of phases.layers.entries()) body.push(T(i === 0 ? 'x.phaseBottom' : 'x.phaseTop') + ': ' + T('x.solv_' + layer.id) + ' · ' + fmt(layer.volume, 2) + ' mL');
   } else if (s.liquid) body.push(T('x.phaseSingle'));
-  if (v.agclState?.amount > 1e-8) body.push(T(v.agclState.settled > .95 ? 'x.agclSettled' : 'x.agclSuspended'));
+  for (const [id, state] of Object.entries(v.precipitates || {})) if (state.amount > 1e-8) body.push(T('x.' + (id === 'AgCl' ? 'agcl' : 'cuoh2') + (state.settled > .95 ? 'Settled' : 'Suspended')));
   if (s.components.length) body.push(T('x.sampleComponents'), ...s.components.map(q => `${q.name}: ${amount(q.amount)} mmol${q.concentration == null ? '' : ' · ' + amount(q.concentration) + ' mol/L'}`));
   if (s.solvents.length) body.push(T('x.sampleSolvents'), ...s.solvents.map(q => `${T('x.solv_' + q.name)}: ${fmt(q.volume, 3)} mL`));
   if (s.indicators.length) body.push(T('x.sampleIndicators'), ...s.indicators.map(q => T(REAG[q.name]?.name || q.name)));
@@ -6212,6 +6385,66 @@ function updateCapControl() {
   const e = $('activeCap'), b = activeBottle(); if (!e) return;
   e.hidden = !b;
   if (b) { const text = T(b.open ? 'x.closeCap' : 'x.openCap'); if (e.textContent !== text) { e.textContent = text; e.setAttribute('aria-label', text); } }
+}
+function renderSolubilityHypothesis(group, h) {
+  const saved = TASK.hypothesis, field = h('fieldset', 'hypothesis'); field.append(h('legend', null, T('x.k311.hypothesisTitle')));
+  const label = h('label', null, T('x.k311.predict')); label.htmlFor = 'k311Hypothesis';
+  const select = h('select'); select.id = 'k311Hypothesis'; select.append(new Option('—', ''));
+  for (const value of ['water', 'hexane', 'same']) select.append(new Option(T('x.k311.option.' + value), value));
+  select.value = saved?.prediction || TASK.hypothesisDraft; select.disabled = !!saved || TASK.saltStarted;
+  select.addEventListener('change', () => { TASK.hypothesisDraft = select.value; });
+  const reasonLabel = h('label', null, T('x.k311.reason')); reasonLabel.htmlFor = 'k311Reason';
+  const reason = h('textarea'); reason.id = 'k311Reason'; reason.maxLength = 500; reason.rows = 3; reason.value = saved?.reason || TASK.hypothesisReason; reason.disabled = !!saved || TASK.saltStarted;
+  reason.addEventListener('input', () => { TASK.hypothesisReason = reason.value; });
+  const save = h('button', 'btn', T(saved ? 'x.k311.hypothesisLocked' : 'x.k311.saveHypothesis')); save.type = 'button'; save.disabled = !!saved || TASK.saltStarted; save.addEventListener('click', saveSolubilityHypothesis);
+  field.append(label, select, reasonLabel, reason, save);
+  if (saved) field.append(h('p', null, T('x.k311.savedAt', { t: fmt(saved.recordedAt, 1) })));
+  if (TASK.saltStarted && !saved) field.append(h('p', null, T('x.k311.hypothesisFirst')));
+  group.append(field);
+}
+function hydrationDiagram(view) {
+  const ns = 'http://www.w3.org/2000/svg', make = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); if (text != null) e.textContent = text; return e; };
+  const svg = make('svg', { viewBox: '0 0 340 210', role: 'img', 'aria-label': T('x.k311.diagram.' + view) }); svg.append(make('title', {}, T('x.k311.diagram.' + view)));
+  const line = (x1, y1, x2, y2, dashed = false) => svg.append(make('line', { x1, y1, x2, y2, stroke: dashed ? '#217d83' : '#7d8c94', 'stroke-width': dashed ? 1.5 : 2, ...(dashed ? { 'stroke-dasharray': '4 3' } : {}) }));
+  const atom = (x, y, text, fill, r = 8) => { svg.append(make('circle', { cx: x, cy: y, r, fill, stroke: '#374d57', 'stroke-width': 1 })); svg.append(make('text', { x, y: y + 3.5, 'text-anchor': 'middle', 'font-size': r > 12 ? 12 : 9, fill: '#122c36' }, text)); };
+  const water = (x, y, angle) => {
+    const H = [-.912, .912].map(a => [x + 17 * Math.cos(angle + a), y + 17 * Math.sin(angle + a)]);
+    for (const [hx, hy] of H) line(x, y, hx, hy);
+    atom(x, y, 'O', '#f4aaa5', 9); for (const [hx, hy] of H) atom(hx, hy, 'H', '#f5fbff', 6);
+    return H;
+  };
+  if (view === 'water') {
+    for (const [x, symbol] of [[85, 'Na⁺'], [255, 'Cl⁻']]) {
+      atom(x, 96, symbol, symbol === 'Na⁺' ? '#d2c0ed' : '#a8d6aa', 18);
+      for (const angle of [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6]) {
+        const distance = symbol === 'Na⁺' ? 43 : 54;
+        const ox = x + Math.cos(angle) * distance, oy = 96 + Math.sin(angle) * distance;
+        const orientation = symbol === 'Na⁺' ? angle : angle + Math.PI;
+        const end = symbol === 'Na⁺' ? [ox, oy] : [ox + 17 * Math.cos(orientation - .912), oy + 17 * Math.sin(orientation - .912)];
+        line(x + Math.cos(angle) * 20, 96 + Math.sin(angle) * 20, ...end, true);
+        water(ox, oy, orientation);
+      }
+    }
+    svg.append(make('text', { x: 170, y: 190, 'text-anchor': 'middle', 'font-size': 13, fill: '#17383d' }, 'Na⁺ ⋯ Oδ−     |     Cl⁻ ⋯ Hδ+'));
+  } else if (view === 'hexane') {
+    for (const base of [35, 195]) { const points = Array.from({ length: 6 }, (_, i) => [base + i * 19, 40 + (i % 2) * 15]); for (let i = 1; i < points.length; i++) line(...points[i - 1], ...points[i]); }
+    svg.append(make('text', { x: 170, y: 80, 'text-anchor': 'middle', 'font-size': 14 }, 'C₆H₁₄'));
+    for (let i = 0; i < 6; i++) atom(125 + (i % 3) * 45, 120 + Math.floor(i / 3) * 40, i % 2 ? 'Cl⁻' : 'Na⁺', i % 2 ? '#a8d6aa' : '#d2c0ed', 17);
+  } else {
+    const H = water(100, 100, .912); water(220, 100, 0);
+    line(H[0][0] + 7, H[0][1], 210, 100, true);
+    svg.append(make('text', { x: 170, y: 170, 'text-anchor': 'middle', 'font-size': 14 }, 'Oδ−–Hδ+ ⋯ Oδ−'));
+  }
+  return svg;
+}
+function renderHydrationExplanation(group, h) {
+  const result = hydrationEvidence(k311Samples(), TASK);
+  if (!result) { if (TASK.comparison) group.append(h('p', null, T('x.k311.evidenceChanged'))); return; }
+  const box = h('section', 'hydration'); box.append(h('h3', null, T('x.k311.explainTitle')), h('p', null, T(result.supported ? 'x.k311.predictionSupported' : 'x.k311.predictionRevised')));
+  const views = h('div', 'hydration-tabs');
+  for (const value of ['water', 'hexane', 'hbond']) { const button = h('button', 'btn', T('x.k311.view.' + value)); button.type = 'button'; button.id = 'hydration-' + value; button.setAttribute('aria-pressed', String(TASK.explanationView === value)); button.addEventListener('click', () => { TASK.explanationView = value; renderCard(); }); views.append(button); }
+  box.append(views, hydrationDiagram(TASK.explanationView), h('p', null, T('x.k311.explain.' + TASK.explanationView)), h('p', 'schematic-note', T('x.k311.schematic')));
+  const source = h('a', null, T('x.k311.source')); source.href = 'https://openstax.org/books/chemistry-2e/pages/11-2-electrolytes'; source.target = '_blank'; source.rel = 'noopener'; box.append(source); group.append(box);
 }
 function renderCard() {
   const c = $('card'); c.replaceChildren();
@@ -6258,8 +6491,10 @@ function renderCard() {
     }
     if (TASK.id === 'k311') {
       const group = h('section', 'activity');
+      renderSolubilityHypothesis(group, h);
       for (const [blank, key] of [[true, 'blank'], [false, 'compare']]) { const b = h('button', 'btn', T('x.k311.' + key)); b.type = 'button'; b.disabled = TASK.reached || (blank && !!TASK.blank); b.addEventListener('click', () => recordSolubility(blank)); group.append(b); }
       for (const r of TASK.comparison || TASK.blank || []) group.append(h('p', null, T('x.k311.measurement', { v: r.vessel, volume: fmt(r.volume, 2), temp: fmt(r.temperature, 1), dose: fmt(r.dose, 3), dissolved: fmt(r.dissolved, 3), residue: fmt(r.residue, 3) })));
+      renderHydrationExplanation(group, h);
       c.append(group);
     }
     if (TASK.answer) { const A = TASK.answer, box = h('div', TASK.id === 'k311' ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
@@ -6679,7 +6914,10 @@ function addPhaseVisuals(v) {
   grains.count = 0; grains.frustumCulled = false; grains.renderOrder = 2; v.g.add(grains);
   const bed = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 32), new THREE.MeshStandardMaterial({ color: 0xf4f4f0, roughness: .9 }));
   bed.visible = false; v.g.add(bed);
-  v.phaseVisuals = { layers, line, grains, bed };
+  const copperGrains = new THREE.InstancedMesh(grains.geometry.clone(), new THREE.MeshStandardMaterial({ color: 0x3d7fd1, roughness: .9 }), 96);
+  copperGrains.count = 0; copperGrains.frustumCulled = false; v.g.add(copperGrains);
+  const copperBed = new THREE.Mesh(bed.geometry.clone(), copperGrains.material.clone()); copperBed.visible = false; v.g.add(copperBed);
+  v.phaseVisuals = { layers, line, grains, bed, copperGrains, copperBed };
 }
 function renderPhases(v, t) {
   const visuals = v.phaseVisuals, phase = liquidLayers(v.chem), upright = v.tilt < 1;
@@ -6698,19 +6936,21 @@ function renderPhases(v, t) {
     floor += height;
     if (i === 0) visuals.line.position.y = floor + .0001;
   }
-  const state = v.agclState || { amount: 0, settled: 0 };
-  const count = upright && state.amount > 1e-8 ? Math.min(96, Math.max(8, Math.ceil(state.amount * 160))) : 0;
-  visuals.grains.count = count;
-  for (let i = 0; i < count; i++) {
-    const angle = i * 2.399963, radius = v.Ri * .85 * Math.sqrt((i + .5) / count);
-    const fraction = ((i * 37 % 97) + .5) / 97;
-    const y = v.b + .001 + Math.max(0, v.level - v.b - .003) * fraction * (1 - state.settled);
-    M4.compose(P3.set(Math.sin(angle) * radius, y, Math.cos(angle) * radius), QI, SC.setScalar(.0007)); visuals.grains.setMatrixAt(i, M4);
+  for (const [id, grains, bed, offset] of [['AgCl', visuals.grains, visuals.bed, -.25], ['CuOH2', visuals.copperGrains, visuals.copperBed, .25]]) {
+    const state = v.precipitates?.[id] || { amount: 0, settled: 0 };
+    const count = upright && state.amount > 1e-8 ? Math.min(96, Math.max(8, Math.ceil(state.amount * 160))) : 0;
+    grains.count = count;
+    for (let i = 0; i < count; i++) {
+      const angle = i * 2.399963 + (id === 'CuOH2' ? 1.1 : 0), radius = v.Ri * .85 * Math.sqrt((i + .5) / count);
+      const fraction = ((i * 37 % 97) + .5) / 97;
+      const y = v.b + .001 + Math.max(0, v.level - v.b - .003) * fraction * (1 - state.settled);
+      M4.compose(P3.set(Math.sin(angle) * radius, y, Math.cos(angle) * radius), QI, SC.setScalar(.0007)); grains.setMatrixAt(i, M4);
+    }
+    grains.instanceMatrix.needsUpdate = true;
+    bed.visible = upright && state.amount * state.settled > 1e-5;
+    const radius = Math.min(v.Ri * .7, .004 + .012 * Math.cbrt(state.amount * state.settled)), height = .001 * Math.cbrt(state.amount * state.settled);
+    bed.scale.set(radius, Math.max(.00001, height), radius); bed.position.set(v.Ri * offset, v.b + height / 2, 0);
   }
-  visuals.grains.instanceMatrix.needsUpdate = true;
-  visuals.bed.visible = upright && state.amount * state.settled > 1e-5;
-  const radius = Math.min(v.Ri * .9, .004 + .012 * Math.cbrt(state.amount * state.settled)), height = .001 * Math.cbrt(state.amount * state.settled);
-  visuals.bed.scale.set(radius, Math.max(.00001, height), radius); visuals.bed.position.y = v.b + height / 2;
 }
 
 Object.assign(window.__lab3d, { recordSolubility, solubilityTrial, updateGrains, updateSpatula, GR, findTarget, deliver, separatorSupported, drainLowerPhase });
@@ -6722,4 +6962,6 @@ Object.assign(window.__lab3d, { placeSeparatorReceiver, ptr, scr });
 Object.assign(window.__lab3d, { pickAt });
 
 Object.assign(window.__lab3d, { discardSeparator });
+
+Object.assign(window.__lab3d, { saveSolubilityHypothesis, hydrationEvidence, makeSolubilityHypothesis, hydrationDiagram });
 </script>

@@ -2775,8 +2775,8 @@ const LABS = [
   { id: 'nonmetals-spc', run: 'nonmetals-spc', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🔥', title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', time: '12–15 min' },
   { id: 'nonmetals-halogens', run: 'nonmetals-halogens', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🧪', title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', time: '8–10 min' },
   { id: 'combustion', run: 'combustion', level: 'high', course: 'organic', tp: 'hydrocarbons', icon: '🔥', title: 'lab.comb.title', goal: 'lab.comb.goal', desc: 'lab.comb.desc', time: '8–10 min' },
-  { id:'k117-copper',run:'k117-copper',level:'high',course:'general',tp:'acidbase',icon:'🧪',title:'x.copper.title',goal:'x.copper.goal',desc:'x.copper.desc',time:'15–20 min' },
-  { id: 'k311', run: 'k311', level: 'high', course: 'organic', tp: 'bond', icon: '🧂', title: 'x.k311.title', goal: 'x.k311.goal', desc: 'x.k311.desc', time: '10–15 min' },
+  { id:'k117-copper',run:'k117-copper',level:'high',course:'general',tp:'ionreactions',icon:'🧪',title:'x.copper.title',goal:'x.copper.goal',desc:'x.copper.desc',time:'15–20 min' },
+  { id: 'k311', run: 'k311', level: 'high', course: 'organic', tp: 'solubility', icon: '🧂', title: 'x.k311.title', goal: 'x.k311.goal', desc: 'x.k311.desc', time: '10–15 min' },
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
   { id: 'k112', run: 'k112', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔩', title: 'x.k112.title', goal: 'x.k112.goal', desc: 'x.k112.desc', time: '15–20 min' },
   { id: 'k113', run: 'k113', level: 'high', course: 'inorganic', tp: 'bond', icon: '💧', title: 'x.k113.title', goal: 'x.k113.goal', desc: 'x.k113.desc', time: '12–15 min' },
@@ -2799,20 +2799,30 @@ function openLabs() {
   const filter = (label, values, selected, set) => { const row = el('div', 'filterrow'); row.append(el('span', null, label)); for (const [value, labelText, disabled] of values) { const b = el('button', null, labelText); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-pressed', String(selected === value)); if (!disabled) b.addEventListener('click', () => { set(value); openLabs(); }); row.append(b); } filters.append(row); };
   filter(T('x.level'), [['high', T('x.levelHigh')], ['university', T('x.levelUniversity'), true]], labSel.level, v => { labSel.level = v; });
   filter(T('x.branch'), [['all', T('x.all')], ['general', T('x.course.general')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
-  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['nonmetals', T('topic.nonmetals')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
+  filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['ionreactions', T('topic.ionreactions')], ['solubility', T('topic.solubility')], ['nonmetals', T('topic.nonmetals')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
   box.append(filters);
-  const grid = el('div', 'labgrid'), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
+  const tree = el('div', 'labtree'), branches = new Map(), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
   const launch = (l, demoMode) => { pk.hidden = true; const task = TASKS.find(t => t.id === l.run); instructorTab = 'procedure'; if (demoMode) startDemo(task); else { setupTask(task); setInspector(true); } };
+  tree.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))e.stopPropagation();});
+  function branch(parent,key,kind,value,label) {
+    if(!branches.has(key)) { const node=el('details','labtree-node');node.open=true;node.dataset.treeKind=kind;node.dataset.treeValue=value;node.append(el('summary',null,label));parent.append(node);branches.set(key,node); }
+    return branches.get(key);
+  }
   for (const l of shown) {
-    const card = el('article', 'pcard labcard ready'); card.append(el('div', 'labicon', l.icon));
-    card.append(el('div', 'labmeta', T('x.levelHigh') + ' · ' + T('x.course.' + l.course) + ' · ' + T('topic.' + l.tp)));
+    const levelKey=l.level, courseKey=levelKey+'/'+l.course, topicKey=courseKey+'/'+l.tp;
+    const level=branch(tree,levelKey,'level',l.level,T(l.level==='high'?'x.levelHigh':'x.levelUniversity'));
+    const course=branch(level,courseKey,'course',l.course,T('x.course.'+l.course));
+    const topic=branch(course,topicKey,'topic',l.tp,T('topic.'+l.tp));
+    let grid=topic.querySelector('.labgrid');if(!grid){grid=el('div','labgrid');topic.append(grid);}
+    const card = el('article', 'pcard labcard ready');card.dataset.labId=l.id; card.append(el('div', 'labicon', l.icon));
+    card.append(el('div', 'labmeta', T(l.level==='high'?'x.levelHigh':'x.levelUniversity') + ' · ' + T('x.course.' + l.course) + ' · ' + T('topic.' + l.tp)));
     const hasDemo = !!DEMO_LIBRARY[l.run];
     card.append(el('b', null, T(l.title)), el('span', 'labdesc', T(l.desc)), el('span', 'labmeta', l.time + (hasDemo ? ' · ' + T('x.guidedDemo') : '')));
     const acts = el('div', 'labactions'), start = el('button', 'start', T('x.startLab')); start.type = 'button'; start.addEventListener('click', () => launch(l, false)); acts.append(start);
     if (hasDemo) { const demo = el('button', null, T('x.watchDemo')); demo.type = 'button'; demo.addEventListener('click', () => launch(l, true)); acts.append(demo); }
     card.append(acts); grid.append(card);
   }
-  if (!shown.length) grid.append(el('p', 'labempty', T('x.noLabs'))); box.append(grid);
+  if (!shown.length) tree.append(el('p', 'labempty', T('x.noLabs'))); box.append(tree);
   const free = el('button', 'freebench', T('x.openFreeBench')); free.type = 'button'; free.addEventListener('click', () => { pk.hidden = true; setupTask(TASKS[0]); setInspector(true); }); box.append(free);
   pk.append(box);
 }

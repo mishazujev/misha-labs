@@ -2,6 +2,14 @@
 
 **Public Chemistry lab:** <https://labs.mishazujev.com/chemistry/lab3d/lab3d.html>
 
+## Catalogue structure — 27 November 2026
+
+The lab chooser now groups its entries into a collapsible **level → course part → topic → lab** tree while retaining the existing filters and launch controls. The copper lab belongs to **High school → K1 General chemistry → Ion reactions and ionic equations**; the K3-11 reference belongs to **High school → Organic chemistry → Solubility**. Both topics are translated in all four languages. Older entries retain their current course/topic metadata.
+
+The canonical description and approved grouping names belong in **Chemistry lab → roadmap → Lab catalogue structure** on [the Notion project page](https://app.notion.com/p/4069e7589a238073b9faf331f2e3fd06). It contains a template for level, course part, topic, order, lab objective and skill IDs. The daily pipeline requires every new lab to appear under its full path and document that path here and in the journey.
+
+This catalogue-only change is in [draft PR #10](https://github.com/mishazujev/misha-labs/pull/10), on `chemistry/catalogue-tree`, stacked on PR #9. It is unmerged/unpublished. Packaged Chrome verified three ancestors for every leaf, unique entries, native copper/K3-11 launches, keyboard collapse/expand, four languages and mobile bounds; desktop/mobile screenshots were inspected. The optional scenario is `node scripts/check-chemistry-catalogue-tree.cjs`. `npm test` and production packaging pass; no chemistry model or curriculum ID was changed.
+
 ## Current development — 27 November 2026
 
 **New daily lab: Copper precipitate and acid recovery** — K1 General chemistry, primary skill **K1-17** (investigate ion reactions), with two net-ionic-equation choices supporting **K1-18**. Native catalogue/task ID: `k117-copper`, under **K1 · General chemistry → Acids, bases and oxides**. This is a distinct staged investigation with its own apparatus, controls, observations and assessment; it is not a renamed legacy precipitation task.

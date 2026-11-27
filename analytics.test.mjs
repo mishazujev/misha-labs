@@ -39,7 +39,7 @@ try {
   r = await fetch(`${base}/teacher/login`, { method: "POST", redirect: "manual", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ password: "correct horse battery staple" }) });
   assert.equal(r.status, 303); const cookie = r.headers.get("set-cookie").split(";")[0];
 
-  const payloads = ["k111", "k112", "k113", "k3v01", "k3v02"].map(labId => ({ batchId: randomUUID(), sessionId: randomUUID(), attemptId: randomUUID(), labId, mode: "independent", startedAt: Date.now(), activeMs: 240000, lastStep: "lab:completed", completed: true, activities: [{ key: "reagent:hcl", count: 3, amount: 12.5 }, { key: "take:beaker:A", count: 1, amount: 0 }, { key: "safety:noGoggles", count: 1, amount: 0 }] }));
+  const payloads = ["k111", "k112", "k113", "k3v01", "k3v02", "k311", "k117-copper"].map(labId => ({ batchId: randomUUID(), sessionId: randomUUID(), attemptId: randomUUID(), labId, mode: "independent", startedAt: Date.now(), activeMs: 240000, lastStep: "lab:completed", completed: true, activities: [{ key: "reagent:hcl", count: 3, amount: 12.5 }, { key: "take:beaker:A", count: 1, amount: 0 }, { key: "safety:noGoggles", count: 1, amount: 0 }] }));
   const payload = payloads[0];
   for (const item of payloads) {
     r = await fetch(`${base}/api/analytics/flush`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(item) }); assert.equal(r.status, 204);
@@ -48,7 +48,7 @@ try {
   r = await fetch(`${base}/api/analytics/flush`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); assert.equal(r.status, 204);
   const day = new Date().toISOString().slice(0, 10);
   r = await fetch(`${base}/teacher/data?from=${day}&to=${day}`, { headers: { cookie } }); assert.equal(r.status, 200);
-  const report = await r.json(); assert.equal(report.sessions, 5); assert.equal(report.completed, 5); assert.equal(report.averageMs, 240000); assert.equal(report.reagents[0].key, "reagent:hcl"); assert.equal(report.reagents[0].count, 15); assert.equal(report.safety[0].count, 5);
+  const report = await r.json(); assert.equal(report.sessions, payloads.length); assert.equal(report.completed, payloads.length); assert.equal(report.averageMs, 240000); assert.equal(report.reagents[0].key, "reagent:hcl"); assert.equal(report.reagents[0].count, payloads.length * 3); assert.equal(report.safety[0].count, payloads.length);
   console.log("analytics: authentication, K1/K3 lab acceptance, aggregation and idempotency passed");
 } finally {
   child.kill("SIGTERM"); await new Promise(resolve => child.once("exit", resolve)); await rm(dataDir, { recursive: true, force: true });

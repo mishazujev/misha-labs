@@ -172,6 +172,11 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .hydration-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .hydration-tabs [aria-pressed="true"] { background: var(--accent, #0c7069); color: white; }
 .schematic-note { font-size: 12px; }
+.trial-history { min-width: 0; max-width: 100%; }
+.trial-scroll { max-width: 100%; overflow-x: auto; }
+.trial-scroll table { border-collapse: collapse; min-width: 560px; font-size: 12px; }
+.trial-scroll td, .trial-scroll th { padding: 6px; border: 1px solid var(--line); text-align: right; }
+.trial-scroll caption { text-align: left; padding: 6px 0; }
 .activity { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
 .activity-row { display: grid; gap: 5px; }
 .activity-row .btn { justify-self: stretch; text-align: left; background: var(--surface); }

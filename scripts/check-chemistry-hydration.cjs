@@ -28,6 +28,7 @@ const { createServer } = require('node:net');
     await page.evaluate(()=>{window.__pauseLab=true;const l=window.__lab3d;l.setupTask(l.TASKS.find(t=>t.id==='k311'));l.setPPE('goggles');l.HOOD.fan=true;});
     if(await page.locator('#inspectorToggle').getAttribute('aria-expanded')!=='true')await page.locator('#inspectorToggle').click();
     assert.equal(await page.locator('.hydration').count(),0);
+    await page.locator('#design-independent').selectOption('solvent');await page.locator('#design-controls').selectOption('volumeDoseTemperature');await page.getByRole('button',{name:'Save experiment plan',exact:true}).click();
     await page.locator('#k311Hypothesis').selectOption('hexane');await page.locator('#k311Reason').fill('I think hexane may be the better solvent.');
     await page.getByRole('button',{name:'Save prediction',exact:true}).click();
     const stored=await page.evaluate(()=>JSON.stringify(window.__lab3d.TASK.hypothesis));assert.ok(stored.includes('hexane'));

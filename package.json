@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server.mjs",
     "share": "ngrok http 127.0.0.1:4173",
-    "test": "node lab/reaction_engine.test.mjs && node lab/engine.test.mjs && node lab/distillation_interactions.test.mjs && node lab3d/course_labs.test.mjs && node --test lab3d/phase_state.test.mjs lab3d/sample_transfer.test.mjs scripts/validate-deployment.test.mjs scripts/verify-ssh-host.test.mjs && node analytics.test.mjs",
+    "test": "node lab/reaction_engine.test.mjs && node lab/engine.test.mjs && node lab/distillation_interactions.test.mjs && node lab3d/course_labs.test.mjs && node --test lab3d/investigation_models.test.mjs lab3d/phase_state.test.mjs lab3d/sample_transfer.test.mjs scripts/validate-deployment.test.mjs scripts/verify-ssh-host.test.mjs && node analytics.test.mjs",
     "deploy:prepare": "node scripts/prepare-deploy.mjs"
   }
 }

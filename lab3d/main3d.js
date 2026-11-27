@@ -7,6 +7,7 @@ import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODE
 import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
 import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
 import { doseCapacity, flowAllowed, sampleSnapshot } from './bench_state.mjs';
+import { copperCycleObservation, makeSolubilityDesign, solubilityTrialRecord } from './investigation_models.mjs';
 import { waterVolume, dissolutionDomain, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, NACL, separatorSupported, drainLowerPhase, solubilityTrial, makeSolubilityHypothesis, hydrationEvidence } from './phase_state.mjs';
 
 /* =====================================================================
@@ -2321,6 +2322,22 @@ TASKS.push({ id: 'k311', lab: true, hoodLab: true, code: 'K3-11', title: 'x.k311
   setup: [['beaker:A', { V: 40 }], ['beaker:B', { V: 40, solv: { hexane: 40 } }], ['jar'], ['spatula'], ['rod']],
   answer: { rows: ['outcome'], rowKey: 'x.k311.row.', optKey: 'x.k311.option.', opts: ['water', 'hexane', 'same'], fixed: { outcome: 'water' }, needSeen: true }
 });
+TASKS.push({ id:'k117-copper', lab:true, code:'K1-17 / K1-18', title:'x.copper.title', goal:'x.copper.goal', steps:'x.copper.steps', start:'x.copper.start', done:'x.copper.done', sensory:'x.copper.sensory',
+  setup:[['beaker:A',{V:20,tot:{Cu:2,SO4:2,Cl:.2}}],['beaker:B',{V:20,tot:{Cu:2,SO4:2,Cl:.2}}],['bottle:naoh'],['bottle:hcl'],['bottle:water'],['p10'],['p3'],['rod']],
+  answer:{rows:['precip','acid'],rowKey:'x.copper.row.',optKey:'x.copper.option.',optsByRow:{precip:['precipCorrect','precipWrong'],acid:['acidCorrect','acidWrong']},opts:[],fixed:{precip:'precipCorrect',acid:'acidCorrect'},needSeen:true}
+});
+function copperSamples() { return ['A','B'].map(L=>vessels.find(v=>v.letter===L)); }
+function recordCopperCycle(stage) {
+  if (!PPE.goggles || !PPE.gloves) { logE('mistake',[['x.copper.ppe']]); renderCard(); return; }
+  const samples=copperSamples(); for(const v of samples) if(v.eqDirty) doEq(v);
+  const rows=copperCycleObservation(samples,stage,TASK.copperEvidence);
+  if(!rows || TASK.copperEvidence[stage]) { logE('mistake',[['x.copper.notReady']]); renderCard(); return; }
+  TASK.copperEvidence[stage]=rows;
+  if(stage==='positive') TASK.evidence.precip=rows;
+  if(stage==='dissolved') TASK.evidence.acid=rows;
+  for(const r of rows) logE('obs',[['x.copper.measurement',{stage:T('x.copper.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),cu:fmt(r.copper,3),ppt:fmt(r.precipitate,4),ph:fmt(r.pH,2)}]]);
+  renderCard();
+}
 function k311Samples() { return ['A', 'B'].map(L => vessels.find(v => v.letter === L)); }
 function saveSolubilityHypothesis() {
   const hypothesis = makeSolubilityHypothesis(k311Samples(), TASK, TASK.hypothesisDraft, TASK.hypothesisReason, (performance.now() - NB.t0) / 1000);
@@ -2330,6 +2347,7 @@ function saveSolubilityHypothesis() {
 }
 function recordSolubility(blank) {
   if (!PPE.goggles || !HOOD.fan) { logE('mistake', [['x.k311.safety']]); renderCard(); return; }
+  if (!blank && !TASK.design) { logE('mistake',[['x.k311.designFirst']]); renderCard(); return; }
   if (!blank && !TASK.hypothesis) { logE('mistake', [['x.k311.hypothesisFirst']]); renderCard(); return; }
   const rows = solubilityTrial(k311Samples(), TASK.doses, blank);
   if (!rows || (!blank && !TASK.blank)) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
@@ -2341,6 +2359,7 @@ function recordSolubility(blank) {
 function dealUnknowns(task) {
   task.key = {}; task.picks = {}; task.num = '';
   task.evidence = task.answer && task.answer.needSeen ? {} : null;
+  task.copperEvidence={}; task.design=null; task.designDraft={independent:'',controls:''}; task.trials=[]; task.trialLogStart=0;
   task.doses = {}; task.blank = null; task.comparison = null; task.hypothesis = null; task.hypothesisDraft = ''; task.hypothesisReason = ''; task.saltStarted = false; task.explanationView = 'water';
   task.activityDone = new Set(); task.activityResults = {};
   for (const L of UNK) { REAG['u' + L].tot = {}; }
@@ -2362,7 +2381,8 @@ function runActivityTrial(trial) {
 }
 function checkAnswers() {
   const A = TASK.answer; let wrong = 0;
-  if (TASK.id === 'k311' && (!TASK.hypothesis || !TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
+  if(TASK.id==='k117-copper' && (!PPE.goggles || !PPE.gloves || !copperCycleObservation(copperSamples(),'dissolved',TASK.copperEvidence))) { logE('mistake',[['x.copper.notReady']]); renderCard(); return; }
+  if (TASK.id === 'k311' && (!TASK.design || !TASK.hypothesis || !TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
   const rows = A.rows || Object.keys(TASK.key);
   if (A.needSeen) {
     const missing = rows.filter(L => !TASK.evidence || TASK.evidence[L] == null);
@@ -2709,6 +2729,7 @@ function setupTask(task, mode = task.free ? 'free' : 'independent') {
     if (fill) { o.chem.V = fill.V || 0; o.chem.tot = { ...(fill.tot || {}) }; o.chem.ind = { ...(fill.ind || {}) }; o.chem.solv = { ...(fill.solv || {}) }; o.solid = fill.solid || 0; equilibrate(o.chem); const lk = vesselLook(o.chem); o.rgb = lk.rgb.slice(); o.a = lk.a; o.level = levelOf(o); o.eqDirty = true; }
   }
   if (task.id === 'k311') { setSampleTag(vessels.find(v => v.letter === 'A'), 'A · H₂O', '40 mL'); setSampleTag(vessels.find(v => v.letter === 'B'), 'B · C₆H₁₄', '40 mL'); }
+  if(task.id==='k117-copper') for(const L of ['A','B']) setSampleTag(vessels.find(v=>v.letter===L),L+' · 0.10 M CuSO₄','20 mL · 0.010 M HCl');
   if (task.id === 'phmeasure') {
     const tags = { A: ['A · HCl', '0.10 M · 75 mL'], B: ['B · HCl', '0.010 M · 75 mL'], C: ['C · CH₃COOH', '0.10 M · 75 mL'] };
     for (const v of vessels) if (tags[v.letter]) setSampleTag(v, ...tags[v.letter]);
@@ -2754,6 +2775,7 @@ const LABS = [
   { id: 'nonmetals-spc', run: 'nonmetals-spc', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🔥', title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', time: '12–15 min' },
   { id: 'nonmetals-halogens', run: 'nonmetals-halogens', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🧪', title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', time: '8–10 min' },
   { id: 'combustion', run: 'combustion', level: 'high', course: 'organic', tp: 'hydrocarbons', icon: '🔥', title: 'lab.comb.title', goal: 'lab.comb.goal', desc: 'lab.comb.desc', time: '8–10 min' },
+  { id:'k117-copper',run:'k117-copper',level:'high',course:'general',tp:'acidbase',icon:'🧪',title:'x.copper.title',goal:'x.copper.goal',desc:'x.copper.desc',time:'15–20 min' },
   { id: 'k311', run: 'k311', level: 'high', course: 'organic', tp: 'bond', icon: '🧂', title: 'x.k311.title', goal: 'x.k311.goal', desc: 'x.k311.desc', time: '10–15 min' },
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
   { id: 'k112', run: 'k112', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔩', title: 'x.k112.title', goal: 'x.k112.goal', desc: 'x.k112.desc', time: '15–20 min' },
@@ -2776,7 +2798,7 @@ function openLabs() {
   const filters = el('div', 'labfilters');
   const filter = (label, values, selected, set) => { const row = el('div', 'filterrow'); row.append(el('span', null, label)); for (const [value, labelText, disabled] of values) { const b = el('button', null, labelText); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-pressed', String(selected === value)); if (!disabled) b.addEventListener('click', () => { set(value); openLabs(); }); row.append(b); } filters.append(row); };
   filter(T('x.level'), [['high', T('x.levelHigh')], ['university', T('x.levelUniversity'), true]], labSel.level, v => { labSel.level = v; });
-  filter(T('x.branch'), [['all', T('x.all')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
+  filter(T('x.branch'), [['all', T('x.all')], ['general', T('x.course.general')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
   filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['nonmetals', T('topic.nonmetals')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
   box.append(filters);
   const grid = el('div', 'labgrid'), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
@@ -3512,6 +3534,39 @@ function updateCapControl() {
   e.hidden = !b;
   if (b) { const text = T(b.open ? 'x.closeCap' : 'x.openCap'); if (e.textContent !== text) { e.textContent = text; e.setAttribute('aria-label', text); } }
 }
+function saveSolubilityDesign() {
+  const d=TASK.designDraft, record=makeSolubilityDesign(k311Samples(),TASK,d.independent,d.controls,(performance.now()-NB.t0)/1000);
+  if(!record) { logE('mistake',[['x.k311.designFirst']]); renderCard(); return; }
+  TASK.design=record; logE('info',[['x.k311.designSaved']]); renderCard();
+}
+function startSolubilityRepeat() {
+  endSession(); const record=solubilityTrialRecord(k311Samples(),TASK,NB.log.slice(TASK.trialLogStart));
+  if(!record) { logE('mistake',[['x.k311.repeatNotReady']]); renderCard(); return; }
+  const records=[...TASK.trials,record], previous={log:NB.log.slice(),t0:NB.t0,started:NB.started}, fan=HOOD.fan;
+  setupTask(TASK); HOOD.fan=fan; TASK.trials=records; Object.assign(NB,previous);
+  TASK.trialLogStart=NB.log.length; logE('info',[['x.k311.repeatStarted',{n:records.length+1}]]); renderCard();
+}
+function renderSolubilityDesign(group,h) {
+  const field=h('fieldset','hypothesis');field.append(h('legend',null,T('x.k311.designTitle')));
+  for(const [id,options] of [['independent',['solvent','dose','temperature']],['controls',['volumeDoseTemperature','volumeOnly','none']]]) {
+    const label=h('label',null,T('x.k311.design.'+id));label.htmlFor='design-'+id;const select=h('select');select.id=label.htmlFor;select.append(new Option('—',''));
+    for(const value of options) select.append(new Option(T('x.k311.designOption.'+value),value));
+    select.value=TASK.design ? (id==='independent'?'solvent':'volumeDoseTemperature') : TASK.designDraft[id]; select.disabled=!!TASK.design||TASK.saltStarted;
+    select.addEventListener('change',()=>{TASK.designDraft[id]=select.value;});field.append(label,select);
+  }
+  const b=h('button','btn',T(TASK.design?'x.k311.designLocked':'x.k311.saveDesign'));b.type='button';b.disabled=!!TASK.design||TASK.saltStarted;b.addEventListener('click',saveSolubilityDesign);field.append(b);group.append(field);
+}
+function renderSolubilityHistory(group,h) {
+  const trials=TASK.trials.slice();if(TASK.comparison) trials.push({hypothesis:TASK.hypothesis,measurements:TASK.comparison,conclusion:TASK.reached?TASK.picks.outcome:null});
+  if(trials.length) {
+    const section=h('section','trial-history');section.append(h('h3',null,T('x.k311.trialHistory')));
+    for(const [i,trial] of trials.entries()) section.append(h('p',null,T('x.k311.trialPrediction',{n:i+1,prediction:T('x.k311.option.'+trial.hypothesis.prediction),reason:trial.hypothesis.reason})));
+    const wrap=h('div','trial-scroll'),table=h('table'),caption=h('caption',null,T('x.k311.trialHistory'));wrap.tabIndex=0;wrap.setAttribute('aria-label',T('x.k311.scrollTable'));wrap.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))e.stopPropagation();});section.append(h('p','schematic-note',T('x.k311.scrollTable')));table.append(caption);
+    const head=h('thead'),tr=h('tr');for(const name of ['trial','vessel','volume','temperature','dose','dissolved','residue']){const th=h('th',null,T('x.k311.column.'+name));th.scope='col';tr.append(th);}head.append(tr);table.append(head);
+    const body=h('tbody');for(const [i,trial] of trials.entries())for(const row of trial.measurements){const tr=h('tr');for(const value of [i+1,row.vessel,fmt(row.volume,2),fmt(row.temperature,1),fmt(row.dose,3),fmt(row.dissolved,3),fmt(row.residue,3)])tr.append(h('td',null,value));body.append(tr);}table.append(body);wrap.append(table);section.append(wrap);group.append(section);
+  }
+  const repeat=h('button','btn',T('x.k311.startRepeat'));repeat.type='button';repeat.id='startSolubilityRepeat';repeat.disabled=!TASK.reached;repeat.addEventListener('click',startSolubilityRepeat);group.append(repeat,h('p','schematic-note',T('x.k311.repeatHelp')));
+}
 function renderSolubilityHypothesis(group, h) {
   const saved = TASK.hypothesis, field = h('fieldset', 'hypothesis'); field.append(h('legend', null, T('x.k311.hypothesisTitle')));
   const label = h('label', null, T('x.k311.predict')); label.htmlFor = 'k311Hypothesis';
@@ -3617,13 +3672,21 @@ function renderCard() {
     }
     if (TASK.id === 'k311') {
       const group = h('section', 'activity');
+      renderSolubilityDesign(group,h);
       renderSolubilityHypothesis(group, h);
       for (const [blank, key] of [[true, 'blank'], [false, 'compare']]) { const b = h('button', 'btn', T('x.k311.' + key)); b.type = 'button'; b.disabled = TASK.reached || (blank && !!TASK.blank); b.addEventListener('click', () => recordSolubility(blank)); group.append(b); }
       for (const r of TASK.comparison || TASK.blank || []) group.append(h('p', null, T('x.k311.measurement', { v: r.vessel, volume: fmt(r.volume, 2), temp: fmt(r.temperature, 1), dose: fmt(r.dose, 3), dissolved: fmt(r.dissolved, 3), residue: fmt(r.residue, 3) })));
       renderHydrationExplanation(group, h);
+      renderSolubilityHistory(group,h);
       c.append(group);
     }
-    if (TASK.answer) { const A = TASK.answer, box = h('div', TASK.id === 'k311' ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
+    if(TASK.id==='k117-copper') {
+      const group=h('section','activity');
+      for(const stage of ['baseline','positive','dissolved']) { const b=h('button','btn',T('x.copper.record.'+stage)); b.type='button'; b.id='copper-'+stage; b.disabled=!!TASK.copperEvidence[stage]||TASK.reached; b.addEventListener('click',()=>recordCopperCycle(stage)); group.append(b);
+        for(const r of TASK.copperEvidence[stage]||[]) group.append(h('p',null,T('x.copper.measurement',{stage:T('x.copper.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),cu:fmt(r.copper,3),ppt:fmt(r.precipitate,4),ph:fmt(r.pH,2)})));
+      } c.append(group);
+    }
+    if (TASK.answer) { const A = TASK.answer, box = h('div', ['k311','k117-copper'].includes(TASK.id) ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
       const optLabel = o => A.optKey ? T(A.optKey + o) : A.cat ? T('x.ans_' + o) : SOLF[o];
       for (const L of A.rows || Object.keys(TASK.key)) { const row = h('label', 'arow'); row.append(h('span', null, A.rowKey ? T(A.rowKey + L) : T('x.bottleL', { l: L })));
         const sel = document.createElement('select'); sel.append(new Option('—', '')); for (const o of (A.optsByRow && A.optsByRow[L] || A.opts)) sel.append(new Option(optLabel(o), o)); sel.value = TASK.picks[L] || ''; sel.disabled = TASK.reached;
@@ -4090,3 +4153,5 @@ Object.assign(window.__lab3d, { pickAt });
 Object.assign(window.__lab3d, { discardSeparator });
 
 Object.assign(window.__lab3d, { saveSolubilityHypothesis, hydrationEvidence, makeSolubilityHypothesis, hydrationDiagram });
+
+Object.assign(window.__lab3d,{copperCycleObservation,recordCopperCycle,saveSolubilityDesign,makeSolubilityDesign,startSolubilityRepeat,solubilityTrialRecord});

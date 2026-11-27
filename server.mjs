@@ -19,6 +19,7 @@ const publicFiles = new Set([
   join(root, "lab3d", "sample_transfer.mjs"),
   join(root, "lab3d", "bench_state.mjs"),
   join(root, "lab3d", "phase_state.mjs"),
+  join(root, "lab3d", "investigation_models.mjs"),
   ...[
     "lab-biology.jpg",
     "lab-chemistry.jpg",

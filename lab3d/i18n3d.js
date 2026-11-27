@@ -1252,3 +1252,304 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
 })();
 
 for (const [lang, step] of Object.entries({en:'Predict which solvent dissolves ionic NaCl and save your prediction with a reason before delivering salt. Keep volume, mass, temperature and stirring comparable.',et:'Ennusta, kumb lahusti lahustab ioonilist NaCl, ning salvesta ennustus ja põhjendus enne soola lisamist. Hoia ruumala, mass, temperatuur ja segamine võrreldavad.',ru:'Предскажите растворимость ионного NaCl и сохраните прогноз с объяснением до переноса соли. Сравнивайте при равных объёмах, массе, температуре и перемешивании.',uk:'Передбачте розчинність йонного NaCl і збережіть прогноз із поясненням до перенесення солі. Порівнюйте за рівних об’ємів, маси, температури й перемішування.'})) { const steps=I18N[lang]['x.k311.steps'].split('|'); steps[1]=step; I18N[lang]['x.k311.steps']=steps.join('|'); }
+
+// Native copper-cycle lab and controlled repeat investigations.
+(() => {const rows={
+  "course.general": [
+    "K1 · General chemistry",
+    "K1 · Üldine keemia",
+    "K1 · Общая химия",
+    "K1 · Загальна хімія"
+  ],
+  "copper.title": [
+    "K1-17 · Copper precipitate and acid recovery",
+    "K1-17 · Vasksade ja lahustamine happega",
+    "K1-17 · Осадок меди и растворение кислотой",
+    "K1-17 · Осад міді й розчинення кислотою"
+  ],
+  "copper.goal": [
+    "Investigate ion reactions with matched controls, then explain precipitation and acid redissolution with net ionic equations (K1-18).",
+    "Uuri ioonreaktsioone võrdlusproovidega ning selgita sadenemist ja happes lahustumist taandatud ioonvõrranditega (K1-18).",
+    "Исследуйте реакции ионов с контрольной пробой и объясните осаждение и растворение кислотой сокращёнными ионными уравнениями (K1-18).",
+    "Дослідіть реакції йонів із контрольною пробою й поясніть осадження та розчинення кислотою скороченими йонними рівняннями (K1-18)."
+  ],
+  "copper.desc": [
+    "A new measured investigation: matched copper samples, a no-base control, a blue precipitate and acid recovery.",
+    "Uus mõõdetav katse: võrdsed vaseproovid, aluseta kontrollproov, sinine sade ja happega lahustamine.",
+    "Измеряемый опыт: одинаковые пробы меди, контроль без щёлочи, синий осадок и растворение кислотой.",
+    "Вимірюваний дослід: однакові проби міді, контроль без лугу, синій осад і розчинення кислотою."
+  ],
+  "copper.steps": [
+    "Wear goggles and gloves. A and B each contain 20 mL of 0.10 M CuSO₄ with 0.010 M HCl, so both start identically and clear.|Record both baselines before dosing. B is the no-added-base control. Use clean pipettes between reagents.|Add 10.0 mL water to B and 10.0 mL 0.50 M NaOH to A. Both now contain 30 mL. Observe the blue Cu(OH)₂ precipitate only in A.|Record the precipitate and control comparison. Let A settle or shake it to distinguish sediment from dissolved copper.|Add 12.0 mL water to B and 12.0 mL 0.50 M HCl to A. Both now contain 42 mL. Mix and observe A until the precipitate redissolves.|Record acid recovery and the control. Choose both net ionic equations from the evidence, then check your answers. Start over clears the samples and evidence.",
+    "Pane kaitseprillid ja kindad. A-s ja B-s on kummaski 20 mL 0,10 M CuSO₄ koos 0,010 M HCl-ga: algtingimused on võrdsed ja lahused selged.|Salvesta mõlema algseis enne doseerimist. B on lisatud aluseta kontrollproov. Kasuta eri reaktiivide jaoks puhtaid pipette.|Lisa B-sse 10,0 mL vett ja A-sse 10,0 mL 0,50 M NaOH. Mõlemas on nüüd 30 mL. Vaata sinist Cu(OH)₂ sadet ainult A-s.|Salvesta sademe ja kontrolli võrdlus. Lase A-l settida või loksuta, et eristada sadet lahustunud vasest.|Lisa B-sse 12,0 mL vett ja A-sse 12,0 mL 0,50 M HCl. Mõlemas on nüüd 42 mL. Sega ja jälgi A-d, kuni sade lahustub.|Salvesta happes lahustumine ja kontroll. Vali tõendite põhjal mõlemad taandatud ioonvõrrandid ja kontrolli vastust. Lähtestamine kustutab proovid ja vaatlused.",
+    "Наденьте очки и перчатки. В A и B по 20 мл 0,10 M CuSO₄ с 0,010 M HCl: обе пробы одинаковые и прозрачные.|Запишите исходное состояние обеих проб до дозирования. B — контроль без добавленной щёлочи. Используйте чистые пипетки для разных реагентов.|Добавьте 10,0 мл воды в B и 10,0 мл 0,50 M NaOH в A. В обеих пробах теперь 30 мл. Наблюдайте синий осадок Cu(OH)₂ только в A.|Запишите сравнение осадка с контролем. Дайте A отстояться или встряхните, чтобы отличить осадок от растворённой меди.|Добавьте 12,0 мл воды в B и 12,0 мл 0,50 M HCl в A. В обеих пробах теперь 42 мл. Перемешайте и дождитесь растворения осадка в A.|Запишите растворение кислотой и контроль. Выберите оба сокращённых ионных уравнения по наблюдениям и проверьте ответы. Сброс очищает пробы и записи.",
+    "Надягніть окуляри й рукавички. В A і B по 20 мл 0,10 M CuSO₄ з 0,010 M HCl: обидві проби однакові та прозорі.|Запишіть початковий стан обох проб до дозування. B — контроль без доданого лугу. Використовуйте чисті піпетки для різних реагентів.|Додайте 10,0 мл води в B і 10,0 мл 0,50 M NaOH в A. В обох пробах тепер 30 мл. Спостерігайте синій осад Cu(OH)₂ лише в A.|Запишіть порівняння осаду з контролем. Дайте A відстоятися або струсіть, щоб відрізнити осад від розчиненої міді.|Додайте 12,0 мл води в B і 12,0 мл 0,50 M HCl в A. В обох пробах тепер 42 мл. Перемішайте й дочекайтеся розчинення осаду в A.|Запишіть розчинення кислотою та контроль. Виберіть обидва скорочені йонні рівняння за спостереженнями й перевірте відповіді. Скидання очищає проби й записи."
+  ],
+  "copper.start": [
+    "New K1-17 investigation: record matched acidified copper baselines, precipitation and acid recovery.",
+    "Uus K1-17 katse: salvesta võrdsed happelised vaseproovid, sadenemine ja happes lahustumine.",
+    "Новый опыт K1-17: запишите одинаковые подкисленные пробы меди, осаждение и растворение кислотой.",
+    "Новий дослід K1-17: запишіть однакові підкислені проби міді, осадження й розчинення кислотою."
+  ],
+  "copper.done": [
+    "Copper-cycle evidence and both net ionic equations verified.",
+    "Vasekatse vaatlused ja mõlemad taandatud ioonvõrrandid on kontrollitud.",
+    "Наблюдения цикла меди и оба сокращённых ионных уравнения проверены.",
+    "Спостереження циклу міді й обидва скорочені йонні рівняння перевірено."
+  ],
+  "copper.sensory": [
+    "Observe blue solid, settling/resuspension and its disappearance after acid. A blue solution alone is not proof of a precipitate.",
+    "Vaata sinist tahkist, settimist, loksutamist ja happe toimel kadumist. Sinine lahus üksi ei tõesta sadet.",
+    "Наблюдайте синий твёрдый осадок, оседание, взмучивание и исчезновение после кислоты. Синий раствор сам по себе не доказывает наличие осадка.",
+    "Спостерігайте синій твердий осад, осідання, скаламучування й зникнення після кислоти. Синій розчин сам собою не доводить наявність осаду."
+  ],
+  "copper.ppe": [
+    "Wear goggles and gloves before recording reagent trials.",
+    "Pane enne reaktiivikatsete salvestamist kaitseprillid ja kindad.",
+    "Наденьте очки и перчатки перед записью опытов с реагентами.",
+    "Надягніть окуляри й рукавички перед записом дослідів із реагентами."
+  ],
+  "copper.notReady": [
+    "Follow the staged procedure and matched volumes. Record both baselines, then the precipitate/control, then acid recovery/control. Keep B free of NaOH and other reagents. Reset to retry an incorrect setup.",
+    "Järgi etappe ja võrdseid ruumalasid. Salvesta algseis, seejärel sade/kontroll ja siis happes lahustumine/kontroll. Ära lisa B-sse NaOH-d ega muid reaktiive. Vale seadistuse korral lähtesta.",
+    "Соблюдайте этапы и равные объёмы. Запишите исходные пробы, затем осадок/контроль, затем растворение/контроль. Не добавляйте в B NaOH или другие реагенты. При ошибке сбросьте опыт.",
+    "Дотримуйтеся етапів і рівних об’ємів. Запишіть початкові проби, потім осад/контроль, потім розчинення/контроль. Не додавайте в B NaOH або інші реагенти. За помилки скиньте дослід."
+  ],
+  "copper.record.baseline": [
+    "Record matched baselines",
+    "Salvesta võrdsed algproovid",
+    "Записать исходные пробы",
+    "Записати початкові проби"
+  ],
+  "copper.record.positive": [
+    "Record precipitate and control",
+    "Salvesta sade ja kontroll",
+    "Записать осадок и контроль",
+    "Записати осад і контроль"
+  ],
+  "copper.record.dissolved": [
+    "Record acid recovery and control",
+    "Salvesta happes lahustumine ja kontroll",
+    "Записать растворение и контроль",
+    "Записати розчинення й контроль"
+  ],
+  "copper.stage.baseline": [
+    "Baseline",
+    "Algseis",
+    "Исходная проба",
+    "Початкова проба"
+  ],
+  "copper.stage.positive": [
+    "After base / water control",
+    "Pärast alust / veekontroll",
+    "После щёлочи / водный контроль",
+    "Після лугу / водний контроль"
+  ],
+  "copper.stage.dissolved": [
+    "After acid / water control",
+    "Pärast hapet / veekontroll",
+    "После кислоты / водный контроль",
+    "Після кислоти / водний контроль"
+  ],
+  "copper.measurement": [
+    "{stage} · {v}: {volume} mL · total Cu {cu} mmol · Cu(OH)₂(s) {ppt} mmol · model pH {ph}",
+    "{stage} · {v}: {volume} mL · Cu üldkogus {cu} mmol · Cu(OH)₂(s) {ppt} mmol · mudeli pH {ph}",
+    "{stage} · {v}: {volume} мл · всего Cu {cu} ммоль · Cu(OH)₂(s) {ppt} ммоль · pH модели {ph}",
+    "{stage} · {v}: {volume} мл · усього Cu {cu} ммоль · Cu(OH)₂(s) {ppt} ммоль · pH моделі {ph}"
+  ],
+  "copper.row.precip": [
+    "Net ionic equation for the precipitate",
+    "Sademe taandatud ioonvõrrand",
+    "Сокращённое ионное уравнение осаждения",
+    "Скорочене йонне рівняння осадження"
+  ],
+  "copper.row.acid": [
+    "Net ionic equation for acid recovery",
+    "Happes lahustumise taandatud ioonvõrrand",
+    "Сокращённое ионное уравнение растворения",
+    "Скорочене йонне рівняння розчинення"
+  ],
+  "copper.option.precipCorrect": [
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)"
+  ],
+  "copper.option.precipWrong": [
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)"
+  ],
+  "copper.option.acidCorrect": [
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O",
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O",
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O",
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O"
+  ],
+  "copper.option.acidWrong": [
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O",
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O",
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O",
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O"
+  ],
+  "k311.designTitle": [
+    "Plan the controlled comparison",
+    "Kavanda kontrollitud võrdlus",
+    "Спланируйте контролируемое сравнение",
+    "Сплануйте контрольоване порівняння"
+  ],
+  "k311.design.independent": [
+    "Independent variable",
+    "Sõltumatu muutuja",
+    "Независимая переменная",
+    "Незалежна змінна"
+  ],
+  "k311.design.controls": [
+    "Keep these quantities matched",
+    "Hoia need suurused võrdsed",
+    "Сохраняйте эти величины одинаковыми",
+    "Зберігайте ці величини однаковими"
+  ],
+  "k311.designOption.solvent": [
+    "Solvent identity",
+    "Lahusti liik",
+    "Вид растворителя",
+    "Вид розчинника"
+  ],
+  "k311.designOption.dose": [
+    "Salt dose",
+    "Soola kogus",
+    "Навеска соли",
+    "Наважка солі"
+  ],
+  "k311.designOption.temperature": [
+    "Temperature",
+    "Temperatuur",
+    "Температура",
+    "Температура"
+  ],
+  "k311.designOption.volumeDoseTemperature": [
+    "Solvent volume, salt dose and temperature",
+    "Lahusti ruumala, soola kogus ja temperatuur",
+    "Объём растворителя, навеска соли и температура",
+    "Об’єм розчинника, наважка солі й температура"
+  ],
+  "k311.designOption.volumeOnly": [
+    "Solvent volume only",
+    "Ainult lahusti ruumala",
+    "Только объём растворителя",
+    "Лише об’єм розчинника"
+  ],
+  "k311.designOption.none": [
+    "No controls",
+    "Kontrollitavaid suurusi pole",
+    "Без контролируемых величин",
+    "Без контрольованих величин"
+  ],
+  "k311.saveDesign": [
+    "Save experiment plan",
+    "Salvesta katseplaan",
+    "Сохранить план опыта",
+    "Зберегти план досліду"
+  ],
+  "k311.designLocked": [
+    "Experiment plan saved",
+    "Katseplaan salvestatud",
+    "План опыта сохранён",
+    "План досліду збережено"
+  ],
+  "k311.designSaved": [
+    "Plan recorded: change solvent identity; match volume, salt dose and temperature.",
+    "Plaan salvestatud: muuda lahusti liiki; hoia ruumala, soola kogus ja temperatuur võrdsed.",
+    "План записан: меняйте вид растворителя; сохраняйте объём, навеску соли и температуру одинаковыми.",
+    "План записано: змінюйте вид розчинника; зберігайте об’єм, наважку солі й температуру однаковими."
+  ],
+  "k311.designFirst": [
+    "Before salt delivery, identify the solvent as the independent variable and match volume, salt dose and temperature. Save the plan while both samples are clean.",
+    "Enne soola lisamist vali lahusti liik sõltumatuks muutujaks ning võrdsusta ruumala, soola kogus ja temperatuur. Salvesta plaan puhaste proovidega.",
+    "До переноса соли выберите вид растворителя независимой переменной и сохраняйте объём, навеску и температуру. Сохраните план на чистых пробах.",
+    "До перенесення солі виберіть вид розчинника незалежною змінною й зберігайте об’єм, наважку та температуру. Збережіть план на чистих пробах."
+  ],
+  "k311.trialHistory": [
+    "Trial comparison · K3-11",
+    "Katsete võrdlus · K3-11",
+    "Сравнение опытов · K3-11",
+    "Порівняння дослідів · K3-11"
+  ],
+  "k311.trialPrediction": [
+    "Trial {n} · Prediction: {prediction} Reason: {reason}",
+    "Katse {n} · Ennustus: {prediction} Põhjendus: {reason}",
+    "Опыт {n} · Прогноз: {prediction} Объяснение: {reason}",
+    "Дослід {n} · Прогноз: {prediction} Пояснення: {reason}"
+  ],
+  "k311.startRepeat": [
+    "Start repeat and retain this trial",
+    "Alusta korduskatset ja säilita see katse",
+    "Начать повтор с сохранением этого опыта",
+    "Почати повтор зі збереженням цього досліду"
+  ],
+  "k311.repeatNotReady": [
+    "Finish a valid observed trial and conclusion before starting a retained repeat.",
+    "Lõpeta vaadeldud katse ja järeldus enne säilitatava korduskatse alustamist.",
+    "Завершите опыт с наблюдениями и выводом перед сохранённым повтором.",
+    "Завершіть дослід зі спостереженнями й висновком перед збереженим повтором."
+  ],
+  "k311.repeatStarted": [
+    "Trial {n} started; earlier measurements, hypothesis and notebook are retained.",
+    "Katse {n} algas; varasemad mõõtmised, ennustus ja päevik säilivad.",
+    "Начат опыт {n}; предыдущие измерения, прогноз и журнал сохранены.",
+    "Розпочато дослід {n}; попередні вимірювання, прогноз і журнал збережено."
+  ],
+  "k311.repeatHelp": [
+    "Repeat retains completed trials in this investigation. Start over clears the investigation and its trial history.",
+    "Kordamine säilitab selle uurimistöö lõpetatud katsed. Lähtestamine kustutab uurimistöö ja katsete ajaloo.",
+    "Повтор сохраняет завершённые опыты исследования. Сброс очищает исследование и историю опытов.",
+    "Повтор зберігає завершені досліди. Скидання очищає дослідження й історію дослідів."
+  ],
+  "k311.column.trial": [
+    "Trial",
+    "Katse",
+    "Опыт",
+    "Дослід"
+  ],
+  "k311.column.vessel": [
+    "Vessel",
+    "Anum",
+    "Сосуд",
+    "Посудина"
+  ],
+  "k311.column.volume": [
+    "Volume / mL",
+    "Ruumala / mL",
+    "Объём / мл",
+    "Об’єм / мл"
+  ],
+  "k311.column.temperature": [
+    "Temperature / °C",
+    "Temperatuur / °C",
+    "Температура / °C",
+    "Температура / °C"
+  ],
+  "k311.column.dose": [
+    "Dose / g",
+    "Kogus / g",
+    "Навеска / г",
+    "Наважка / г"
+  ],
+  "k311.column.dissolved": [
+    "Dissolved / g",
+    "Lahustunud / g",
+    "Растворено / г",
+    "Розчинено / г"
+  ],
+  "k311.column.residue": [
+    "Residue / g",
+    "Jääk / g",
+    "Остаток / г",
+    "Залишок / г"
+  ]
+};
+ for(const [i,lang] of ["en","et","ru","uk"].entries())for(const [key,values]of Object.entries(rows))I18N[lang]["x."+key]=values[i];})();
+
+for(const [lang,text]of Object.entries({en:'Scroll the table sideways to compare salt dose, dissolved amount and residue; arrow keys work when the table is focused.',et:'Keri tabelit külgsuunas, et võrrelda soola kogust, lahustunud kogust ja jääki; fookuses tabelit saab kerida nooleklahvidega.',ru:'Прокрутите таблицу по горизонтали для сравнения навески, растворённой массы и остатка; в фокусе таблицы работают клавиши со стрелками.',uk:'Прокрутіть таблицю горизонтально для порівняння наважки, розчиненої маси й залишку; у фокусі таблиці працюють клавіші зі стрілками.'}))I18N[lang]['x.k311.scrollTable']=text;

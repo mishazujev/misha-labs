@@ -38,6 +38,7 @@ const { createServer } = require('node:net');
     assert.equal(await page.evaluate(()=>window.__lab3d.TASK.comparison),null);
     await page.getByRole('button',{name:'Save prediction',exact:true}).click();
     assert.equal(await page.evaluate(()=>window.__lab3d.TASK.hypothesis),null);
+    await page.locator('#design-independent').selectOption('solvent');await page.locator('#design-controls').selectOption('volumeDoseTemperature');await page.getByRole('button',{name:'Save experiment plan',exact:true}).click();
     await page.locator('#k311Hypothesis').selectOption('hexane');
     await page.locator('#k311Reason').fill('I think the nonpolar solvent may dissolve more salt.');
     await page.getByRole('button',{name:'Save prediction',exact:true}).click();

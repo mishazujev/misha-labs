@@ -172,6 +172,11 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .hydration-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .hydration-tabs [aria-pressed="true"] { background: var(--accent, #0c7069); color: white; }
 .schematic-note { font-size: 12px; }
+.trial-history { min-width: 0; max-width: 100%; }
+.trial-scroll { max-width: 100%; overflow-x: auto; }
+.trial-scroll table { border-collapse: collapse; min-width: 560px; font-size: 12px; }
+.trial-scroll td, .trial-scroll th { padding: 6px; border: 1px solid var(--line); text-align: right; }
+.trial-scroll caption { text-align: left; padding: 6px 0; }
 .activity { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
 .activity-row { display: grid; gap: 5px; }
 .activity-row .btn { justify-self: stretch; text-align: left; background: var(--surface); }
@@ -2576,6 +2581,307 @@ I18N.uk = Object.assign({}, I18N.en, I18N.uk);
 })();
 
 for (const [lang, step] of Object.entries({en:'Predict which solvent dissolves ionic NaCl and save your prediction with a reason before delivering salt. Keep volume, mass, temperature and stirring comparable.',et:'Ennusta, kumb lahusti lahustab ioonilist NaCl, ning salvesta ennustus ja põhjendus enne soola lisamist. Hoia ruumala, mass, temperatuur ja segamine võrreldavad.',ru:'Предскажите растворимость ионного NaCl и сохраните прогноз с объяснением до переноса соли. Сравнивайте при равных объёмах, массе, температуре и перемешивании.',uk:'Передбачте розчинність йонного NaCl і збережіть прогноз із поясненням до перенесення солі. Порівнюйте за рівних об’ємів, маси, температури й перемішування.'})) { const steps=I18N[lang]['x.k311.steps'].split('|'); steps[1]=step; I18N[lang]['x.k311.steps']=steps.join('|'); }
+
+// Native copper-cycle lab and controlled repeat investigations.
+(() => {const rows={
+  "course.general": [
+    "K1 · General chemistry",
+    "K1 · Üldine keemia",
+    "K1 · Общая химия",
+    "K1 · Загальна хімія"
+  ],
+  "copper.title": [
+    "K1-17 · Copper precipitate and acid recovery",
+    "K1-17 · Vasksade ja lahustamine happega",
+    "K1-17 · Осадок меди и растворение кислотой",
+    "K1-17 · Осад міді й розчинення кислотою"
+  ],
+  "copper.goal": [
+    "Investigate ion reactions with matched controls, then explain precipitation and acid redissolution with net ionic equations (K1-18).",
+    "Uuri ioonreaktsioone võrdlusproovidega ning selgita sadenemist ja happes lahustumist taandatud ioonvõrranditega (K1-18).",
+    "Исследуйте реакции ионов с контрольной пробой и объясните осаждение и растворение кислотой сокращёнными ионными уравнениями (K1-18).",
+    "Дослідіть реакції йонів із контрольною пробою й поясніть осадження та розчинення кислотою скороченими йонними рівняннями (K1-18)."
+  ],
+  "copper.desc": [
+    "A new measured investigation: matched copper samples, a no-base control, a blue precipitate and acid recovery.",
+    "Uus mõõdetav katse: võrdsed vaseproovid, aluseta kontrollproov, sinine sade ja happega lahustamine.",
+    "Измеряемый опыт: одинаковые пробы меди, контроль без щёлочи, синий осадок и растворение кислотой.",
+    "Вимірюваний дослід: однакові проби міді, контроль без лугу, синій осад і розчинення кислотою."
+  ],
+  "copper.steps": [
+    "Wear goggles and gloves. A and B each contain 20 mL of 0.10 M CuSO₄ with 0.010 M HCl, so both start identically and clear.|Record both baselines before dosing. B is the no-added-base control. Use clean pipettes between reagents.|Add 10.0 mL water to B and 10.0 mL 0.50 M NaOH to A. Both now contain 30 mL. Observe the blue Cu(OH)₂ precipitate only in A.|Record the precipitate and control comparison. Let A settle or shake it to distinguish sediment from dissolved copper.|Add 12.0 mL water to B and 12.0 mL 0.50 M HCl to A. Both now contain 42 mL. Mix and observe A until the precipitate redissolves.|Record acid recovery and the control. Choose both net ionic equations from the evidence, then check your answers. Start over clears the samples and evidence.",
+    "Pane kaitseprillid ja kindad. A-s ja B-s on kummaski 20 mL 0,10 M CuSO₄ koos 0,010 M HCl-ga: algtingimused on võrdsed ja lahused selged.|Salvesta mõlema algseis enne doseerimist. B on lisatud aluseta kontrollproov. Kasuta eri reaktiivide jaoks puhtaid pipette.|Lisa B-sse 10,0 mL vett ja A-sse 10,0 mL 0,50 M NaOH. Mõlemas on nüüd 30 mL. Vaata sinist Cu(OH)₂ sadet ainult A-s.|Salvesta sademe ja kontrolli võrdlus. Lase A-l settida või loksuta, et eristada sadet lahustunud vasest.|Lisa B-sse 12,0 mL vett ja A-sse 12,0 mL 0,50 M HCl. Mõlemas on nüüd 42 mL. Sega ja jälgi A-d, kuni sade lahustub.|Salvesta happes lahustumine ja kontroll. Vali tõendite põhjal mõlemad taandatud ioonvõrrandid ja kontrolli vastust. Lähtestamine kustutab proovid ja vaatlused.",
+    "Наденьте очки и перчатки. В A и B по 20 мл 0,10 M CuSO₄ с 0,010 M HCl: обе пробы одинаковые и прозрачные.|Запишите исходное состояние обеих проб до дозирования. B — контроль без добавленной щёлочи. Используйте чистые пипетки для разных реагентов.|Добавьте 10,0 мл воды в B и 10,0 мл 0,50 M NaOH в A. В обеих пробах теперь 30 мл. Наблюдайте синий осадок Cu(OH)₂ только в A.|Запишите сравнение осадка с контролем. Дайте A отстояться или встряхните, чтобы отличить осадок от растворённой меди.|Добавьте 12,0 мл воды в B и 12,0 мл 0,50 M HCl в A. В обеих пробах теперь 42 мл. Перемешайте и дождитесь растворения осадка в A.|Запишите растворение кислотой и контроль. Выберите оба сокращённых ионных уравнения по наблюдениям и проверьте ответы. Сброс очищает пробы и записи.",
+    "Надягніть окуляри й рукавички. В A і B по 20 мл 0,10 M CuSO₄ з 0,010 M HCl: обидві проби однакові та прозорі.|Запишіть початковий стан обох проб до дозування. B — контроль без доданого лугу. Використовуйте чисті піпетки для різних реагентів.|Додайте 10,0 мл води в B і 10,0 мл 0,50 M NaOH в A. В обох пробах тепер 30 мл. Спостерігайте синій осад Cu(OH)₂ лише в A.|Запишіть порівняння осаду з контролем. Дайте A відстоятися або струсіть, щоб відрізнити осад від розчиненої міді.|Додайте 12,0 мл води в B і 12,0 мл 0,50 M HCl в A. В обох пробах тепер 42 мл. Перемішайте й дочекайтеся розчинення осаду в A.|Запишіть розчинення кислотою та контроль. Виберіть обидва скорочені йонні рівняння за спостереженнями й перевірте відповіді. Скидання очищає проби й записи."
+  ],
+  "copper.start": [
+    "New K1-17 investigation: record matched acidified copper baselines, precipitation and acid recovery.",
+    "Uus K1-17 katse: salvesta võrdsed happelised vaseproovid, sadenemine ja happes lahustumine.",
+    "Новый опыт K1-17: запишите одинаковые подкисленные пробы меди, осаждение и растворение кислотой.",
+    "Новий дослід K1-17: запишіть однакові підкислені проби міді, осадження й розчинення кислотою."
+  ],
+  "copper.done": [
+    "Copper-cycle evidence and both net ionic equations verified.",
+    "Vasekatse vaatlused ja mõlemad taandatud ioonvõrrandid on kontrollitud.",
+    "Наблюдения цикла меди и оба сокращённых ионных уравнения проверены.",
+    "Спостереження циклу міді й обидва скорочені йонні рівняння перевірено."
+  ],
+  "copper.sensory": [
+    "Observe blue solid, settling/resuspension and its disappearance after acid. A blue solution alone is not proof of a precipitate.",
+    "Vaata sinist tahkist, settimist, loksutamist ja happe toimel kadumist. Sinine lahus üksi ei tõesta sadet.",
+    "Наблюдайте синий твёрдый осадок, оседание, взмучивание и исчезновение после кислоты. Синий раствор сам по себе не доказывает наличие осадка.",
+    "Спостерігайте синій твердий осад, осідання, скаламучування й зникнення після кислоти. Синій розчин сам собою не доводить наявність осаду."
+  ],
+  "copper.ppe": [
+    "Wear goggles and gloves before recording reagent trials.",
+    "Pane enne reaktiivikatsete salvestamist kaitseprillid ja kindad.",
+    "Наденьте очки и перчатки перед записью опытов с реагентами.",
+    "Надягніть окуляри й рукавички перед записом дослідів із реагентами."
+  ],
+  "copper.notReady": [
+    "Follow the staged procedure and matched volumes. Record both baselines, then the precipitate/control, then acid recovery/control. Keep B free of NaOH and other reagents. Reset to retry an incorrect setup.",
+    "Järgi etappe ja võrdseid ruumalasid. Salvesta algseis, seejärel sade/kontroll ja siis happes lahustumine/kontroll. Ära lisa B-sse NaOH-d ega muid reaktiive. Vale seadistuse korral lähtesta.",
+    "Соблюдайте этапы и равные объёмы. Запишите исходные пробы, затем осадок/контроль, затем растворение/контроль. Не добавляйте в B NaOH или другие реагенты. При ошибке сбросьте опыт.",
+    "Дотримуйтеся етапів і рівних об’ємів. Запишіть початкові проби, потім осад/контроль, потім розчинення/контроль. Не додавайте в B NaOH або інші реагенти. За помилки скиньте дослід."
+  ],
+  "copper.record.baseline": [
+    "Record matched baselines",
+    "Salvesta võrdsed algproovid",
+    "Записать исходные пробы",
+    "Записати початкові проби"
+  ],
+  "copper.record.positive": [
+    "Record precipitate and control",
+    "Salvesta sade ja kontroll",
+    "Записать осадок и контроль",
+    "Записати осад і контроль"
+  ],
+  "copper.record.dissolved": [
+    "Record acid recovery and control",
+    "Salvesta happes lahustumine ja kontroll",
+    "Записать растворение и контроль",
+    "Записати розчинення й контроль"
+  ],
+  "copper.stage.baseline": [
+    "Baseline",
+    "Algseis",
+    "Исходная проба",
+    "Початкова проба"
+  ],
+  "copper.stage.positive": [
+    "After base / water control",
+    "Pärast alust / veekontroll",
+    "После щёлочи / водный контроль",
+    "Після лугу / водний контроль"
+  ],
+  "copper.stage.dissolved": [
+    "After acid / water control",
+    "Pärast hapet / veekontroll",
+    "После кислоты / водный контроль",
+    "Після кислоти / водний контроль"
+  ],
+  "copper.measurement": [
+    "{stage} · {v}: {volume} mL · total Cu {cu} mmol · Cu(OH)₂(s) {ppt} mmol · model pH {ph}",
+    "{stage} · {v}: {volume} mL · Cu üldkogus {cu} mmol · Cu(OH)₂(s) {ppt} mmol · mudeli pH {ph}",
+    "{stage} · {v}: {volume} мл · всего Cu {cu} ммоль · Cu(OH)₂(s) {ppt} ммоль · pH модели {ph}",
+    "{stage} · {v}: {volume} мл · усього Cu {cu} ммоль · Cu(OH)₂(s) {ppt} ммоль · pH моделі {ph}"
+  ],
+  "copper.row.precip": [
+    "Net ionic equation for the precipitate",
+    "Sademe taandatud ioonvõrrand",
+    "Сокращённое ионное уравнение осаждения",
+    "Скорочене йонне рівняння осадження"
+  ],
+  "copper.row.acid": [
+    "Net ionic equation for acid recovery",
+    "Happes lahustumise taandatud ioonvõrrand",
+    "Сокращённое ионное уравнение растворения",
+    "Скорочене йонне рівняння розчинення"
+  ],
+  "copper.option.precipCorrect": [
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + 2OH⁻ → Cu(OH)₂(s)"
+  ],
+  "copper.option.precipWrong": [
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)",
+    "Cu²⁺ + OH⁻ → Cu(OH)₂(s)"
+  ],
+  "copper.option.acidCorrect": [
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O",
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O",
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O",
+    "Cu(OH)₂(s) + 2H⁺ → Cu²⁺ + 2H₂O"
+  ],
+  "copper.option.acidWrong": [
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O",
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O",
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O",
+    "Cu(OH)₂(s) + H⁺ → Cu²⁺ + H₂O"
+  ],
+  "k311.designTitle": [
+    "Plan the controlled comparison",
+    "Kavanda kontrollitud võrdlus",
+    "Спланируйте контролируемое сравнение",
+    "Сплануйте контрольоване порівняння"
+  ],
+  "k311.design.independent": [
+    "Independent variable",
+    "Sõltumatu muutuja",
+    "Независимая переменная",
+    "Незалежна змінна"
+  ],
+  "k311.design.controls": [
+    "Keep these quantities matched",
+    "Hoia need suurused võrdsed",
+    "Сохраняйте эти величины одинаковыми",
+    "Зберігайте ці величини однаковими"
+  ],
+  "k311.designOption.solvent": [
+    "Solvent identity",
+    "Lahusti liik",
+    "Вид растворителя",
+    "Вид розчинника"
+  ],
+  "k311.designOption.dose": [
+    "Salt dose",
+    "Soola kogus",
+    "Навеска соли",
+    "Наважка солі"
+  ],
+  "k311.designOption.temperature": [
+    "Temperature",
+    "Temperatuur",
+    "Температура",
+    "Температура"
+  ],
+  "k311.designOption.volumeDoseTemperature": [
+    "Solvent volume, salt dose and temperature",
+    "Lahusti ruumala, soola kogus ja temperatuur",
+    "Объём растворителя, навеска соли и температура",
+    "Об’єм розчинника, наважка солі й температура"
+  ],
+  "k311.designOption.volumeOnly": [
+    "Solvent volume only",
+    "Ainult lahusti ruumala",
+    "Только объём растворителя",
+    "Лише об’єм розчинника"
+  ],
+  "k311.designOption.none": [
+    "No controls",
+    "Kontrollitavaid suurusi pole",
+    "Без контролируемых величин",
+    "Без контрольованих величин"
+  ],
+  "k311.saveDesign": [
+    "Save experiment plan",
+    "Salvesta katseplaan",
+    "Сохранить план опыта",
+    "Зберегти план досліду"
+  ],
+  "k311.designLocked": [
+    "Experiment plan saved",
+    "Katseplaan salvestatud",
+    "План опыта сохранён",
+    "План досліду збережено"
+  ],
+  "k311.designSaved": [
+    "Plan recorded: change solvent identity; match volume, salt dose and temperature.",
+    "Plaan salvestatud: muuda lahusti liiki; hoia ruumala, soola kogus ja temperatuur võrdsed.",
+    "План записан: меняйте вид растворителя; сохраняйте объём, навеску соли и температуру одинаковыми.",
+    "План записано: змінюйте вид розчинника; зберігайте об’єм, наважку солі й температуру однаковими."
+  ],
+  "k311.designFirst": [
+    "Before salt delivery, identify the solvent as the independent variable and match volume, salt dose and temperature. Save the plan while both samples are clean.",
+    "Enne soola lisamist vali lahusti liik sõltumatuks muutujaks ning võrdsusta ruumala, soola kogus ja temperatuur. Salvesta plaan puhaste proovidega.",
+    "До переноса соли выберите вид растворителя независимой переменной и сохраняйте объём, навеску и температуру. Сохраните план на чистых пробах.",
+    "До перенесення солі виберіть вид розчинника незалежною змінною й зберігайте об’єм, наважку та температуру. Збережіть план на чистих пробах."
+  ],
+  "k311.trialHistory": [
+    "Trial comparison · K3-11",
+    "Katsete võrdlus · K3-11",
+    "Сравнение опытов · K3-11",
+    "Порівняння дослідів · K3-11"
+  ],
+  "k311.trialPrediction": [
+    "Trial {n} · Prediction: {prediction} Reason: {reason}",
+    "Katse {n} · Ennustus: {prediction} Põhjendus: {reason}",
+    "Опыт {n} · Прогноз: {prediction} Объяснение: {reason}",
+    "Дослід {n} · Прогноз: {prediction} Пояснення: {reason}"
+  ],
+  "k311.startRepeat": [
+    "Start repeat and retain this trial",
+    "Alusta korduskatset ja säilita see katse",
+    "Начать повтор с сохранением этого опыта",
+    "Почати повтор зі збереженням цього досліду"
+  ],
+  "k311.repeatNotReady": [
+    "Finish a valid observed trial and conclusion before starting a retained repeat.",
+    "Lõpeta vaadeldud katse ja järeldus enne säilitatava korduskatse alustamist.",
+    "Завершите опыт с наблюдениями и выводом перед сохранённым повтором.",
+    "Завершіть дослід зі спостереженнями й висновком перед збереженим повтором."
+  ],
+  "k311.repeatStarted": [
+    "Trial {n} started; earlier measurements, hypothesis and notebook are retained.",
+    "Katse {n} algas; varasemad mõõtmised, ennustus ja päevik säilivad.",
+    "Начат опыт {n}; предыдущие измерения, прогноз и журнал сохранены.",
+    "Розпочато дослід {n}; попередні вимірювання, прогноз і журнал збережено."
+  ],
+  "k311.repeatHelp": [
+    "Repeat retains completed trials in this investigation. Start over clears the investigation and its trial history.",
+    "Kordamine säilitab selle uurimistöö lõpetatud katsed. Lähtestamine kustutab uurimistöö ja katsete ajaloo.",
+    "Повтор сохраняет завершённые опыты исследования. Сброс очищает исследование и историю опытов.",
+    "Повтор зберігає завершені досліди. Скидання очищає дослідження й історію дослідів."
+  ],
+  "k311.column.trial": [
+    "Trial",
+    "Katse",
+    "Опыт",
+    "Дослід"
+  ],
+  "k311.column.vessel": [
+    "Vessel",
+    "Anum",
+    "Сосуд",
+    "Посудина"
+  ],
+  "k311.column.volume": [
+    "Volume / mL",
+    "Ruumala / mL",
+    "Объём / мл",
+    "Об’єм / мл"
+  ],
+  "k311.column.temperature": [
+    "Temperature / °C",
+    "Temperatuur / °C",
+    "Температура / °C",
+    "Температура / °C"
+  ],
+  "k311.column.dose": [
+    "Dose / g",
+    "Kogus / g",
+    "Навеска / г",
+    "Наважка / г"
+  ],
+  "k311.column.dissolved": [
+    "Dissolved / g",
+    "Lahustunud / g",
+    "Растворено / г",
+    "Розчинено / г"
+  ],
+  "k311.column.residue": [
+    "Residue / g",
+    "Jääk / g",
+    "Остаток / г",
+    "Залишок / г"
+  ]
+};
+ for(const [i,lang] of ["en","et","ru","uk"].entries())for(const [key,values]of Object.entries(rows))I18N[lang]["x."+key]=values[i];})();
+
+for(const [lang,text]of Object.entries({en:'Scroll the table sideways to compare salt dose, dissolved amount and residue; arrow keys work when the table is focused.',et:'Keri tabelit külgsuunas, et võrrelda soola kogust, lahustunud kogust ja jääki; fookuses tabelit saab kerida nooleklahvidega.',ru:'Прокрутите таблицу по горизонтали для сравнения навески, растворённой массы и остатка; в фокусе таблицы работают клавиши со стрелками.',uk:'Прокрутіть таблицю горизонтально для порівняння наважки, розчиненої маси й залишку; у фокусі таблиці працюють клавіші зі стрілками.'}))I18N[lang]['x.k311.scrollTable']=text;
 /* Lab inventory shown on the closet and cabinet shelves (see "Virtual Lab Inventory" doc).
    Items here are display-only for now: tapping one opens a note; later rounds make them usable.
    n = [en, ru, et]; lv = MS | HS | Uni; sh = shelf T | M2 | M1 | B (top, eye level, lower middle, bottom).
@@ -2881,6 +3187,7 @@ import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODE
 import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
 import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
 import { doseCapacity, flowAllowed, sampleSnapshot } from './bench_state.mjs';
+import { copperCycleObservation, makeSolubilityDesign, solubilityTrialRecord } from './investigation_models.mjs';
 import { waterVolume, dissolutionDomain, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, NACL, separatorSupported, drainLowerPhase, solubilityTrial, makeSolubilityHypothesis, hydrationEvidence } from './phase_state.mjs';
 
 /* =====================================================================
@@ -5195,6 +5502,22 @@ TASKS.push({ id: 'k311', lab: true, hoodLab: true, code: 'K3-11', title: 'x.k311
   setup: [['beaker:A', { V: 40 }], ['beaker:B', { V: 40, solv: { hexane: 40 } }], ['jar'], ['spatula'], ['rod']],
   answer: { rows: ['outcome'], rowKey: 'x.k311.row.', optKey: 'x.k311.option.', opts: ['water', 'hexane', 'same'], fixed: { outcome: 'water' }, needSeen: true }
 });
+TASKS.push({ id:'k117-copper', lab:true, code:'K1-17 / K1-18', title:'x.copper.title', goal:'x.copper.goal', steps:'x.copper.steps', start:'x.copper.start', done:'x.copper.done', sensory:'x.copper.sensory',
+  setup:[['beaker:A',{V:20,tot:{Cu:2,SO4:2,Cl:.2}}],['beaker:B',{V:20,tot:{Cu:2,SO4:2,Cl:.2}}],['bottle:naoh'],['bottle:hcl'],['bottle:water'],['p10'],['p3'],['rod']],
+  answer:{rows:['precip','acid'],rowKey:'x.copper.row.',optKey:'x.copper.option.',optsByRow:{precip:['precipCorrect','precipWrong'],acid:['acidCorrect','acidWrong']},opts:[],fixed:{precip:'precipCorrect',acid:'acidCorrect'},needSeen:true}
+});
+function copperSamples() { return ['A','B'].map(L=>vessels.find(v=>v.letter===L)); }
+function recordCopperCycle(stage) {
+  if (!PPE.goggles || !PPE.gloves) { logE('mistake',[['x.copper.ppe']]); renderCard(); return; }
+  const samples=copperSamples(); for(const v of samples) if(v.eqDirty) doEq(v);
+  const rows=copperCycleObservation(samples,stage,TASK.copperEvidence);
+  if(!rows || TASK.copperEvidence[stage]) { logE('mistake',[['x.copper.notReady']]); renderCard(); return; }
+  TASK.copperEvidence[stage]=rows;
+  if(stage==='positive') TASK.evidence.precip=rows;
+  if(stage==='dissolved') TASK.evidence.acid=rows;
+  for(const r of rows) logE('obs',[['x.copper.measurement',{stage:T('x.copper.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),cu:fmt(r.copper,3),ppt:fmt(r.precipitate,4),ph:fmt(r.pH,2)}]]);
+  renderCard();
+}
 function k311Samples() { return ['A', 'B'].map(L => vessels.find(v => v.letter === L)); }
 function saveSolubilityHypothesis() {
   const hypothesis = makeSolubilityHypothesis(k311Samples(), TASK, TASK.hypothesisDraft, TASK.hypothesisReason, (performance.now() - NB.t0) / 1000);
@@ -5204,6 +5527,7 @@ function saveSolubilityHypothesis() {
 }
 function recordSolubility(blank) {
   if (!PPE.goggles || !HOOD.fan) { logE('mistake', [['x.k311.safety']]); renderCard(); return; }
+  if (!blank && !TASK.design) { logE('mistake',[['x.k311.designFirst']]); renderCard(); return; }
   if (!blank && !TASK.hypothesis) { logE('mistake', [['x.k311.hypothesisFirst']]); renderCard(); return; }
   const rows = solubilityTrial(k311Samples(), TASK.doses, blank);
   if (!rows || (!blank && !TASK.blank)) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
@@ -5215,6 +5539,7 @@ function recordSolubility(blank) {
 function dealUnknowns(task) {
   task.key = {}; task.picks = {}; task.num = '';
   task.evidence = task.answer && task.answer.needSeen ? {} : null;
+  task.copperEvidence={}; task.design=null; task.designDraft={independent:'',controls:''}; task.trials=[]; task.trialLogStart=0;
   task.doses = {}; task.blank = null; task.comparison = null; task.hypothesis = null; task.hypothesisDraft = ''; task.hypothesisReason = ''; task.saltStarted = false; task.explanationView = 'water';
   task.activityDone = new Set(); task.activityResults = {};
   for (const L of UNK) { REAG['u' + L].tot = {}; }
@@ -5236,7 +5561,8 @@ function runActivityTrial(trial) {
 }
 function checkAnswers() {
   const A = TASK.answer; let wrong = 0;
-  if (TASK.id === 'k311' && (!TASK.hypothesis || !TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
+  if(TASK.id==='k117-copper' && (!PPE.goggles || !PPE.gloves || !copperCycleObservation(copperSamples(),'dissolved',TASK.copperEvidence))) { logE('mistake',[['x.copper.notReady']]); renderCard(); return; }
+  if (TASK.id === 'k311' && (!TASK.design || !TASK.hypothesis || !TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
   const rows = A.rows || Object.keys(TASK.key);
   if (A.needSeen) {
     const missing = rows.filter(L => !TASK.evidence || TASK.evidence[L] == null);
@@ -5583,6 +5909,7 @@ function setupTask(task, mode = task.free ? 'free' : 'independent') {
     if (fill) { o.chem.V = fill.V || 0; o.chem.tot = { ...(fill.tot || {}) }; o.chem.ind = { ...(fill.ind || {}) }; o.chem.solv = { ...(fill.solv || {}) }; o.solid = fill.solid || 0; equilibrate(o.chem); const lk = vesselLook(o.chem); o.rgb = lk.rgb.slice(); o.a = lk.a; o.level = levelOf(o); o.eqDirty = true; }
   }
   if (task.id === 'k311') { setSampleTag(vessels.find(v => v.letter === 'A'), 'A · H₂O', '40 mL'); setSampleTag(vessels.find(v => v.letter === 'B'), 'B · C₆H₁₄', '40 mL'); }
+  if(task.id==='k117-copper') for(const L of ['A','B']) setSampleTag(vessels.find(v=>v.letter===L),L+' · 0.10 M CuSO₄','20 mL · 0.010 M HCl');
   if (task.id === 'phmeasure') {
     const tags = { A: ['A · HCl', '0.10 M · 75 mL'], B: ['B · HCl', '0.010 M · 75 mL'], C: ['C · CH₃COOH', '0.10 M · 75 mL'] };
     for (const v of vessels) if (tags[v.letter]) setSampleTag(v, ...tags[v.letter]);
@@ -5628,6 +5955,7 @@ const LABS = [
   { id: 'nonmetals-spc', run: 'nonmetals-spc', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🔥', title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', time: '12–15 min' },
   { id: 'nonmetals-halogens', run: 'nonmetals-halogens', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🧪', title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', time: '8–10 min' },
   { id: 'combustion', run: 'combustion', level: 'high', course: 'organic', tp: 'hydrocarbons', icon: '🔥', title: 'lab.comb.title', goal: 'lab.comb.goal', desc: 'lab.comb.desc', time: '8–10 min' },
+  { id:'k117-copper',run:'k117-copper',level:'high',course:'general',tp:'acidbase',icon:'🧪',title:'x.copper.title',goal:'x.copper.goal',desc:'x.copper.desc',time:'15–20 min' },
   { id: 'k311', run: 'k311', level: 'high', course: 'organic', tp: 'bond', icon: '🧂', title: 'x.k311.title', goal: 'x.k311.goal', desc: 'x.k311.desc', time: '10–15 min' },
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
   { id: 'k112', run: 'k112', level: 'high', course: 'inorganic', tp: 'bond', icon: '🔩', title: 'x.k112.title', goal: 'x.k112.goal', desc: 'x.k112.desc', time: '15–20 min' },
@@ -5650,7 +5978,7 @@ function openLabs() {
   const filters = el('div', 'labfilters');
   const filter = (label, values, selected, set) => { const row = el('div', 'filterrow'); row.append(el('span', null, label)); for (const [value, labelText, disabled] of values) { const b = el('button', null, labelText); b.type = 'button'; b.disabled = !!disabled; b.setAttribute('aria-pressed', String(selected === value)); if (!disabled) b.addEventListener('click', () => { set(value); openLabs(); }); row.append(b); } filters.append(row); };
   filter(T('x.level'), [['high', T('x.levelHigh')], ['university', T('x.levelUniversity'), true]], labSel.level, v => { labSel.level = v; });
-  filter(T('x.branch'), [['all', T('x.all')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
+  filter(T('x.branch'), [['all', T('x.all')], ['general', T('x.course.general')], ['inorganic', T('x.course.inorganic')], ['organic', T('x.course.organic')]], labSel.course, v => { labSel.course = v; labSel.tp = 'all'; });
   filter(T('x.topic'), [['all', T('x.all')], ['acidbase', T('topic.acidbase')], ['nonmetals', T('topic.nonmetals')], ['hydrocarbons', T('topic.hydrocarbons')], ['bond', T('topic.bond')], ['kinetics', T('topic.kinetics')], ['structure', T('topic.structure')], ['carboxylic', T('topic.carboxylic')]], labSel.tp, v => { labSel.tp = v; });
   box.append(filters);
   const grid = el('div', 'labgrid'), shown = LABS.filter(l => l.level === labSel.level && (labSel.course === 'all' || l.course === labSel.course) && (labSel.tp === 'all' || l.tp === labSel.tp));
@@ -6386,6 +6714,39 @@ function updateCapControl() {
   e.hidden = !b;
   if (b) { const text = T(b.open ? 'x.closeCap' : 'x.openCap'); if (e.textContent !== text) { e.textContent = text; e.setAttribute('aria-label', text); } }
 }
+function saveSolubilityDesign() {
+  const d=TASK.designDraft, record=makeSolubilityDesign(k311Samples(),TASK,d.independent,d.controls,(performance.now()-NB.t0)/1000);
+  if(!record) { logE('mistake',[['x.k311.designFirst']]); renderCard(); return; }
+  TASK.design=record; logE('info',[['x.k311.designSaved']]); renderCard();
+}
+function startSolubilityRepeat() {
+  endSession(); const record=solubilityTrialRecord(k311Samples(),TASK,NB.log.slice(TASK.trialLogStart));
+  if(!record) { logE('mistake',[['x.k311.repeatNotReady']]); renderCard(); return; }
+  const records=[...TASK.trials,record], previous={log:NB.log.slice(),t0:NB.t0,started:NB.started}, fan=HOOD.fan;
+  setupTask(TASK); HOOD.fan=fan; TASK.trials=records; Object.assign(NB,previous);
+  TASK.trialLogStart=NB.log.length; logE('info',[['x.k311.repeatStarted',{n:records.length+1}]]); renderCard();
+}
+function renderSolubilityDesign(group,h) {
+  const field=h('fieldset','hypothesis');field.append(h('legend',null,T('x.k311.designTitle')));
+  for(const [id,options] of [['independent',['solvent','dose','temperature']],['controls',['volumeDoseTemperature','volumeOnly','none']]]) {
+    const label=h('label',null,T('x.k311.design.'+id));label.htmlFor='design-'+id;const select=h('select');select.id=label.htmlFor;select.append(new Option('—',''));
+    for(const value of options) select.append(new Option(T('x.k311.designOption.'+value),value));
+    select.value=TASK.design ? (id==='independent'?'solvent':'volumeDoseTemperature') : TASK.designDraft[id]; select.disabled=!!TASK.design||TASK.saltStarted;
+    select.addEventListener('change',()=>{TASK.designDraft[id]=select.value;});field.append(label,select);
+  }
+  const b=h('button','btn',T(TASK.design?'x.k311.designLocked':'x.k311.saveDesign'));b.type='button';b.disabled=!!TASK.design||TASK.saltStarted;b.addEventListener('click',saveSolubilityDesign);field.append(b);group.append(field);
+}
+function renderSolubilityHistory(group,h) {
+  const trials=TASK.trials.slice();if(TASK.comparison) trials.push({hypothesis:TASK.hypothesis,measurements:TASK.comparison,conclusion:TASK.reached?TASK.picks.outcome:null});
+  if(trials.length) {
+    const section=h('section','trial-history');section.append(h('h3',null,T('x.k311.trialHistory')));
+    for(const [i,trial] of trials.entries()) section.append(h('p',null,T('x.k311.trialPrediction',{n:i+1,prediction:T('x.k311.option.'+trial.hypothesis.prediction),reason:trial.hypothesis.reason})));
+    const wrap=h('div','trial-scroll'),table=h('table'),caption=h('caption',null,T('x.k311.trialHistory'));wrap.tabIndex=0;wrap.setAttribute('aria-label',T('x.k311.scrollTable'));wrap.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))e.stopPropagation();});section.append(h('p','schematic-note',T('x.k311.scrollTable')));table.append(caption);
+    const head=h('thead'),tr=h('tr');for(const name of ['trial','vessel','volume','temperature','dose','dissolved','residue']){const th=h('th',null,T('x.k311.column.'+name));th.scope='col';tr.append(th);}head.append(tr);table.append(head);
+    const body=h('tbody');for(const [i,trial] of trials.entries())for(const row of trial.measurements){const tr=h('tr');for(const value of [i+1,row.vessel,fmt(row.volume,2),fmt(row.temperature,1),fmt(row.dose,3),fmt(row.dissolved,3),fmt(row.residue,3)])tr.append(h('td',null,value));body.append(tr);}table.append(body);wrap.append(table);section.append(wrap);group.append(section);
+  }
+  const repeat=h('button','btn',T('x.k311.startRepeat'));repeat.type='button';repeat.id='startSolubilityRepeat';repeat.disabled=!TASK.reached;repeat.addEventListener('click',startSolubilityRepeat);group.append(repeat,h('p','schematic-note',T('x.k311.repeatHelp')));
+}
 function renderSolubilityHypothesis(group, h) {
   const saved = TASK.hypothesis, field = h('fieldset', 'hypothesis'); field.append(h('legend', null, T('x.k311.hypothesisTitle')));
   const label = h('label', null, T('x.k311.predict')); label.htmlFor = 'k311Hypothesis';
@@ -6491,13 +6852,21 @@ function renderCard() {
     }
     if (TASK.id === 'k311') {
       const group = h('section', 'activity');
+      renderSolubilityDesign(group,h);
       renderSolubilityHypothesis(group, h);
       for (const [blank, key] of [[true, 'blank'], [false, 'compare']]) { const b = h('button', 'btn', T('x.k311.' + key)); b.type = 'button'; b.disabled = TASK.reached || (blank && !!TASK.blank); b.addEventListener('click', () => recordSolubility(blank)); group.append(b); }
       for (const r of TASK.comparison || TASK.blank || []) group.append(h('p', null, T('x.k311.measurement', { v: r.vessel, volume: fmt(r.volume, 2), temp: fmt(r.temperature, 1), dose: fmt(r.dose, 3), dissolved: fmt(r.dissolved, 3), residue: fmt(r.residue, 3) })));
       renderHydrationExplanation(group, h);
+      renderSolubilityHistory(group,h);
       c.append(group);
     }
-    if (TASK.answer) { const A = TASK.answer, box = h('div', TASK.id === 'k311' ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
+    if(TASK.id==='k117-copper') {
+      const group=h('section','activity');
+      for(const stage of ['baseline','positive','dissolved']) { const b=h('button','btn',T('x.copper.record.'+stage)); b.type='button'; b.id='copper-'+stage; b.disabled=!!TASK.copperEvidence[stage]||TASK.reached; b.addEventListener('click',()=>recordCopperCycle(stage)); group.append(b);
+        for(const r of TASK.copperEvidence[stage]||[]) group.append(h('p',null,T('x.copper.measurement',{stage:T('x.copper.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),cu:fmt(r.copper,3),ppt:fmt(r.precipitate,4),ph:fmt(r.pH,2)})));
+      } c.append(group);
+    }
+    if (TASK.answer) { const A = TASK.answer, box = h('div', ['k311','k117-copper'].includes(TASK.id) ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
       const optLabel = o => A.optKey ? T(A.optKey + o) : A.cat ? T('x.ans_' + o) : SOLF[o];
       for (const L of A.rows || Object.keys(TASK.key)) { const row = h('label', 'arow'); row.append(h('span', null, A.rowKey ? T(A.rowKey + L) : T('x.bottleL', { l: L })));
         const sel = document.createElement('select'); sel.append(new Option('—', '')); for (const o of (A.optsByRow && A.optsByRow[L] || A.opts)) sel.append(new Option(optLabel(o), o)); sel.value = TASK.picks[L] || ''; sel.disabled = TASK.reached;
@@ -6964,4 +7333,6 @@ Object.assign(window.__lab3d, { pickAt });
 Object.assign(window.__lab3d, { discardSeparator });
 
 Object.assign(window.__lab3d, { saveSolubilityHypothesis, hydrationEvidence, makeSolubilityHypothesis, hydrationDiagram });
+
+Object.assign(window.__lab3d,{copperCycleObservation,recordCopperCycle,saveSolubilityDesign,makeSolubilityDesign,startSolubilityRepeat,solubilityTrialRecord});
 </script>

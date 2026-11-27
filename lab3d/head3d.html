@@ -61,6 +61,11 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .filterrow button { border: 1px solid transparent; border-radius: 999px; padding: 5px 10px; background: var(--surface); color: var(--ink); font: 500 12.5px var(--f-body); cursor: pointer; }
 .filterrow button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 .filterrow button:disabled { opacity: .48; cursor: default; }
+.labtree { display: grid; gap: 10px; }
+.labtree-node { min-width: 0; border-left: 2px solid var(--line); padding: 3px 0 3px 12px; }
+.labtree-node > summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.labtree-node > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.labtree-node > .labtree-node { margin-left: 8px; }
 .labgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .pcard { text-align: left; display: grid; gap: 4px; border: 1px solid var(--line); border-radius: 11px; background: var(--bg); padding: 12px 14px; cursor: pointer; color: var(--ink); font: 14px/1.45 var(--f-body); }
 .pcard b { font: 600 15px var(--f-body); } .pcard span { color: var(--muted); }

@@ -1553,3 +1553,8 @@ for (const [lang, step] of Object.entries({en:'Predict which solvent dissolves i
  for(const [i,lang] of ["en","et","ru","uk"].entries())for(const [key,values]of Object.entries(rows))I18N[lang]["x."+key]=values[i];})();
 
 for(const [lang,text]of Object.entries({en:'Scroll the table sideways to compare salt dose, dissolved amount and residue; arrow keys work when the table is focused.',et:'Keri tabelit külgsuunas, et võrrelda soola kogust, lahustunud kogust ja jääki; fookuses tabelit saab kerida nooleklahvidega.',ru:'Прокрутите таблицу по горизонтали для сравнения навески, растворённой массы и остатка; в фокусе таблицы работают клавиши со стрелками.',uk:'Прокрутіть таблицю горизонтально для порівняння наважки, розчиненої маси й залишку; у фокусі таблиці працюють клавіші зі стрілками.'}))I18N[lang]['x.k311.scrollTable']=text;
+
+for(const [i,lang]of ['en','et','ru','uk'].entries()) {
+ I18N[lang]['topic.ionreactions']=['Ion reactions and ionic equations','Ioonreaktsioonid ja ioonvõrrandid','Реакции ионов и ионные уравнения','Реакції йонів і йонні рівняння'][i];
+ I18N[lang]['topic.solubility']=['Solubility','Lahustuvus','Растворимость','Розчинність'][i];
+}

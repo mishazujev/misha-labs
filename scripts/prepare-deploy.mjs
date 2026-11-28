@@ -20,6 +20,7 @@ const files = [
   "lab3d/bench_state.mjs",
   "lab3d/phase_state.mjs",
   "lab3d/investigation_models.mjs",
+  "lab3d/investigation_reports.mjs",
   "hub-assets/lab-biology.jpg",
   "hub-assets/lab-chemistry.jpg",
   "hub-assets/lab-geography.jpg",

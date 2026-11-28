@@ -39,7 +39,7 @@ try {
   r = await fetch(`${base}/teacher/login`, { method: "POST", redirect: "manual", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ password: "correct horse battery staple" }) });
   assert.equal(r.status, 303); const cookie = r.headers.get("set-cookie").split(";")[0];
 
-  const payloads = ["k111", "k112", "k113", "k3v01", "k3v02", "k311", "k117-copper"].map(labId => ({ batchId: randomUUID(), sessionId: randomUUID(), attemptId: randomUUID(), labId, mode: "independent", startedAt: Date.now(), activeMs: 240000, lastStep: "lab:completed", completed: true, activities: [{ key: "reagent:hcl", count: 3, amount: 12.5 }, { key: "take:beaker:A", count: 1, amount: 0 }, { key: "safety:noGoggles", count: 1, amount: 0 }] }));
+  const payloads = ["k111", "k112", "k113", "k3v01", "k3v02", "k311", "k117-copper", "k117-chloride"].map(labId => ({ batchId: randomUUID(), sessionId: randomUUID(), attemptId: randomUUID(), labId, mode: "independent", startedAt: Date.now(), activeMs: 240000, lastStep: "lab:completed", completed: true, activities: [{ key: "reagent:hcl", count: 3, amount: 12.5 }, { key: "take:beaker:A", count: 1, amount: 0 }, { key: "safety:noGoggles", count: 1, amount: 0 }] }));
   const payload = payloads[0];
   for (const item of payloads) {
     r = await fetch(`${base}/api/analytics/flush`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(item) }); assert.equal(r.status, 204);

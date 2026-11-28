@@ -26,3 +26,21 @@ export function solubilityTrialRecord(samples, task, notebook) {
   if (!task.reached || !task.hypothesis || !task.design || !task.comparison || !solubilityTrial(samples,task.doses)) return null;
   return JSON.parse(JSON.stringify({course:'K3',skill:'K3-11',hypothesis:task.hypothesis,design:task.design,blanks:task.blank,measurements:task.comparison,conclusion:task.picks.outcome,notebook}));
 }
+
+// Acidified, matched sodium chloride/nitrate matrices, tested with four 0.05 mL drops of
+// 0.10 M AgNO3. C is the positive control; D is the nitrate blank.
+export function chlorideObservation(samples, stage, key, evidence = {}) {
+ if(samples.length!==4 || !['baseline','tested'].includes(stage) || !key || !['chloride','nitrate'].every(id=>Object.values(key).includes(id)))return null;
+ const tested=stage==='tested';if(tested&&!evidence.baseline)return null;
+ const rows=[];
+ for(const v of samples){
+  if(!v||v.held||v.stowed||v.fly||!v.chem.eq||(v.solid||0)>1e-8||(v.particles||[]).some(p=>p.m>1e-8))return null;
+  const c=v.chem,kind=v.letter==='C'?'chloride':v.letter==='D'?'nitrate':key[v.letter];
+  if(!['chloride','nitrate'].includes(kind)||Object.values(c.ind||{}).some(n=>n>1e-8)||Object.values(c.solv||{}).some(n=>n>1e-8))return null;
+  const expected={Na:2,Cl:kind==='chloride'?2:0,NO3:(kind==='nitrate'?2:0)+.2+(tested?.02:0),Ag:tested?.02:0};
+  if(!near(c.V,tested?20.2:20,.02)||Object.entries(expected).some(([k,n])=>!near(c.tot[k]||0,n,k==='Ag'?.001:.015))||Object.entries(c.tot).some(([k,n])=>!(k in expected)&&n>1e-8))return null;
+  const ppt=c.eq.ppt?.AgCl||0;if(tested?(kind==='chloride'?ppt<.019:ppt>1e-8):ppt>1e-8)return null;
+  rows.push({vessel:v.letter,volume:c.V,temperature:v.temp,precipitate:ppt,appearance:ppt>.0015?'precipitate':'clear'});
+ }
+ return rows;
+}

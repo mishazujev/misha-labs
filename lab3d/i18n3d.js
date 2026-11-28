@@ -1558,3 +1558,273 @@ for(const [i,lang]of ['en','et','ru','uk'].entries()) {
  I18N[lang]['topic.ionreactions']=['Ion reactions and ionic equations','Ioonreaktsioonid ja ioonvõrrandid','Реакции ионов и ионные уравнения','Реакції йонів і йонні рівняння'][i];
  I18N[lang]['topic.solubility']=['Solubility','Lahustuvus','Растворимость','Розчинність'][i];
 }
+
+// Chloride investigation, aggregate salt recovery and local report controls.
+(()=>{const rows={
+  "chloride.title": [
+    "K1-17 · Chloride detective",
+    "K1-17 · Kloriidi detektiiv",
+    "K1-17 · Детектив хлоридов",
+    "K1-17 · Детектив хлоридів"
+  ],
+  "chloride.goal": [
+    "Identify blinded sodium chloride/nitrate samples using matched silver-nitrate tests, a positive control and a nitrate blank. Support the conclusion with observations and a net ionic equation.",
+    "Tuvasta varjatud naatriumkloriidi ja -nitraadi proovid hõbenitraadiga, kasutades positiivset kontrolli ja nitraadi nullproovi. Põhjenda järeldust vaatluste ja taandatud ioonvõrrandiga.",
+    "Определите скрытые пробы хлорида и нитрата натрия с помощью нитрата серебра, положительного контроля и нитратной холостой пробы. Обоснуйте вывод наблюдениями и сокращённым ионным уравнением.",
+    "Визначте приховані проби хлориду й нітрату натрію нітратом срібла, використовуючи позитивний контроль і нітратну холосту пробу. Обґрунтуйте висновок спостереженнями й скороченим йонним рівнянням."
+  ],
+  "chloride.desc": [
+    "Two blinded samples, matched controls and real dropwise precipitation evidence.",
+    "Kaks varjatud proovi, võrdsed kontrolltingimused ja tilgutamisel tekkiva sademe vaatlused.",
+    "Две скрытые пробы, одинаковые контрольные условия и наблюдение осаждения при добавлении капель.",
+    "Дві приховані проби, однакові контрольні умови й спостереження осадження під час додавання крапель."
+  ],
+  "chloride.steps": [
+    "Wear goggles and gloves. A and B are blinded 0.10 M NaCl/NaNO₃ samples, one of each. C is known NaCl; D is the NaNO₃ blank. All contain 20 mL with the same dilute nitric-acid background.|Record all four baselines before adding reagent. Unknown identities are withheld from the inspector until you reach a conclusion.|Place the 0.10 M AgNO₃ dropper over each beaker and press its bulb four times. Keep the tip above the liquid. Each simulated drop is 0.05 mL: four drops add 0.20 mL; real drop size is not assumed exact.|Allow the drops to land. Compare white solid in the positive control C with clear blank D, then observe A and B. Colourless liquid alone does not show whether a precipitate formed.|Record the controls and unknowns, identify A and B, and choose the balanced net ionic equation. Reset deals a fresh unknown order and clears evidence. This conclusion applies to the two specified candidate salts, not every possible interference.",
+    "Pane kaitseprillid ja kindad. A ja B on varjatud 0,10 M NaCl/NaNO₃ proovid, kumbagi üks. C on teadaolev NaCl; D on NaNO₃ nullproov. Kõigis on 20 mL sama lahja lämmastikhappe taustaga.|Salvesta kõigi nelja algseis enne reaktiivi lisamist. Tundmatute koostis jääb inspektoris varjatuks kuni järelduseni.|Aseta 0,10 M AgNO₃ tilguti iga keeduklaasi kohale ja vajuta kummiosa neli korda. Hoia ots vedeliku kohal. Mudeli tilk on 0,05 mL: neli tilka lisavad 0,20 mL; tegelikku tilgasuurust ei eeldata täpseks.|Lase tilkadel langeda. Võrdle valget tahkist kontrollis C selge nullprooviga D ning vaata A-d ja B-d. Värvitu vedelik üksi ei tõesta sademe puudumist.|Salvesta kontrollid ja tundmatud, tuvasta A ja B ning vali tasakaalustatud taandatud ioonvõrrand. Lähtestamine määrab uue proovide järjekorra ja kustutab vaatlused. Järeldus kehtib kahe antud soola kohta, mitte kõigi segavate ainete puhul.",
+    "Наденьте очки и перчатки. A и B — скрытые 0,10 M NaCl/NaNO₃, по одной пробе каждого. C — известный NaCl; D — холостая проба NaNO₃. Во всех по 20 мл с одинаковым фоном разбавленной азотной кислоты.|Запишите исходное состояние всех четырёх до реагента. Состав неизвестных скрыт в инспекторе до вывода.|Поместите капельницу 0,10 M AgNO₃ над каждым стаканом и нажмите грушу четыре раза. Держите кончик над жидкостью. Капля модели — 0,05 мл: четыре добавляют 0,20 мл; реальный размер капли не считается точным.|Дождитесь падения капель. Сравните белый осадок положительного контроля C с прозрачной холостой пробой D, затем A и B. Бесцветность жидкости сама по себе не доказывает отсутствие осадка.|Запишите контроли и неизвестные, определите A и B и выберите уравнение. Сброс меняет порядок неизвестных и очищает записи. Вывод относится к двум указанным солям, а не ко всем возможным помехам.",
+    "Надягніть окуляри й рукавички. A і B — приховані 0,10 M NaCl/NaNO₃, по одній пробі кожного. C — відомий NaCl; D — холоста проба NaNO₃. У всіх по 20 мл з однаковим фоном розбавленої азотної кислоти.|Запишіть початковий стан усіх чотирьох до реагенту. Склад невідомих прихований в інспекторі до висновку.|Розмістіть крапельницю 0,10 M AgNO₃ над кожною склянкою й натисніть грушу чотири рази. Тримайте кінчик над рідиною. Крапля моделі — 0,05 мл: чотири додають 0,20 мл; реальний розмір краплі не вважається точним.|Дочекайтеся падіння крапель. Порівняйте білий осад позитивного контролю C з прозорою холостою пробою D, потім A і B. Безбарвність рідини сама собою не доводить відсутності осаду.|Запишіть контролі й невідомі, визначте A і B та виберіть рівняння. Скидання змінює порядок невідомих і очищає записи. Висновок стосується двох указаних солей, а не всіх можливих перешкод."
+  ],
+  "chloride.start": [
+    "Chloride detective: observe the blinded samples and matched controls.",
+    "Kloriidi detektiiv: vaatle varjatud proove ja kontrollproove.",
+    "Детектив хлоридов: наблюдайте скрытые пробы и контроли.",
+    "Детектив хлоридів: спостерігайте приховані проби й контролі."
+  ],
+  "chloride.done": [
+    "Unknown identities and AgCl equation match the recorded evidence.",
+    "Tundmatute koostis ja AgCl võrrand vastavad salvestatud vaatlustele.",
+    "Состав неизвестных и уравнение AgCl соответствуют наблюдениям.",
+    "Склад невідомих і рівняння AgCl відповідають спостереженням."
+  ],
+  "chloride.sensory": [
+    "Look for white solid, settling and a clear blank. Do not smell or taste reagents.",
+    "Vaata valget tahkist, settimist ja selget nullproovi. Ära nuusuta ega maitse reaktiive.",
+    "Наблюдайте белый осадок, оседание и прозрачную холостую пробу. Не нюхайте и не пробуйте реагенты.",
+    "Спостерігайте білий осад, осідання й прозору холосту пробу. Не нюхайте й не куштуйте реагенти."
+  ],
+  "chloride.unknown": [
+    "Unknown",
+    "Tundmatu",
+    "Неизвестная проба",
+    "Невідома проба"
+  ],
+  "chloride.positive": [
+    "NaCl positive control",
+    "NaCl positiivne kontroll",
+    "Положительный контроль NaCl",
+    "Позитивний контроль NaCl"
+  ],
+  "chloride.blank": [
+    "NaNO₃ blank",
+    "NaNO₃ nullproov",
+    "Холостая проба NaNO₃",
+    "Холоста проба NaNO₃"
+  ],
+  "chloride.hidden": [
+    "Unknown analytical identities are hidden until your evidence-based conclusion.",
+    "Tundmatu analüütiline koostis on varjatud kuni tõenduspõhise järelduseni.",
+    "Аналитический состав неизвестного скрыт до вывода по наблюдениям.",
+    "Аналітичний склад невідомого прихований до висновку за спостереженнями."
+  ],
+  "chloride.notReady": [
+    "Record clean baselines first, then add exactly four simulated AgNO₃ drops to every sample. Check both controls and retry after reset if a wrong reagent was added.",
+    "Salvesta esmalt puhtad algseisud ja lisa igasse proovi täpselt neli mudeli AgNO₃ tilka. Kontrolli mõlemat kontrollproovi; vale reaktiivi korral lähtesta ja proovi uuesti.",
+    "Сначала запишите чистые исходные пробы, затем добавьте в каждую ровно четыре модельные капли AgNO₃. Проверьте оба контроля; после неверного реагента начните заново.",
+    "Спочатку запишіть чисті початкові проби, потім додайте в кожну рівно чотири модельні краплі AgNO₃. Перевірте обидва контролі; після неправильного реагенту почніть заново."
+  ],
+  "chloride.record.baseline": [
+    "Record four baselines",
+    "Salvesta neli algproovi",
+    "Записать четыре исходные пробы",
+    "Записати чотири початкові проби"
+  ],
+  "chloride.record.tested": [
+    "Record silver-nitrate tests",
+    "Salvesta hõbenitraadikatsed",
+    "Записать пробы с нитратом серебра",
+    "Записати проби з нітратом срібла"
+  ],
+  "chloride.stage.baseline": [
+    "Baseline",
+    "Algseis",
+    "Исходная проба",
+    "Початкова проба"
+  ],
+  "chloride.stage.tested": [
+    "After AgNO₃",
+    "Pärast AgNO₃",
+    "После AgNO₃",
+    "Після AgNO₃"
+  ],
+  "chloride.precipitate": [
+    "White precipitate",
+    "Valge sade",
+    "Белый осадок",
+    "Білий осад"
+  ],
+  "chloride.clear": [
+    "No precipitate",
+    "Sadet ei ole",
+    "Осадка нет",
+    "Осаду немає"
+  ],
+  "chloride.measurement": [
+    "{stage} · {v}: {volume} mL · {appearance} · model AgCl(s) {ppt} mmol",
+    "{stage} · {v}: {volume} mL · {appearance} · mudeli AgCl(s) {ppt} mmol",
+    "{stage} · {v}: {volume} мл · {appearance} · AgCl(s) модели {ppt} ммоль",
+    "{stage} · {v}: {volume} мл · {appearance} · AgCl(s) моделі {ppt} ммоль"
+  ],
+  "chloride.row.A": [
+    "Identify A",
+    "Tuvasta A",
+    "Определите A",
+    "Визначте A"
+  ],
+  "chloride.row.B": [
+    "Identify B",
+    "Tuvasta B",
+    "Определите B",
+    "Визначте B"
+  ],
+  "chloride.row.equation": [
+    "Net ionic equation",
+    "Taandatud ioonvõrrand",
+    "Сокращённое ионное уравнение",
+    "Скорочене йонне рівняння"
+  ],
+  "chloride.option.chloride": [
+    "Sodium chloride",
+    "Naatriumkloriid",
+    "Хлорид натрия",
+    "Хлорид натрію"
+  ],
+  "chloride.option.nitrate": [
+    "Sodium nitrate",
+    "Naatriumnitraat",
+    "Нитрат натрия",
+    "Нітрат натрію"
+  ],
+  "chloride.option.agclCorrect": [
+    "Ag⁺ + Cl⁻ → AgCl(s)",
+    "Ag⁺ + Cl⁻ → AgCl(s)",
+    "Ag⁺ + Cl⁻ → AgCl(s)",
+    "Ag⁺ + Cl⁻ → AgCl(s)"
+  ],
+  "chloride.option.agclWrong": [
+    "2Ag⁺ + Cl⁻ → AgCl(s)",
+    "2Ag⁺ + Cl⁻ → AgCl(s)",
+    "2Ag⁺ + Cl⁻ → AgCl(s)",
+    "2Ag⁺ + Cl⁻ → AgCl(s)"
+  ],
+  "cleanSalt": [
+    "Collect spilled NaCl",
+    "Kogu lekkinud NaCl",
+    "Собрать рассыпанный NaCl",
+    "Зібрати розсипаний NaCl"
+  ],
+  "solidCollected": [
+    "Collected {g} g NaCl as solid waste.",
+    "Koguti {g} g NaCl tahkete jäätmetena.",
+    "Собрано {g} г NaCl в твёрдые отходы.",
+    "Зібрано {g} г NaCl у тверді відходи."
+  ],
+  "solidStatus": [
+    "NaCl on bench: {g} g · Collected: {w} g · In sink: {s} g",
+    "NaCl laual: {g} g · Kogutud: {w} g · Kraanikausis: {s} g",
+    "NaCl на столе: {g} г · Собрано: {w} г · В раковине: {s} г",
+    "NaCl на столі: {g} г · Зібрано: {w} г · У раковині: {s} г"
+  ],
+  "saltToBench": [
+    "NaCl poured from {v} onto the bench.",
+    "NaCl valati anumast {v} lauale.",
+    "NaCl высыпан из {v} на стол.",
+    "NaCl висипано з {v} на стіл."
+  ],
+  "report.download.md": [
+    "Download report (.md)",
+    "Laadi aruanne alla (.md)",
+    "Скачать отчёт (.md)",
+    "Завантажити звіт (.md)"
+  ],
+  "report.download.json": [
+    "Download data (.json)",
+    "Laadi andmed alla (.json)",
+    "Скачать данные (.json)",
+    "Завантажити дані (.json)"
+  ],
+  "report.course": [
+    "Course",
+    "Kursus",
+    "Курс",
+    "Курс"
+  ],
+  "report.skills": [
+    "Skills",
+    "Oskused",
+    "Умения",
+    "Уміння"
+  ],
+  "report.path": [
+    "Catalogue path",
+    "Kataloogi asukoht",
+    "Путь в каталоге",
+    "Шлях у каталозі"
+  ],
+  "report.status": [
+    "Status",
+    "Olek",
+    "Статус",
+    "Статус"
+  ],
+  "report.source": [
+    "Simulation data",
+    "Simulatsiooni andmed",
+    "Данные модели",
+    "Дані моделі"
+  ],
+  "report.observations": [
+    "Observations",
+    "Vaatlused",
+    "Наблюдения",
+    "Спостереження"
+  ],
+  "report.trial": [
+    "Trial",
+    "Katse",
+    "Опыт",
+    "Дослід"
+  ],
+  "report.hypothesis": [
+    "Hypothesis",
+    "Hüpotees",
+    "Гипотеза",
+    "Гіпотеза"
+  ],
+  "report.reason": [
+    "Reason",
+    "Põhjendus",
+    "Объяснение",
+    "Пояснення"
+  ],
+  "report.controls": [
+    "Experiment plan",
+    "Katseplaan",
+    "План опыта",
+    "План досліду"
+  ],
+  "report.answers": [
+    "Answers",
+    "Vastused",
+    "Ответы",
+    "Відповіді"
+  ],
+  "report.notebook": [
+    "Notebook",
+    "Päevik",
+    "Журнал",
+    "Журнал"
+  ]
+};for(const [i,lang]of ["en","et","ru","uk"].entries())for(const [key,values]of Object.entries(rows))I18N[lang]["x."+key]=values[i];})();
+
+(()=>{const rows={vessel:['Vessel','Anum','Сосуд','Посудина'],volume:['Volume','Ruumala','Объём','Об’єм'],temperature:['Temperature','Temperatuur','Температура','Температура'],dose:['Salt dose','Soola kogus','Навеска соли','Наважка солі'],dissolved:['Dissolved','Lahustunud','Растворено','Розчинено'],residue:['Residue','Jääk','Остаток','Залишок'],copper:['Total Cu','Cu üldkogus','Всего Cu','Усього Cu'],precipitate:['Precipitate','Sade','Осадок','Осад'],pH:['Model pH','Mudeli pH','pH модели','pH моделі'],status_complete:['Complete','Lõpetatud','Завершено','Завершено'],status_in_progress:['In progress','Pooleli','В процессе','У процесі']};for(const [i,lang]of ['en','et','ru','uk'].entries())for(const [key,values]of Object.entries(rows))I18N[lang]['x.report.'+key]=values[i];})();

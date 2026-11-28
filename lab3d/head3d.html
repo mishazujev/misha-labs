@@ -138,7 +138,7 @@ html { -webkit-text-size-adjust: 100%; } body { touch-action: manipulation; -web
 .student-steps li { counter-increment: labstep; position: relative; padding: 9px 10px 9px 43px; min-height: 40px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: var(--ink); }
 .student-steps li::before { content: counter(labstep); position: absolute; left: 9px; top: 8px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: white; font: 600 12px var(--f-body); }
 .student-steps li.demo-current { border-color: var(--amber); background: #FFF4E5; box-shadow: none; }
-.procedure-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.procedure-actions, .report-actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .procedure-actions .demo { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .demo-status { padding: 8px 10px; border-radius: 8px; background: #FFF4E5; color: #6B3A00; font-size: 13px; }
 .steps .demo-current { background: #FFF4E5; box-shadow: 0 0 0 4px #FFF4E5; color: #4F3008; }

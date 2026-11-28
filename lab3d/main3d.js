@@ -1,3 +1,4 @@
+import { investigationReport, reportMarkdown } from './investigation_reports.mjs';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -6,8 +7,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { C4H10O_ISOMERS, EVAPORATION_MODEL, HEAT_CONDUCTION_ORDER, MOLECULE_MODELS, UNKNOWN_SOLIDS, carbonateReactionTime, ionicConductivity, conductivityBrightness, conductivityCategory, evaporativeCoolingAt, peroxideOxygenRate, solutionMass, reagentBottleMass } from './course_lab_models.mjs';
 import { MECHANICAL_PROFILES, applyMechanicalProfile, hasMechanicalCapability, mechanicalGeometry, mechanicalRadius, mechanicalCarryHeight, canTransferPhase, containerProfileForPhase } from './mechanics_core.mjs';
 import { sampleComposition, mixSample, drainSample, excessOf } from './sample_transfer.mjs';
-import { doseCapacity, flowAllowed, sampleSnapshot } from './bench_state.mjs';
-import { copperCycleObservation, makeSolubilityDesign, solubilityTrialRecord } from './investigation_models.mjs';
+import { doseCapacity, flowAllowed, sampleSnapshot, saltLanding, depositSalt, saltInventory } from './bench_state.mjs';
+import { copperCycleObservation, makeSolubilityDesign, solubilityTrialRecord, chlorideObservation } from './investigation_models.mjs';
 import { waterVolume, dissolutionDomain, dissolutionRoom, dissolveSalt, liquidLayers, advancePhases, shakeSample, NACL, separatorSupported, drainLowerPhase, solubilityTrial, makeSolubilityHypothesis, hydrationEvidence } from './phase_state.mjs';
 
 /* =====================================================================
@@ -301,6 +302,16 @@ function cleanLiquidSpills() {
   liquidSpills.length = 0;
   if (volume > 0) logE('info', [['x.spillCleaned', { v: fmt(volume, 2) }]]);
   renderCard();
+}
+const solidSpills=[],solidWaste={collected:0,sink:0};
+function spillSalt(x,z,mass){
+ const spill=depositSalt(solidSpills,x,z,mass);if(!spill)return;
+ if(!spill.mesh){spill.mesh=new THREE.Mesh(new THREE.ConeGeometry(1,1,18),MAT.salt.clone());scene.add(spill.mesh);}
+ const r=.004+.007*Math.cbrt(spill.mass),height=.003+.004*Math.cbrt(spill.mass);spill.mesh.scale.set(r,height,r);spill.mesh.position.set(spill.x,.001+height/2,spill.z);
+}
+function cleanSaltSpills(){
+ let mass=0;for(const s of solidSpills){mass+=s.mass;scene.remove(s.mesh);s.mesh.geometry.dispose();s.mesh.material.dispose();}solidWaste.collected+=mass;solidSpills.length=0;
+ if(mass>0)logE('info',[['x.solidCollected',{g:fmt(mass,3)}]]);renderCard();
 }
 function spawnDrop(pos, comp, target) { const m = new THREE.Mesh(dropGeo, dropMat); m.scale.set(.0021, .0028, .0021); m.position.copy(pos); scene.add(m); drops.push({ m, vy: 0, comp, target }); }
 
@@ -2326,6 +2337,20 @@ TASKS.push({ id:'k117-copper', lab:true, code:'K1-17 / K1-18', title:'x.copper.t
   setup:[['beaker:A',{V:20,tot:{Cu:2,SO4:2,Cl:.2}}],['beaker:B',{V:20,tot:{Cu:2,SO4:2,Cl:.2}}],['bottle:naoh'],['bottle:hcl'],['bottle:water'],['p10'],['p3'],['rod']],
   answer:{rows:['precip','acid'],rowKey:'x.copper.row.',optKey:'x.copper.option.',optsByRow:{precip:['precipCorrect','precipWrong'],acid:['acidCorrect','acidWrong']},opts:[],fixed:{precip:'precipCorrect',acid:'acidCorrect'},needSeen:true}
 });
+TASKS.push({id:'k117-chloride',lab:true,code:'K1-17 / K1-18',title:'x.chloride.title',goal:'x.chloride.goal',steps:'x.chloride.steps',start:'x.chloride.start',done:'x.chloride.done',sensory:'x.chloride.sensory',
+ setup:[['beaker:A'],['beaker:B'],['beaker:C'],['beaker:D'],['dropper:agno3']],
+ answer:{rows:['A','B','equation'],rowKey:'x.chloride.row.',optKey:'x.chloride.option.',opts:[],optsByRow:{A:['chloride','nitrate'],B:['chloride','nitrate'],equation:['agclCorrect','agclWrong']},fixed:{},needSeen:true}
+});
+function chlorideSamples(){return ['A','B','C','D'].map(L=>vessels.find(v=>v.letter===L));}
+function recordChloride(stage){
+ if(!PPE.goggles||!PPE.gloves){logE('mistake',[['x.copper.ppe']]);renderCard();return;}
+ const samples=chlorideSamples();for(const v of samples)if(v.eqDirty)doEq(v);
+ const rows=chlorideObservation(samples,stage,TASK.chlorideKey,TASK.chlorideEvidence);
+ if(!rows||TASK.chlorideEvidence[stage]){logE('mistake',[['x.chloride.notReady']]);renderCard();return;}
+ TASK.chlorideEvidence[stage]=rows;
+ if(stage==='tested'){for(const row of rows.filter(r=>['A','B'].includes(r.vessel)))TASK.evidence[row.vessel]=row.appearance;TASK.evidence.equation=true;}
+ for(const r of rows)logE('obs',[['x.chloride.measurement',{stage:T('x.chloride.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),ppt:fmt(r.precipitate,4),appearance:T('x.chloride.'+r.appearance)}]]);renderCard();
+}
 function copperSamples() { return ['A','B'].map(L=>vessels.find(v=>v.letter===L)); }
 function recordCopperCycle(stage) {
   if (!PPE.goggles || !PPE.gloves) { logE('mistake',[['x.copper.ppe']]); renderCard(); return; }
@@ -2359,7 +2384,7 @@ function recordSolubility(blank) {
 function dealUnknowns(task) {
   task.key = {}; task.picks = {}; task.num = '';
   task.evidence = task.answer && task.answer.needSeen ? {} : null;
-  task.copperEvidence={}; task.design=null; task.designDraft={independent:'',controls:''}; task.trials=[]; task.trialLogStart=0;
+  task.chlorideKey=null; task.chlorideEvidence={}; task.copperEvidence={}; task.design=null; task.designDraft={independent:'',controls:''}; task.trials=[]; task.trialLogStart=0;
   task.doses = {}; task.blank = null; task.comparison = null; task.hypothesis = null; task.hypothesisDraft = ''; task.hypothesisReason = ''; task.saltStarted = false; task.explanationView = 'water';
   task.activityDone = new Set(); task.activityResults = {};
   for (const L of UNK) { REAG['u' + L].tot = {}; }
@@ -2381,6 +2406,7 @@ function runActivityTrial(trial) {
 }
 function checkAnswers() {
   const A = TASK.answer; let wrong = 0;
+  if(TASK.id==='k117-chloride'&&(!PPE.goggles||!PPE.gloves||!chlorideObservation(chlorideSamples(),'tested',TASK.chlorideKey,TASK.chlorideEvidence))){logE('mistake',[['x.chloride.notReady']]);renderCard();return;}
   if(TASK.id==='k117-copper' && (!PPE.goggles || !PPE.gloves || !copperCycleObservation(copperSamples(),'dissolved',TASK.copperEvidence))) { logE('mistake',[['x.copper.notReady']]); renderCard(); return; }
   if (TASK.id === 'k311' && (!TASK.design || !TASK.hypothesis || !TASK.blank || !PPE.goggles || !HOOD.fan || !solubilityTrial(k311Samples(), TASK.doses))) { logE('mistake', [['x.k311.notReady']]); renderCard(); return; }
   const rows = A.rows || Object.keys(TASK.key);
@@ -2690,6 +2716,7 @@ function resetState() {
   for (const d of drops) scene.remove(d.m); drops.length = 0; GR.length = 0; SPL.length = 0; grainMesh.count = 0;
   for (const s of liquidSpills) { scene.remove(s.mesh); s.mesh.geometry.dispose(); s.mesh.material.dispose(); } liquidSpills.length = 0;
   Object.assign(cleanedLiquid, { V: 0, tot: {}, ind: {}, solv: {}, temp: 22, acidEq: 0, baseEq: 0, neutralised: 0 });
+  for(const s of solidSpills){scene.remove(s.mesh);s.mesh.geometry.dispose();s.mesh.material.dispose();}solidSpills.length=0;solidWaste.collected=solidWaste.sink=0;
   RIG.reset(); RIG.g.visible = !!(TASK && TASK.id === 'k112');
   held = null; pending = null; remote = null; endSession();
   for (const o of balanceItems()) setOnBalance(o, false);
@@ -2727,6 +2754,10 @@ function setupTask(task, mode = task.free ? 'free' : 'independent') {
     const home = o.kind === 'vessel' ? o.base0 : o.home0 || (o.kind === 'dropper' ? V3(o.bx0, 0, o.bz0) : null);
     if (it.key === 'jar') placeItem(it, JAR.x0, JAR.z0); else if (o.kind === 'dropper') placeItem(it, o.bx0, o.bz0); else if (o.kind === 'pipette' || o.kind === 'spatula' || o.kind === 'rod') placeItem(it, o.home0.x, o.home0.z); else placeItem(it, home.x, home.z);
     if (fill) { o.chem.V = fill.V || 0; o.chem.tot = { ...(fill.tot || {}) }; o.chem.ind = { ...(fill.ind || {}) }; o.chem.solv = { ...(fill.solv || {}) }; o.solid = fill.solid || 0; equilibrate(o.chem); const lk = vesselLook(o.chem); o.rgb = lk.rgb.slice(); o.a = lk.a; o.level = levelOf(o); o.eqDirty = true; }
+  }
+  if(task.id==='k117-chloride') {
+    const kinds=Math.random()<.5?['chloride','nitrate']:['nitrate','chloride'];task.chlorideKey={A:kinds[0],B:kinds[1]};task.answer.fixed={...task.chlorideKey,equation:'agclCorrect'};
+    for(const v of chlorideSamples()){const kind=v.letter==='C'?'chloride':v.letter==='D'?'nitrate':task.chlorideKey[v.letter];v.chem.V=20;v.chem.tot=kind==='chloride'?{Na:2,Cl:2,NO3:.2}:{Na:2,NO3:2.2};equilibrate(v.chem);v.eqDirty=true;setSampleTag(v,v.letter+' · '+T(['A','B'].includes(v.letter)?'x.chloride.unknown':v.letter==='C'?'x.chloride.positive':'x.chloride.blank'),'20 mL');}
   }
   if (task.id === 'k311') { setSampleTag(vessels.find(v => v.letter === 'A'), 'A · H₂O', '40 mL'); setSampleTag(vessels.find(v => v.letter === 'B'), 'B · C₆H₁₄', '40 mL'); }
   if(task.id==='k117-copper') for(const L of ['A','B']) setSampleTag(vessels.find(v=>v.letter===L),L+' · 0.10 M CuSO₄','20 mL · 0.010 M HCl');
@@ -2775,6 +2806,7 @@ const LABS = [
   { id: 'nonmetals-spc', run: 'nonmetals-spc', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🔥', title: 'x.nonmetalsSpc.title', goal: 'x.nonmetalsSpc.goal', desc: 'x.nonmetalsSpc.desc', time: '12–15 min' },
   { id: 'nonmetals-halogens', run: 'nonmetals-halogens', level: 'high', course: 'inorganic', tp: 'nonmetals', icon: '🧪', title: 'x.halogens.title', goal: 'x.halogens.goal', desc: 'x.halogens.desc', time: '8–10 min' },
   { id: 'combustion', run: 'combustion', level: 'high', course: 'organic', tp: 'hydrocarbons', icon: '🔥', title: 'lab.comb.title', goal: 'lab.comb.goal', desc: 'lab.comb.desc', time: '8–10 min' },
+  {id:'k117-chloride',run:'k117-chloride',level:'high',course:'general',tp:'ionreactions',icon:'🔎',title:'x.chloride.title',goal:'x.chloride.goal',desc:'x.chloride.desc',time:'12–15 min'},
   { id:'k117-copper',run:'k117-copper',level:'high',course:'general',tp:'ionreactions',icon:'🧪',title:'x.copper.title',goal:'x.copper.goal',desc:'x.copper.desc',time:'15–20 min' },
   { id: 'k311', run: 'k311', level: 'high', course: 'organic', tp: 'solubility', icon: '🧂', title: 'x.k311.title', goal: 'x.k311.goal', desc: 'x.k311.desc', time: '10–15 min' },
   { id: 'k111', run: 'k111', level: 'high', course: 'inorganic', tp: 'bond', icon: '💡', title: 'x.k111.title', goal: 'x.k111.goal', desc: 'x.k111.desc', time: '12–15 min' },
@@ -3234,11 +3266,11 @@ const GRAVITY_SOLIDS = {
     if (!this.has(v) || !tg || v.tilt < 82) { if (v.tilt < 35) { v.solidPourAcc = 0; v.solidPourTarget = null; } return; }
     const drive = clamp((v.tilt - 78) / 55, .08, 1.5);
     v.solidPourAcc = (v.solidPourAcc || 0) + dt * (3 + 10 * drive);
-    const targetKey = tg.kind === 'vessel' ? 'v:' + tg.v.letter : 'sink';
+    const targetKey = tg.kind === 'vessel' ? 'v:' + tg.v.letter : tg.kind;
     if (v.solidPourTarget !== targetKey) {
       v.solidPourTarget = targetKey;
-      logE(tg.kind === 'sink' ? 'mistake' : 'info', [[tg.kind === 'sink' ? 'x.piecesSink' : 'x.solidPoured', { v: v.letter, to: tg.kind === 'vessel' ? tg.v.letter : '' }]]);
-      analyticsActivity(tg.kind === 'sink' ? 'solid:discarded' : 'solid:transferred');
+      logE(tg.kind === 'sink' ? 'mistake' : 'info', [[tg.kind === 'bench' ? 'x.saltToBench' : tg.kind === 'sink' ? 'x.piecesSink' : 'x.solidPoured', { v: v.letter, to: tg.kind === 'vessel' ? tg.v.letter : '' }]]);
+      analyticsActivity(tg.kind === 'bench' ? 'solid:spilled' : tg.kind === 'sink' ? 'solid:discarded' : 'solid:transferred');
     }
     while (v.solidPourAcc >= 1 && v.particles && v.particles.length) {
       v.solidPourAcc -= 1;
@@ -3249,9 +3281,9 @@ const GRAVITY_SOLIDS = {
     }
     if ((v.solid || 0) > .005) {
       const dm = Math.min(v.solid, dt * (1.5 + 7 * drive)); v.solid -= dm;
-      if (tg.kind === 'vessel' && dm > 0) {
+      if (dm > 0) {
         const n = Math.max(1, Math.min(6, Math.ceil(dm / .03)));
-        for (let i = 0; i < n; i++) GR.push({ x: v.spout.x + (Math.random() - .5) * .005, y: v.spout.y - .004, z: v.spout.z + (Math.random() - .5) * .005, vy: -.08, m: dm / n, s: .001 + Math.random() * .0007, v: tg.v });
+        for (let i = 0; i < n; i++) GR.push({ x: v.spout.x + (Math.random() - .5) * .005, y: v.spout.y - .004, z: v.spout.z + (Math.random() - .5) * .005, vy: -.08, m: dm / n, s: .001 + Math.random() * .0007, v: tg.kind==='vessel'?tg.v:null });
       }
     }
   }
@@ -3262,6 +3294,7 @@ function findTarget(o) {
   for (const v of vessels) if (v !== o && hasMechanicalCapability(v, 'receiveLiquid') && !v.held && !v.stowed) { const d = Math.hypot(ptr.x - v.g.position.x, ptr.z - v.g.position.z); if (d < v.R + .045) return { kind: 'vessel', v, c: V3(v.g.position.x, rimY(v), v.g.position.z), R: v.Ri }; }
   const carriesMatter = hasMechanicalCapability(o, 'drawLiquid') || canTransferPhase(o, 'liquid') || (canTransferPhase(o, 'solid') && GRAVITY_SOLIDS.has(o));
   if (carriesMatter && ptr.x > SINK.x0 - .03 && ptr.x < SINK.x1 + .03 && ptr.z > SINK.z0 - .03 && ptr.z < SINK.z1 + .03) return { kind: 'sink', c: V3(clamp(ptr.x, SINK.x0 + .05, SINK.x1 - .05), 0, clamp(ptr.z, SINK.z0 + .05, SINK.z1 - .05)), R: .04 };
+  if(o.kind==='vessel'&&(o.solid||0)>.005&&o.chem.V<=.02&&!(o.particles||[]).length){const a=areaRect(o);if(ptr.x>a[0]&&ptr.x<a[1]&&ptr.z>a[2]&&ptr.z<a[3])return {kind:'bench',c:V3(ptr.x,0,ptr.z),R:.04};}
   return null;
 }
 function poseTilted(o, spoutLocal, dir, th) { const axis = V3(dir.z, 0, -dir.x).normalize(); const q = new THREE.Quaternion().setFromAxisAngle(axis, D2R(th)); o.g.quaternion.copy(q); o.g.position.copy(o.spout).sub(spoutLocal.clone().applyQuaternion(q)); }
@@ -3465,10 +3498,13 @@ function updateStick(o, dt) {
 }
 function vesselAtPoint(p) { for (const v of vessels) { const l = worldToLocal(v, p); if (Math.hypot(l.x, l.z) < v.Ri && l.y < v.level - .001 && l.y > 0 && v.chem.V > .3 && v.tilt < 1) return v; } return null; }
 function updateGrains(dt) {
-  let n = 0;
-  for (let i = GR.length - 1; i >= 0; i--) { const g = GR[i]; g.vy -= 9.8 * dt; g.y += g.vy * dt; const v = g.v; const floor = v.g.position.y + v.b + .002; if (g.y <= floor) { v.solid += g.m; if (TASK.id === 'k311') TASK.doses[v.letter] = (TASK.doses[v.letter] || 0) + g.m; GR.splice(i, 1); continue; } M4.compose(P3.set(g.x, g.y, g.z), QI, SC.setScalar(g.s)); grainMesh.setMatrixAt(n++, M4); }
-  grainMesh.count = n; grainMesh.instanceMatrix.needsUpdate = true;
+ let n=0;
+ for(let i=GR.length-1;i>=0;i--){const g=GR[i];g.vy-=9.8*dt;g.y+=g.vy*dt;const landing=saltLanding(g,vessels,SINK);
+  if(landing){if(landing.kind==='vessel'){landing.v.solid+=g.m;if(TASK.id==='k311')TASK.doses[landing.v.letter]=(TASK.doses[landing.v.letter]||0)+g.m;}else if(landing.kind==='sink')solidWaste.sink+=g.m;else spillSalt(g.x,g.z,g.m);GR.splice(i,1);continue;}
+  if(n<300){M4.compose(P3.set(g.x,g.y,g.z),QI,SC.setScalar(g.s));grainMesh.setMatrixAt(n++,M4);}
+ }grainMesh.count=n;grainMesh.instanceMatrix.needsUpdate=true;
 }
+
 function updateDrops(dt, t) {
   for (let i = drops.length - 1; i >= 0; i--) {
     const d = drops[i]; d.vy -= 9.8 * dt; d.m.position.y += d.vy * dt; const p = d.m.position;
@@ -3519,7 +3555,9 @@ function inspectSample(v) {
     for (const [i, layer] of phases.layers.entries()) body.push(T(i === 0 ? 'x.phaseBottom' : 'x.phaseTop') + ': ' + T('x.solv_' + layer.id) + ' · ' + fmt(layer.volume, 2) + ' mL');
   } else if (s.liquid) body.push(T('x.phaseSingle'));
   for (const [id, state] of Object.entries(v.precipitates || {})) if (state.amount > 1e-8) body.push(T('x.' + (id === 'AgCl' ? 'agcl' : 'cuoh2') + (state.settled > .95 ? 'Settled' : 'Suspended')));
-  if (s.components.length) body.push(T('x.sampleComponents'), ...s.components.map(q => `${q.name}: ${amount(q.amount)} mmol${q.concentration == null ? '' : ' · ' + amount(q.concentration) + ' mol/L'}`));
+  const blind=TASK.id==='k117-chloride'&&['A','B'].includes(v.letter)&&!TASK.reached;
+  if(blind)body.push(T('x.chloride.hidden'));
+  if (s.components.length&&!blind) body.push(T('x.sampleComponents'), ...s.components.map(q => `${q.name}: ${amount(q.amount)} mmol${q.concentration == null ? '' : ' · ' + amount(q.concentration) + ' mol/L'}`));
   if (s.solvents.length) body.push(T('x.sampleSolvents'), ...s.solvents.map(q => `${T('x.solv_' + q.name)}: ${fmt(q.volume, 3)} mL`));
   if (s.indicators.length) body.push(T('x.sampleIndicators'), ...s.indicators.map(q => T(REAG[q.name]?.name || q.name)));
   if (s.solids.length) body.push(T('x.sampleSolid'), ...s.solids.map(q => `${q.name}: ${amount(q.amount)} ${q.unit}`));
@@ -3536,6 +3574,7 @@ function inspectSample(v) {
 function updateBenchStatus() {
   const e = $('spillStatus');
   if (e) { const text = T('x.spillStatus', { v: fmt(liquidSpills.reduce((sum, s) => sum + s.chem.V, 0), 2), w: fmt(cleanedLiquid.V, 2) }); if (e.textContent !== text) e.textContent = text; }
+  const solid=$('solidStatus');if(solid){const text=T('x.solidStatus',{g:fmt(solidSpills.reduce((n,s)=>n+s.mass,0),3),w:fmt(solidWaste.collected,3),s:fmt(solidWaste.sink,3)});if(solid.textContent!==text)solid.textContent=text;}
   updateCapControl();
 }
 function activeBottle() { return bottles.find(b => b.held || b.docked); }
@@ -3637,6 +3676,14 @@ function renderHydrationExplanation(group, h) {
   box.append(views, hydrationDiagram(TASK.explanationView), h('p', null, T('x.k311.explain.' + TASK.explanationView)), h('p', 'schematic-note', T('x.k311.schematic')));
   const source = h('a', null, T('x.k311.source')); source.href = 'https://openstax.org/books/chemistry-2e/pages/11-2-electrolytes'; source.target = '_blank'; source.rel = 'noopener'; box.append(source); group.append(box);
 }
+function buildInvestigationReport(){
+ const lab=LABS.find(l=>l.run===TASK.id);return investigationReport(TASK,{title:T(TASK.title),language:LANG,startedAt:new Date(NB.started).toISOString(),exportedAt:new Date().toISOString(),path:[T('x.levelHigh'),T('x.course.'+lab.course),T('topic.'+lab.tp),T(TASK.title)],notebook:plainLog(),answerText:Object.entries(TASK.picks||{}).map(([key,value])=>({question:T(TASK.answer.rowKey+key),answer:value?T(TASK.answer.optKey+value):'—'}))});
+}
+function downloadInvestigation(format){
+ const report=buildInvestigationReport(),labels={};for(const key of ['course','skills','path','status','source','observations','trial','hypothesis','reason','controls','answers','notebook','vessel','volume','temperature','dose','dissolved','residue','copper','precipitate','pH','status_complete','status_in_progress'])labels[key]=T('x.report.'+key);
+ for(const key of ['water','hexane','same'])labels['prediction_'+key]=T('x.k311.option.'+key);for(const stage of ['baseline','positive','dissolved'])labels['stage_'+stage]=T('x.copper.stage.'+stage);labels.designDescription=T('x.k311.designSaved');
+ const text=format==='json'?JSON.stringify(report,null,2):reportMarkdown(report,labels),blob=new Blob([text],{type:format==='json'?'application/json;charset=utf-8':'text/markdown;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=TASK.id+'-report.'+(format==='json'?'json':'md');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 function renderCard() {
   const c = $('card'); c.replaceChildren();
   const h = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
@@ -3653,7 +3700,9 @@ function renderCard() {
   const cleanup = h('button', 'btn', T('x.cleanSpills')); cleanup.type = 'button'; cleanup.addEventListener('click', cleanLiquidSpills);
   const status = h('p'); status.id = 'spillStatus'; status.setAttribute('aria-live', 'polite');
   const report = h('div', 'sample-report'); report.id = 'sampleReport'; report.hidden = true;
-  samples.append(label, select, inspect, cleanup, status, report); c.append(samples); updateBenchStatus();
+  const solidClean=h('button','btn',T('x.cleanSalt'));solidClean.type='button';solidClean.addEventListener('click',cleanSaltSpills);const solidStatus=h('p');solidStatus.id='solidStatus';solidStatus.setAttribute('aria-live','polite');
+  samples.append(label, select, inspect, cleanup, solidClean, status, solidStatus, report); c.append(samples); updateBenchStatus();
+  if(['k117-copper','k311'].includes(TASK.id)){const exports=h('div','report-actions');for(const format of ['md','json']){const b=h('button','btn',T('x.report.download.'+format));b.type='button';b.id='report-'+format;b.addEventListener('click',()=>downloadInvestigation(format));exports.append(b);}c.append(exports);}
   if (inspectionShown && inspectorOpen) inspectSample(vessels.find(v => v.letter === inspectedSample) || vessels[0]);
   if (instructorTab === 'procedure') {
     const lab = LABS.find(l => l.run === TASK.id), course = lab ? lab.course : 'inorganic';
@@ -3690,13 +3739,16 @@ function renderCard() {
       renderSolubilityHistory(group,h);
       c.append(group);
     }
+    if(TASK.id==='k117-chloride'){
+      const group=h('section','activity');for(const stage of ['baseline','tested']){const b=h('button','btn',T('x.chloride.record.'+stage));b.type='button';b.id='chloride-'+stage;b.disabled=!!TASK.chlorideEvidence[stage]||TASK.reached;b.addEventListener('click',()=>recordChloride(stage));group.append(b);for(const r of TASK.chlorideEvidence[stage]||[])group.append(h('p',null,T('x.chloride.measurement',{stage:T('x.chloride.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),ppt:fmt(r.precipitate,4),appearance:T('x.chloride.'+r.appearance)})));}c.append(group);
+    }
     if(TASK.id==='k117-copper') {
       const group=h('section','activity');
       for(const stage of ['baseline','positive','dissolved']) { const b=h('button','btn',T('x.copper.record.'+stage)); b.type='button'; b.id='copper-'+stage; b.disabled=!!TASK.copperEvidence[stage]||TASK.reached; b.addEventListener('click',()=>recordCopperCycle(stage)); group.append(b);
         for(const r of TASK.copperEvidence[stage]||[]) group.append(h('p',null,T('x.copper.measurement',{stage:T('x.copper.stage.'+stage),v:r.vessel,volume:fmt(r.volume,2),cu:fmt(r.copper,3),ppt:fmt(r.precipitate,4),ph:fmt(r.pH,2)})));
       } c.append(group);
     }
-    if (TASK.answer) { const A = TASK.answer, box = h('div', ['k311','k117-copper'].includes(TASK.id) ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
+    if (TASK.answer) { const A = TASK.answer, box = h('div', ['k311','k117-copper','k117-chloride'].includes(TASK.id) ? 'ans solubility-answer' : 'ans'); box.append(h('div', 'cap', T('x.ansTitle')));
       const optLabel = o => A.optKey ? T(A.optKey + o) : A.cat ? T('x.ans_' + o) : SOLF[o];
       for (const L of A.rows || Object.keys(TASK.key)) { const row = h('label', 'arow'); row.append(h('span', null, A.rowKey ? T(A.rowKey + L) : T('x.bottleL', { l: L })));
         const sel = document.createElement('select'); sel.append(new Option('—', '')); for (const o of (A.optsByRow && A.optsByRow[L] || A.opts)) sel.append(new Option(optLabel(o), o)); sel.value = TASK.picks[L] || ''; sel.disabled = TASK.reached;
@@ -4165,3 +4217,5 @@ Object.assign(window.__lab3d, { discardSeparator });
 Object.assign(window.__lab3d, { saveSolubilityHypothesis, hydrationEvidence, makeSolubilityHypothesis, hydrationDiagram });
 
 Object.assign(window.__lab3d,{copperCycleObservation,recordCopperCycle,saveSolubilityDesign,makeSolubilityDesign,startSolubilityRepeat,solubilityTrialRecord});
+
+Object.assign(window.__lab3d,{chlorideObservation,recordChloride,solidSpills,solidWaste,spillSalt,cleanSaltSpills,saltInventory,buildInvestigationReport,downloadInvestigation,updateBenchStatus});

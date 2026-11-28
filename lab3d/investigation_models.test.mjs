@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {copperCycleObservation,makeSolubilityDesign,solubilityTrialRecord} from './investigation_models.mjs';
+import {copperCycleObservation,makeSolubilityDesign,solubilityTrialRecord,chlorideObservation} from './investigation_models.mjs';
 import {solubilityTrial} from './phase_state.mjs';
 const engine=vm.createContext({});vm.runInContext(fs.readFileSync(new URL('../lab/engine.js',import.meta.url),'utf8'),engine);
 const copper=()=>['A','B'].map(letter=>({letter,temp:22,solid:0,chem:{V:20,tot:{Cu:2,SO4:2,Cl:.2},solv:{},ind:{}}}));
@@ -39,4 +39,21 @@ test('retained trials are independent snapshots of hypothesis, controls, measure
 test('the new lab, controls, history and equation prompts have all four language entries',()=>{
  const c=vm.createContext({I18N:{en:{},et:{},ru:{},uk:{}}});vm.runInContext(fs.readFileSync(new URL('./i18n3d.js',import.meta.url),'utf8'),c);
  for(const key of ['copper.steps','copper.row.precip','copper.notReady','k311.designFirst','k311.startRepeat','k311.trialHistory'])for(const lang of ['en','et','ru','uk'])assert.ok(c.I18N[lang]['x.'+key]);
+});
+
+const chlorideSamples=key=>['A','B','C','D'].map(letter=>{const kind=letter==='C'?'chloride':letter==='D'?'nitrate':key[letter];return {letter,tilt:0,temp:22,solid:0,chem:{V:20,tot:kind==='chloride'?{Na:2,Cl:2,NO3:.2}:{Na:2,NO3:2.2},ind:{},solv:{}}};});
+test('both blinded chloride assignments produce actual AgCl only in the unknown chloride and positive control',()=>{
+ for(const key of [{A:'chloride',B:'nitrate'},{A:'nitrate',B:'chloride'}]){
+  const samples=chlorideSamples(key);eq(samples);const baseline=chlorideObservation(samples,'baseline',key);assert.ok(baseline);
+  for(const v of samples){v.chem.V+=.2;v.chem.tot.Ag=.02;v.chem.tot.NO3+=.02;}eq(samples);
+  assert.equal(chlorideObservation(samples,'tested',key),null);const rows=chlorideObservation(samples,'tested',key,{baseline});assert.ok(rows);
+  assert.ok(rows.find(r=>r.vessel==='C').precipitate>.019);assert.equal(rows.find(r=>r.vessel==='D').precipitate,0);
+  for(const v of samples)assert.ok(Math.abs((v.chem.eq.ppt.AgCl||0)+(v.chem.eq.dis.Ag||0)*v.chem.V-.02)<1e-7);
+  assert.equal(rows.find(r=>r.vessel==='A').appearance,key.A==='chloride'?'precipitate':'clear');
+ }
+});
+test('chloride observation rejects missing, extra and contaminated reagent/control doses',()=>{
+ const key={A:'chloride',B:'nitrate'},samples=chlorideSamples(key);eq(samples);const baseline=chlorideObservation(samples,'baseline',key);
+ for(const v of samples){v.chem.V+=.2;v.chem.tot.Ag=.02;v.chem.tot.NO3+=.02;}eq(samples);const good=structuredClone(samples);
+ for(const mutate of [()=>samples[0].chem.tot.Ag=.015,()=>samples[1].chem.V+=.05,()=>samples[3].chem.tot.Cl=1,()=>samples[2].chem.ind.univ=1,()=>samples[1].stowed=true]){mutate();eq(samples);assert.equal(chlorideObservation(samples,'tested',key,{baseline}),null);samples.splice(0,4,...structuredClone(good));}
 });

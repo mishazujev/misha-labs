@@ -1,0 +1,9 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{investigationReport,reportMarkdown}from './investigation_reports.mjs';
+const context={title:'Investigation',path:['High school','K1','Ion reactions','Investigation'],language:'en',startedAt:'2026-11-28T07:00:00Z',exportedAt:'2026-11-28T08:00:00Z',notebook:'Measured 42 mL'};
+test('copper report includes actual recorded stage evidence, status, units, path and confirmed skill IDs without mutating the task',()=>{
+ const task={id:'k117-copper',reached:false,picks:{},copperEvidence:{baseline:[{vessel:'A',volume:20,copper:2,precipitate:0,pH:2}]}};const before=JSON.stringify(task),report=investigationReport(task,context);assert.deepEqual(report.skillIds,['K1-17','K1-18']);assert.equal(report.status,'in_progress');assert.equal(report.units.precipitate,'mmol');report.observations.baseline[0].copper=99;assert.equal(JSON.stringify(task),before);assert.throws(()=>investigationReport({id:'free'},context));
+});
+test('K3 report preserves retained and current trial evidence and emits readable escaped Markdown',()=>{
+ const task={id:'k311',reached:true,picks:{outcome:'water'},trials:[{hypothesis:{prediction:'hexane',reason:'Original | <test>'},measurements:[{vessel:'A',volume:40,temperature:22,dose:.5,dissolved:.5,residue:0}]}],hypothesis:{prediction:'water',reason:'Repeat'},design:{independent:'solvent',controls:['volume','dose','temperature']},comparison:[{vessel:'A',volume:40,temperature:22,dose:.48,dissolved:.48,residue:0}]};
+ const r=investigationReport(task,context),md=reportMarkdown(r);assert.equal(r.retainedTrials.length,1);assert.equal(r.currentTrial.measurements[0].dose,.48);assert.equal(r.status,'complete');assert.deepEqual(r.skillIds,['K3-11']);assert.match(md,/0.48/);assert.match(md,/dissolved \/ g/);assert.ok(!md.includes('<test>'));task.trials[0].hypothesis.reason='Changed';assert.equal(r.retainedTrials[0].hypothesis.reason,'Original | <test>');
+});
